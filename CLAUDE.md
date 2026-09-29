@@ -3,7 +3,7 @@
 ## 一、项目
 
 **NanoAnime番鉴** —— 中国动漫爱好者的「追番 + 考据」社区。不提供在线播放。
-（仓库名 `NanoAnime`；package.json 的 name 为 `nanoanime`）
+应用名：`NanoAnime番鉴`（PWA 主屏名若被截断，退为「番鉴」）｜ 仓库名：`nanoanime`
 方案见 `docs/产品方案.md`｜进度见 `docs/进度.md`（**开工前先读**）
 
 ## 二、红线（最高优先级，不得绕过）
@@ -61,7 +61,9 @@ docs/           文档
 - **一次只做一个里程碑，不跳步**
 - 涉及 3 个以上文件，**先用计划模式**（Shift+Tab ×2）给我方案
 - 每次改完必须能本地跑通；跑不通不算完成
-- 每完成一小阶段就收工：确认能启动 → 提交代码 → 更新 `docs/进度.md`（提示词见 `docs/提示词手册.md`；若已建 `/checkpoint` 命令可直接用）
+- 每完成一小阶段就收工：确认能启动 → 提交 → 更新 `docs/进度.md`（提示词见 `docs/提示词手册.md`；若已建 `/checkpoint` 命令可直接用）
+- **`docs/进度.md` 由 Claude Code 在收工时维护**：勾选「已完成 / 进行中 / 待办」、更新「当前状态」、可追加「遇到的问题」。**只追加与勾选，不删除或改写已有条目**——方案层判断归文档区作者
+- **版本控制**：仓库根 = `E:/Vibe Coding/NanoAnime`，**代码与文档同一仓库**；`.gitignore` 排除 `node_modules/`、`.next/`、`.env*`、`.workbuddy/`；提交信息用中文，说清做了什么；不攒大批量
 
 ## 八、构建与运行（由 Claude Code 执行，你不用手动敲）
 
@@ -69,17 +71,7 @@ docs/           文档
 - 构建检查：`npm run build` —— 上线前必跑
 - 代码检查：`npm run lint`
 
-## 九、版本控制
-
-git 仓库根目录是**外层大文件夹** `E:\Vibe Coding\NanoAnime` —— `docs/` 和本文件都在版本控制内。
-工程目录 `NanoAnime工程/` 里另有一份 Next.js 自带的 `.gitignore`（管 `node_modules/`、`.next/`、`.env*`）；外层 `.gitignore` 负责排除 `.workbuddy/`。
-
-- **commit message 用中文**
-- 每完成一小阶段提交一次（收工流程见 `/checkpoint`）
-- 提交前确认本地能正常启动
-- 密钥只写进 `.env.local`，**永不提交**
-
-## 十、当前里程碑
+## 九、当前里程碑
 
 **M0 · 骨架跑通**（验收：本地跑起来，首页显示 20 部真实番剧封面）
 后续见 `docs/产品方案.md`
