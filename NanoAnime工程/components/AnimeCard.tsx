@@ -11,6 +11,9 @@ import type { Anime } from "@/types/anime";
 /**
  * 封面墙上的单张卡片：封面 + 日文原名 + 英文名 + 更新状态（+ 有数据时才显示的集数/评分）。
  * 文字一律走 lib/anime-display.ts 里的取数函数，那些函数保证不返回 null / 空字符串。
+ *
+ * 图片走 Next/Image，域名白名单在 next.config.ts。开发环境那里关掉了图片优化
+ * （原因见 next.config.ts 的注释），生产环境保持优化开启。
  */
 export function AnimeCard({ anime }: { anime: Anime }) {
   const title = getPrimaryTitle(anime);
