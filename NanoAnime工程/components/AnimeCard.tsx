@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import {
   getAiringStatus,
@@ -13,6 +14,8 @@ import type { Anime } from "@/types/anime";
  * 名字取两行：主标题优先中文名（Bangumi 补的），没配上就是日文原名；副标题相应给日文原名或英文名。
  * 文字一律走 lib/anime-display.ts 里的取数函数，那些函数保证不返回 null / 空字符串。
  *
+ * 整张卡片是一个链接，点进详情页 /anime/{id}。
+ *
  * 图片走 Next/Image，域名白名单在 next.config.ts。开发环境那里关掉了图片优化
  * （原因见 next.config.ts 的注释），生产环境保持优化开启。
  */
@@ -22,7 +25,10 @@ export function AnimeCard({ anime }: { anime: Anime }) {
   const meta = getMetaLine(anime);
 
   return (
-    <article className="flex flex-col gap-2">
+    <Link
+      href={`/anime/${anime.id}`}
+      className="group flex flex-col gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
       {/* 容器自带底色：封面没加载完时显示的是主题灰或封面主色，而不是一块白 */}
       <div
         className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-muted"
@@ -35,7 +41,8 @@ export function AnimeCard({ anime }: { anime: Anime }) {
             fill
             // 告诉浏览器不同屏幕下图片的实际显示宽度，避免下载过大的图
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-            className="object-cover"
+            // 鼠标移上去时封面轻微放大，提示这张卡片可以点
+            className="object-cover transition-transform duration-200 group-hover:scale-105"
           />
         ) : (
           // 兜底：极少数作品没有封面，用主色块 + 标题顶上，不留空白
@@ -51,6 +58,6 @@ export function AnimeCard({ anime }: { anime: Anime }) {
         <p className="text-xs text-muted-foreground">{getAiringStatus(anime)}</p>
         {meta ? <p className="text-xs text-muted-foreground/70">{meta}</p> : null}
       </div>
-    </article>
+    </Link>
   );
 }

@@ -31,6 +31,16 @@ export interface SeasonRef {
 }
 
 /**
+ * AniList 的日期结构。未定档时整个为 null；
+ * 年份定了但月/日没定时，只有 year 有值。展示层必须能处理这三种残缺程度。
+ */
+export interface DateParts {
+  year: number | null;
+  month: number | null;
+  day: number | null;
+}
+
+/**
  * 一部番剧。AniList 上「没填」的字段会返回 null（不是缺字段），
  * 所以除了 id 之外全部允许为 null——卡片渲染时必须做兜底。
  */
@@ -56,15 +66,10 @@ export interface Anime {
   episodes: number | null; // 总集数
   averageScore: number | null; // 评分，0~100
   /**
-   * 首播日期。未定档时为 null，年份未定时 month / day 也可能为 null。
-   * 用途：M1 拿它跟 Bangumi 的放送开始年份比对（同一部番的新旧季度靠这个区分），
+   * 首播日期。用途：M1 拿它跟 Bangumi 的放送开始年份比对（同一部番的新旧季度靠这个区分），
    * M1-1 详情页也要显示它。
    */
-  startDate: {
-    year: number | null;
-    month: number | null;
-    day: number | null;
-  } | null;
+  startDate: DateParts | null;
   status: MediaStatus;
   format: MediaFormat;
   /** 下一集的播出信息；已完结或未定档时为 null */
@@ -77,4 +82,36 @@ export interface Anime {
 /** 一季的番剧列表，附带这是哪一季 */
 export interface SeasonAnimeResult extends SeasonRef {
   anime: Anime[];
+}
+
+/**
+ * 一集。
+ * ⚠️ AniList **没有逐集标题字段**。这里能拿到的标题只来自 `streamingEpisodes`
+ * （Crunchyroll 的英文标题），所以大多数番的 title 是 null——展示层据此留空，不编造。
+ */
+export interface Episode {
+  /** 第几集 */
+  number: number;
+  /** 播出时间，Unix 时间戳（单位：秒）。AniList 没给这一集的排期时为 null */
+  airingAt: number | null;
+  /** 英文集标题。绝大多数番没有，为 null */
+  title: string | null;
+}
+
+/**
+ * 番剧详情（详情页用）。
+ * 继承 Anime，这样 lib/anime-display.ts 里现成的 getPrimaryTitle / getAiringStatus
+ * 等函数能直接复用，不必为详情页再写一套。
+ */
+export interface AnimeDetail extends Anime {
+  /** 简介。已经在 lib/anilist.ts 里清掉了 HTML，没有简介时为 null */
+  description: string | null;
+  /** 只保留「动画制作公司」（AniList 的 isAnimationStudio 为 true 的那些） */
+  studios: string[];
+  endDate: DateParts | null;
+  /** 单集时长，单位分钟 */
+  duration: number | null;
+  genres: string[];
+  /** 剧集列表，按集号升序。**只包含 AniList 真有数据的那几集**，缺的由展示层补「—」 */
+  episodeList: Episode[];
 }

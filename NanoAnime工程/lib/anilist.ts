@@ -1,7 +1,15 @@
 // AniList 数据访问层。
 // 铁律（CLAUDE.md 第五条）：第三方请求只能走这里，页面组件里不许裸写 fetch。
 
-import type { Anime, MediaSeason, SeasonAnimeResult, SeasonRef } from "@/types/anime";
+import type {
+  Anime,
+  AnimeDetail,
+  DateParts,
+  Episode,
+  MediaSeason,
+  SeasonAnimeResult,
+  SeasonRef,
+} from "@/types/anime";
 
 const ANILIST_ENDPOINT = "https://graphql.anilist.co";
 
@@ -42,6 +50,68 @@ const SEASON_ANIME_QUERY = `
     }
   }
 `;
+
+/**
+ * 查一部番的详情。
+ *
+ * 几处刻意的选择：
+ * - `description(asHtml: false)` 让 AniList 先把简介的 HTML 处理一道，但**它清不干净**
+ *   （实测还留 `<br>` 等标签），所以下面还有一道 parseDescription 兜着。
+ * - `airingSchedule` 只请求一页：单次上限被服务端压到 25 条，翻页对长番意义也不大。
+ * - `streamingEpisodes` **只取 title，绝不取 url / site**——那个字段里带着 Crunchyroll
+ *   的播放地址，本项目不接任何播放链接（红线）。集标题只是文本，可以用。
+ */
+const ANIME_DETAIL_QUERY = `
+  query AnimeDetail($id: Int!) {
+    Media(id: $id, type: ANIME) {
+      id
+      title { native english romaji }
+      coverImage { extraLarge large color }
+      description(asHtml: false)
+      studios { nodes { name isAnimationStudio } }
+      startDate { year month day }
+      endDate { year month day }
+      episodes
+      duration
+      status
+      format
+      averageScore
+      genres
+      nextAiringEpisode { episode airingAt }
+      airingSchedule(perPage: 50) { nodes { episode airingAt } }
+      streamingEpisodes { title }
+    }
+  }
+`;
+
+/**
+ * 详情查询的返回外形。
+ * 注意 title 里**没有 zh**——中文名是本地补的，AniList 根本不返回这个字段。
+ * id 不存在时 AniList 返回 HTTP 404，且 data.Media 为 null。
+ */
+interface AnimeDetailResponse {
+  data?: {
+    Media?: {
+      id: number;
+      title: { native: string | null; english: string | null; romaji: string | null };
+      coverImage: Anime["coverImage"];
+      description: string | null;
+      studios: { nodes: { name: string; isAnimationStudio: boolean }[] } | null;
+      startDate: DateParts | null;
+      endDate: DateParts | null;
+      episodes: number | null;
+      duration: number | null;
+      status: Anime["status"];
+      format: Anime["format"];
+      averageScore: number | null;
+      genres: string[] | null;
+      nextAiringEpisode: Anime["nextAiringEpisode"];
+      airingSchedule: { nodes: { episode: number; airingAt: number }[] } | null;
+      streamingEpisodes: { title: string | null }[] | null;
+    };
+  };
+  errors?: { message: string }[];
+}
 
 /** AniList 的返回外形。出错的字段叫 errors，成功的数据在 data.Page.media */
 interface AniListResponse {
@@ -118,4 +188,139 @@ export async function fetchSeasonAnime(perPage = 20): Promise<SeasonAnimeResult>
     seasonYear,
     anime: media.map((item) => ({ ...item, title: { ...item.title, zh: null } })),
   };
+}
+
+/**
+ * 取一部番的详情，供详情页使用。
+ *
+ * @returns 查得到就返回详情；AniList 上不存在这个 id 时返回 **null**（由页面转成 404）。
+ *          网络或服务出错则抛异常——「没有这部番」和「请求失败」是两回事，不能混。
+ */
+export async function fetchAnimeDetail(id: number): Promise<AnimeDetail | null> {
+  const response = await fetch(ANILIST_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ query: ANIME_DETAIL_QUERY, variables: { id } }),
+    // 同首页：Next 16 的 fetch 默认不缓存，要显式开启（见 fetchSeasonAnime 的注释）
+    cache: "force-cache",
+    next: { revalidate: CACHE_SECONDS },
+  });
+
+  // AniList 用 404 表示「没有这个 id」，这不是故障，是正常结果
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(`AniList 请求失败：HTTP ${response.status}`);
+  }
+
+  const json = (await response.json()) as AnimeDetailResponse;
+
+  if (json.errors?.length) {
+    throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
+  }
+
+  const media = json.data?.Media;
+  if (!media) {
+    return null;
+  }
+
+  return {
+    id: media.id,
+    // 同首页：AniList 没有中文字段，先填 null，由调用方用 getTitleZh() 补
+    title: { ...media.title, zh: null },
+    coverImage: media.coverImage,
+    description: parseDescription(media.description),
+    studios: (media.studios?.nodes ?? [])
+      .filter((node) => node.isAnimationStudio)
+      .map((node) => node.name),
+    startDate: media.startDate,
+    endDate: media.endDate,
+    episodes: media.episodes,
+    duration: media.duration,
+    status: media.status,
+    format: media.format,
+    averageScore: media.averageScore,
+    genres: media.genres ?? [],
+    nextAiringEpisode: media.nextAiringEpisode,
+    episodeList: buildEpisodeList(
+      media.airingSchedule?.nodes ?? [],
+      media.streamingEpisodes ?? [],
+    ),
+  };
+}
+
+/**
+ * 清掉简介里的 HTML。
+ *
+ * 查询里虽然写了 `asHtml: false`，但**实测 AniList 并没有清干净**：
+ * 葬送のフリーレン剩 `<br><br>`、薬屋のひとりごと 剩 20 处标签、海贼王剩 22 处。
+ * 所以这里再兜一道。
+ *
+ * 注意顺序：`&amp;` 必须最后解，否则 `&amp;lt;` 会被先解成 `<`。
+ */
+function parseDescription(raw: string | null): string | null {
+  if (!raw) {
+    return null;
+  }
+
+  const text = raw
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;|&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return text || null;
+}
+
+/**
+ * 把 AniList 给的两份数据并成一份剧集列表，按集号升序。
+ *
+ * - `airingSchedule`：有「第几集 + 播出时间」，但**不一定完整**——实测已完结的番会缺开头几集
+ *   （葬送のフリーレン 28 集只给了第 5~28 集），长番只给最近 25 集。
+ * - `streamingEpisodes`：有英文标题（来自 Crunchyroll），但只有上了它家的番才有，且同样不全。
+ *
+ * 缺的集这里**不补**——「列出第 1~N 集、缺的填 —」是展示层 `buildEpisodeRows()` 的规则，
+ * 跟抓数据是两码事。
+ */
+function buildEpisodeList(
+  schedule: { episode: number; airingAt: number }[],
+  streaming: { title: string | null }[],
+): Episode[] {
+  const titles = new Map<number, string>();
+  for (const item of streaming) {
+    // 标题形如 "Episode 1 - The Journey's End"。解析不出集号就丢弃——不猜。
+    // 前缀剥掉，界面上已经写了「第 N 集」，再重复一遍没意义。
+    const matched = /^Episode\s+(\d+)\s*[-–—:]?\s*(.*)$/i.exec(item.title?.trim() ?? "");
+    if (!matched) {
+      continue;
+    }
+    const title = matched[2].trim();
+    if (title) {
+      titles.set(Number(matched[1]), title);
+    }
+  }
+
+  const merged = new Map<number, Episode>();
+  for (const node of schedule) {
+    merged.set(node.episode, {
+      number: node.episode,
+      airingAt: node.airingAt,
+      title: titles.get(node.episode) ?? null,
+    });
+  }
+  // 有标题却没排期的集也留下——标题本身是有效信息，不该因为没日期就丢掉
+  for (const [number, title] of titles) {
+    if (!merged.has(number)) {
+      merged.set(number, { number, airingAt: null, title });
+    }
+  }
+
+  return [...merged.values()].sort((a, b) => a.number - b.number);
 }

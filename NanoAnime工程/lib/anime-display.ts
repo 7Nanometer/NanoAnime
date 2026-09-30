@@ -1,7 +1,7 @@
 // 展示层：把 AniList 的数据整理成卡片上要显示的文字。
 // 所有「字段可能缺失」的判断都集中在这里，页面组件里就不用到处写 ?? 兜底了。
 
-import type { Anime, MediaSeason } from "@/types/anime";
+import type { Anime, AnimeDetail, DateParts, MediaFormat, MediaSeason, MediaStatus } from "@/types/anime";
 
 /** 一周七天。getDay() 的返回值正好就是下标（0 = 周日） */
 const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
@@ -16,6 +16,36 @@ const SEASON_LABELS: Record<MediaSeason, string> = {
 
 /** 连名字都没有时的最后兜底，保证卡片上永远不会出现空字符串 */
 const UNKNOWN_TITLE = "未知作品";
+
+/** 字段缺失时统一显示的破折号。绝不返回 null / 空串，界面上不会出现空洞 */
+const DASH = "—";
+
+/** 作品类型的中文名 */
+const FORMAT_LABELS: Record<MediaFormat, string> = {
+  TV: "TV 动画",
+  TV_SHORT: "泡面番",
+  MOVIE: "剧场版",
+  SPECIAL: "特别篇",
+  OVA: "OVA",
+  ONA: "网络动画",
+  MUSIC: "音乐",
+};
+
+/** 播出状态的中文名（不带排期信息的那种，详情页用） */
+const STATUS_LABELS: Record<MediaStatus, string> = {
+  RELEASING: "在播",
+  FINISHED: "已完结",
+  NOT_YET_RELEASED: "待开播",
+  CANCELLED: "已取消",
+  HIATUS: "停更中",
+};
+
+/**
+ * 剧集列表最多列多少行。
+ * 超过这个数（例：ONE PIECE 500 集）就不再逐集补齐，只列 AniList 真有排期的那部分，
+ * 否则页面会渲染出几百行「—」。
+ */
+const EPISODE_LIST_LIMIT = 100;
 
 /** 季度中文名，用于首页标题，例如「2026 年秋新番」 */
 export function getSeasonLabel(season: MediaSeason): string {
@@ -63,22 +93,17 @@ export function getSecondaryTitle(anime: Anime): string {
 export function getAiringStatus(anime: Anime): string {
   const next = anime.nextAiringEpisode;
   if (next) {
-    const weekday = WEEKDAYS[new Date(next.airingAt * 1000).getDay()];
+    const weekday = WEEKDAYS[toBeijingTime(next.airingAt).getUTCDay()];
     return `${weekday} 第${next.episode}集`;
   }
 
-  switch (anime.status) {
-    case "RELEASING":
-      return "在播 · 排期待定";
-    case "FINISHED":
-      return "已完结";
-    case "NOT_YET_RELEASED":
-      return "待开播";
-    case "CANCELLED":
-      return "已取消";
-    case "HIATUS":
-      return "停更中";
-  }
+  // 在播但查不到下一集时间时，比单说「在播」多给一句"排期待定"
+  return anime.status === "RELEASING" ? "在播 · 排期待定" : getStatusLabel(anime.status);
+}
+
+/** 播出状态的中文名，例如「已完结」。不带排期信息，详情页的信息栏用 */
+export function getStatusLabel(status: MediaStatus): string {
+  return STATUS_LABELS[status];
 }
 
 /**
@@ -95,4 +120,136 @@ export function getMetaLine(anime: Anime): string {
     parts.push(`评分 ${anime.averageScore}`);
   }
   return parts.join(" · ");
+}
+
+/* ------------------------------------------------------------------ *
+ * 以下是 M1-1 详情页用的取数函数
+ * ------------------------------------------------------------------ */
+
+/** 作品类型的中文名，例如「TV 动画」 */
+export function getFormatLabel(format: MediaFormat): string {
+  return FORMAT_LABELS[format];
+}
+
+/** 评分的显示值。AniList 是 0~100 的整数，没有评分时给破折号 */
+export function getScoreLabel(score: number | null): string {
+  return score === null ? DASH : String(score);
+}
+
+/** 制作公司。AniList 上很多番没填，没有就给破折号 */
+export function getStudioNames(detail: AnimeDetail): string {
+  return detail.studios.length > 0 ? detail.studios.join(" / ") : DASH;
+}
+
+/**
+ * AniList 的日期转中文。残缺到什么精度就说到什么精度：
+ * 完整给「2023年9月29日」，只有年月给「2023年9月」，只有年给「2023年」，全空给「待定」。
+ */
+export function formatDateParts(parts: DateParts | null): string {
+  if (!parts?.year) {
+    return "待定";
+  }
+  if (!parts.month) {
+    return `${parts.year}年`;
+  }
+  if (!parts.day) {
+    return `${parts.year}年${parts.month}月`;
+  }
+  return `${parts.year}年${parts.month}月${parts.day}日`;
+}
+
+/**
+ * 播出时间区间，例如「2023年9月29日 ~ 2024年3月22日」。
+ * 开始日期就没有时直接给「待定」；结束日期没有时只显示开始日期（不写「~ 待定」占位）。
+ */
+export function formatDateRange(start: DateParts | null, end: DateParts | null): string {
+  if (!start?.year) {
+    return "待定";
+  }
+  const from = formatDateParts(start);
+  const to = end?.year ? formatDateParts(end) : null;
+  return to && to !== from ? `${from} ~ ${to}` : from;
+}
+
+/** 剧集列表的完整结果 */
+export interface EpisodeListResult {
+  rows: EpisodeRow[];
+  /** 是否因为集数太多而做了截断（截断时 rows 只含 AniList 有数据的集） */
+  truncated: boolean;
+  /** 理论上共有多少集（总集数与排期最大集号的较大者） */
+  total: number;
+}
+
+/** 剧集列表里的一行 */
+export interface EpisodeRow {
+  /** 第几集 */
+  number: number;
+  /** 播出日期，形如「2023年10月6日」；AniList 没给这一集的排期时是「—」 */
+  dateLabel: string;
+  /** 英文集标题。绝大多数番没有，为 null——界面留空即可，不要填占位文字 */
+  title: string | null;
+}
+
+/**
+ * 生成剧集列表要显示的全部行。
+ *
+ * 规则（用户 2026-09-30 拍板）：**以总集数为准列全，没数据的那集日期填「—」**。
+ * 不编造任何日期——AniList 实测对已完结的番可能缺开头几集（葬送のフリーレン就缺第 1~4 集），
+ * 那几行的日期就老老实实显示「—」。
+ *
+ * 例外：集数超过 EPISODE_LIST_LIMIT 的（ONE PIECE 500 集），只列有排期数据的那几集，
+ * 并回传 `truncated: true`，由界面写明"只列出了有数据的部分"。
+ */
+export function buildEpisodeRows(detail: AnimeDetail): EpisodeListResult {
+  const byNumber = new Map(detail.episodeList.map((episode) => [episode.number, episode]));
+
+  // 集数上限取「总集数」与「排期里最大的集号」的较大者：
+  // 未开播的番总集数常为 null，得靠排期推出来
+  const maxScheduled = detail.episodeList.reduce((max, item) => Math.max(max, item.number), 0);
+  const total = Math.max(detail.episodes ?? 0, maxScheduled);
+
+  if (total === 0) {
+    return { rows: [], truncated: false, total: 0 };
+  }
+
+  const truncated = total > EPISODE_LIST_LIMIT;
+  const rows: EpisodeRow[] = [];
+
+  for (let number = 1; number <= total; number++) {
+    const episode = byNumber.get(number);
+    // 超长番：没有排期的集直接跳过，否则会渲染出几百行破折号
+    if (truncated && !episode) {
+      continue;
+    }
+    rows.push({
+      number,
+      dateLabel: episode?.airingAt ? formatAiringAt(episode.airingAt) : DASH,
+      title: episode?.title ?? null,
+    });
+  }
+
+  return { rows, truncated, total };
+}
+
+/** 中国不实行夏令时，北京时间固定是 UTC+8，直接加偏移量即可，不需要 Intl */
+const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+/**
+ * 把 Unix 时间戳（秒）换算成**北京时间**。
+ * 之后要用 getUTCFullYear / getUTCMonth / getUTCDate / getUTCDay 去读——
+ * 加了偏移再用 UTC 取值，得到的就是北京时间的墙上时间。
+ *
+ * ⚠️ 为什么不能直接用 `new Date(ts * 1000).getFullYear()`：那取决于**运行环境**的时区。
+ * 本地开发是 UTC+8 没问题，但 Vercel 的服务器跑在 UTC——深夜播出的番会整体差一天
+ * （10 月 2 日 01:00 JST 在 UTC 下会显示成 10 月 1 日）。这个产品面向国内用户，
+ * 一律按北京时间显示。
+ */
+function toBeijingTime(airingAt: number): Date {
+  return new Date(airingAt * 1000 + BEIJING_OFFSET_MS);
+}
+
+/** Unix 时间戳（秒）→「2023年10月6日」（北京时间） */
+function formatAiringAt(airingAt: number): string {
+  const date = toBeijingTime(airingAt);
+  return `${date.getUTCFullYear()}年${date.getUTCMonth() + 1}月${date.getUTCDate()}日`;
 }
