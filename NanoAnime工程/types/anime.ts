@@ -85,6 +85,19 @@ export interface SeasonAnimeResult extends SeasonRef {
 }
 
 /**
+ * 搜索结果。
+ * 放在这里而不是 lib/search.ts，是为了让客户端组件能用 `import type` 拿到它——
+ * 那样不会把服务端模块（AniList 访问层、本地对照表）连带打进浏览器包里。
+ */
+export interface SearchResult {
+  /** 实际用于搜索的关键词（已 trim） */
+  keyword: string;
+  anime: Anime[];
+  /** 结果数撞到了上限——意味着可能还有更多，界面据此提示用户把关键词写具体点 */
+  truncated: boolean;
+}
+
+/**
  * 一集。
  * ⚠️ AniList **没有逐集标题字段**。这里能拿到的标题只来自 `streamingEpisodes`
  * （Crunchyroll 的英文标题），所以大多数番的 title 是 null——展示层据此留空，不编造。

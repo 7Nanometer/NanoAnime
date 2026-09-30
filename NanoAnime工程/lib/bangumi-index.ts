@@ -23,6 +23,26 @@ export function getTitleZh(anilistId: number): string | null {
 }
 
 /**
+ * 拿中文关键词在本地对照表里找，返回命中的 AniList id。
+ *
+ * 这是搜索功能**唯一**的中文入口：实测把本地 18 个中文名逐个喂给 AniList 的搜索接口，
+ * 命中 0/18——AniList 根本没有中文索引。所以中文关键词只能靠这张表。
+ *
+ * 返回顺序沿用文件里的顺序（数字键的对象会按升序枚举，正好就是 id 升序）。
+ * 关键词为空时返回空数组。
+ */
+export function findLocalMatches(keyword: string): number[] {
+  const needle = keyword.trim().toLowerCase();
+  if (!needle) {
+    return [];
+  }
+
+  return Object.entries(INDEX)
+    .filter(([, entry]) => entry.title_zh.toLowerCase().includes(needle))
+    .map(([anilistId]) => Number(anilistId));
+}
+
+/**
  * 把中文名并进一批番剧里。
  * 配不上的作品 title.zh 保持 null，展示层会据此退回日文原名。
  */

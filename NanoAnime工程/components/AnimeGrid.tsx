@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 
 import { AnimeCard } from "@/components/AnimeCard";
 import { getSeasonLabel } from "@/lib/anime-display";
@@ -41,9 +42,18 @@ export function AnimeGrid() {
 
   return (
     <section>
-      <h1 className="mb-6 text-xl font-bold">
-        {data.seasonYear} 年{getSeasonLabel(data.season)}新番 · 共 {data.anime.length} 部
-      </h1>
+      <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
+        <h1 className="text-xl font-bold">
+          {data.seasonYear} 年{getSeasonLabel(data.season)}新番 · 共 {data.anime.length} 部
+        </h1>
+        {/* 搜索页的入口。没有它 /search 只能靠手敲网址到达 */}
+        <Link
+          href="/search"
+          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+        >
+          搜索其他番剧 →
+        </Link>
+      </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {data.anime.map((anime) => (
           <AnimeCard key={anime.id} anime={anime} />

@@ -23,6 +23,23 @@ const SEASON_LEAD_DAYS = 21;
 const SEASONS: MediaSeason[] = ["WINTER", "SPRING", "SUMMER", "FALL"];
 
 /**
+ * 列表类查询共用的字段（本季、搜索、按 id 批量取都用这一份）。
+ * 抽出来是为了防止三处字段慢慢长歪——尤其 `title` 里少了哪个名字，
+ * 展示层的兜底顺序就会出偏差。
+ */
+const ANIME_LIST_FIELDS = `
+  id
+  title { native english romaji }
+  coverImage { extraLarge large color }
+  episodes
+  averageScore
+  status
+  format
+  startDate { year month day }
+  nextAiringEpisode { episode airingAt }
+`;
+
+/**
  * 查询某一季的番剧。
  * 注意：AniList 没有「星期几」字段，播出星期只能从 nextAiringEpisode.airingAt
  * 这个时间戳自己换算——这是本查询里最容易记错的一点。
@@ -37,15 +54,39 @@ const SEASON_ANIME_QUERY = `
         isAdult: false
         sort: POPULARITY_DESC
       ) {
-        id
-        title { native english romaji }
-        coverImage { extraLarge large color }
-        episodes
-        averageScore
-        status
-        format
-        startDate { year month day }
-        nextAiringEpisode { episode airingAt }
+        ${ANIME_LIST_FIELDS}
+      }
+    }
+  }
+`;
+
+/**
+ * 按关键词搜索。
+ * `sort: SEARCH_MATCH` 是按相关度排（不是按人气），搜索场景必须用这个。
+ * ⚠️ 返回里的 `pageInfo.total` **不可信**——实测热门关键词一律返回 5000 封顶，
+ * 所以本项目的搜索不做分页，只用固定条数。
+ */
+const SEARCH_ANIME_QUERY = `
+  query SearchAnime($keyword: String!, $perPage: Int!) {
+    Page(page: 1, perPage: $perPage) {
+      media(search: $keyword, type: ANIME, isAdult: false, sort: SEARCH_MATCH) {
+        ${ANIME_LIST_FIELDS}
+      }
+    }
+  }
+`;
+
+/**
+ * 按 id 批量取。
+ * 用途：本地中文对照表里只有 id 和中文名，没有封面、年份，靠这个回头补齐。
+ * ⚠️ 返回顺序**不按请求顺序**（实测请求 [195516,195539,195604] 返回 [195516,195539,195604] 之外的
+ * 升序排列），调用方必须自己重排。
+ */
+const ANIME_BY_IDS_QUERY = `
+  query AnimeByIds($ids: [Int]) {
+    Page(page: 1, perPage: 50) {
+      media(id_in: $ids, type: ANIME) {
+        ${ANIME_LIST_FIELDS}
       }
     }
   }
@@ -179,15 +220,81 @@ export async function fetchSeasonAnime(perPage = 20): Promise<SeasonAnimeResult>
     throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
   }
 
-  const media = json.data?.Page?.media ?? [];
-
-  // AniList 不返回中文名，这里先按它自己的习惯填空成 null，保证类型与运行时的数据一致。
-  // 真正的值由 lib/bangumi-index.ts 的 attachChineseTitles() 按 id 补上。
   return {
     season,
     seasonYear,
-    anime: media.map((item) => ({ ...item, title: { ...item.title, zh: null } })),
+    anime: withEmptyZh(json.data?.Page?.media ?? []),
   };
+}
+
+/**
+ * AniList 不返回中文名，统一先把 `title.zh` 填空成 null，
+ * 保证类型声明与运行时数据一致。真正的值由 lib/bangumi-index.ts 的
+ * getTitleZh() / attachChineseTitles() 按 id 补上。
+ */
+function withEmptyZh(items: Anime[]): Anime[] {
+  return items.map((item) => ({ ...item, title: { ...item.title, zh: null } }));
+}
+
+/**
+ * 按关键词搜番剧。
+ * @param keyword 关键词，中文 / 日文原名 / 英文名 / 罗马音都可以（中文走不通，见 lib/search.ts）
+ * @param perPage 取多少条
+ */
+export async function searchAnimeByKeyword(keyword: string, perPage: number): Promise<Anime[]> {
+  const response = await fetch(ANILIST_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      query: SEARCH_ANIME_QUERY,
+      variables: { keyword, perPage },
+    }),
+    cache: "force-cache",
+    next: { revalidate: CACHE_SECONDS },
+  });
+
+  if (!response.ok) {
+    throw new Error(`AniList 搜索失败：HTTP ${response.status}`);
+  }
+
+  const json = (await response.json()) as AniListResponse;
+
+  if (json.errors?.length) {
+    throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
+  }
+
+  return withEmptyZh(json.data?.Page?.media ?? []);
+}
+
+/**
+ * 按 id 批量取番剧，用于给本地中文对照表命中的条目补齐封面、年份。
+ *
+ * ⚠️ 返回顺序不保证跟传入的 ids 一致，调用方要自己按需要的顺序重排。
+ */
+export async function fetchAnimeByIds(ids: number[]): Promise<Anime[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const response = await fetch(ANILIST_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ query: ANIME_BY_IDS_QUERY, variables: { ids } }),
+    cache: "force-cache",
+    next: { revalidate: CACHE_SECONDS },
+  });
+
+  if (!response.ok) {
+    throw new Error(`AniList 按 id 取数失败：HTTP ${response.status}`);
+  }
+
+  const json = (await response.json()) as AniListResponse;
+
+  if (json.errors?.length) {
+    throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
+  }
+
+  return withEmptyZh(json.data?.Page?.media ?? []);
 }
 
 /**

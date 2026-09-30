@@ -107,6 +107,15 @@ export function getStatusLabel(status: MediaStatus): string {
 }
 
 /**
+ * 首播年份，搜索结果卡片上用。
+ * 搜索是跨年份的，同一部番的第 1 期和第 2 期名字很像，靠年份区分。
+ * 没有年份时给「待定」，照旧不留空。
+ */
+export function getYearLabel(anime: Anime): string {
+  return anime.startDate?.year ? `${anime.startDate.year} 年` : "年份待定";
+}
+
+/**
  * 集数与评分的附加信息。
  * 未开播的作品这两项常为空——只拼出存在的那部分；
  * 两个都没有时返回空字符串，调用方据此整行不渲染（而不是渲染一个空行）。
