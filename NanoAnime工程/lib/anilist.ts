@@ -36,6 +36,7 @@ const SEASON_ANIME_QUERY = `
         averageScore
         status
         format
+        startDate { year month day }
         nextAiringEpisode { episode airingAt }
       }
     }
@@ -108,5 +109,13 @@ export async function fetchSeasonAnime(perPage = 20): Promise<SeasonAnimeResult>
     throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
   }
 
-  return { season, seasonYear, anime: json.data?.Page?.media ?? [] };
+  const media = json.data?.Page?.media ?? [];
+
+  // AniList 不返回中文名，这里先按它自己的习惯填空成 null，保证类型与运行时的数据一致。
+  // 真正的值由 lib/bangumi-index.ts 的 attachChineseTitles() 按 id 补上。
+  return {
+    season,
+    seasonYear,
+    anime: media.map((item) => ({ ...item, title: { ...item.title, zh: null } })),
+  };
 }

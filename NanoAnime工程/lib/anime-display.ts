@@ -22,14 +22,37 @@ export function getSeasonLabel(season: MediaSeason): string {
   return SEASON_LABELS[season];
 }
 
-/** 卡片主标题：优先日文原名，依次退到罗马音、英文名 */
+/**
+ * 卡片主标题：优先中文名，没有中文名就退回 M0 的老规矩——
+ * 日文原名 → 罗马音 → 英文名 → "未知作品"。
+ *
+ * 中文名由 Bangumi 补齐（见 lib/bangumi-index.ts）。**没配对上时 title.zh 是 null**，
+ * 这里就自然退回日文原名，卡片不会空掉，也不会显示出错误的中文名。
+ */
 export function getPrimaryTitle(anime: Anime): string {
-  return anime.title.native ?? anime.title.romaji ?? anime.title.english ?? UNKNOWN_TITLE;
+  return (
+    anime.title.zh ??
+    anime.title.native ??
+    anime.title.romaji ??
+    anime.title.english ??
+    UNKNOWN_TITLE
+  );
 }
 
-/** 卡片副标题（英文名）。没有英文名时退回主标题，避免这一行空掉占位 */
+/**
+ * 卡片副标题。分两种情况：
+ * - 主标题是中文名时，副标题显示日文原名（两个名字一起看才有意义）
+ * - 主标题还是日文原名时（＝这部没配上中文名），保持 M0 的规矩：显示英文名
+ * 实在没有可显示的，就重复主标题，保证这一行永远不空。
+ */
 export function getSecondaryTitle(anime: Anime): string {
-  return anime.title.english ?? getPrimaryTitle(anime);
+  const primary = getPrimaryTitle(anime);
+
+  if (anime.title.zh && anime.title.native) {
+    return anime.title.native;
+  }
+
+  return anime.title.english ?? primary;
 }
 
 /**
