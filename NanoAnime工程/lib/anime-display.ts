@@ -3,8 +3,11 @@
 
 import type { Anime, AnimeDetail, DateParts, MediaFormat, MediaSeason, MediaStatus } from "@/types/anime";
 
-/** 一周七天。getDay() 的返回值正好就是下标（0 = 周日） */
-const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+/**
+ * 一周七天。下标正好是 `getUTCDay()` 的返回值（0 = 周日）。
+ * 日历页要按「周一到周日」排，用 `WEEKDAYS[(i + 1) % 7]` 换算即可（见 lib/calendar.ts）。
+ */
+export const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 
 /** 季度缩写翻译成中文 */
 const SEASON_LABELS: Record<MediaSeason, string> = {
@@ -253,7 +256,7 @@ const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
  * （10 月 2 日 01:00 JST 在 UTC 下会显示成 10 月 1 日）。这个产品面向国内用户，
  * 一律按北京时间显示。
  */
-function toBeijingTime(airingAt: number): Date {
+export function toBeijingTime(airingAt: number): Date {
   return new Date(airingAt * 1000 + BEIJING_OFFSET_MS);
 }
 
@@ -261,4 +264,25 @@ function toBeijingTime(airingAt: number): Date {
 function formatAiringAt(airingAt: number): string {
   const date = toBeijingTime(airingAt);
   return `${date.getUTCFullYear()}年${date.getUTCMonth() + 1}月${date.getUTCDate()}日`;
+}
+
+/** 补足两位，例：7 → "07" */
+function pad2(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+/**
+ * Unix 时间戳（秒）→ 北京时间的日期键，形如 `"2026-10-01"`。
+ * 日历页用它把排期分到每一天，也用它判断「是不是今天」。
+ * 为什么不用 `toISOString()` 直接切：那样得到的是 UTC 日期，深夜播出的番会差一天。
+ */
+export function getBeijingDateKey(airingAt: number): string {
+  const date = toBeijingTime(airingAt);
+  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}`;
+}
+
+/** Unix 时间戳（秒）→ 北京时间的时刻，形如 `"23:30"` */
+export function getBeijingClock(airingAt: number): string {
+  const date = toBeijingTime(airingAt);
+  return `${pad2(date.getUTCHours())}:${pad2(date.getUTCMinutes())}`;
 }

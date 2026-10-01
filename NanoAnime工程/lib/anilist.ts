@@ -9,6 +9,7 @@ import type {
   MediaSeason,
   SeasonAnimeResult,
   SeasonRef,
+  ScheduleEntry,
 } from "@/types/anime";
 
 const ANILIST_ENDPOINT = "https://graphql.anilist.co";
@@ -93,6 +94,37 @@ const ANIME_BY_IDS_QUERY = `
 `;
 
 /**
+ * 查一段时间里**全站**的播出排期——日历页用。
+ *
+ * ⚠️ 注意这里用的是 `Page.airingSchedules`（复数），和详情页的
+ * `Media.airingSchedule`（单数）**是两个完全不同的字段**：
+ * 单数是「某一部番自己的排期」，复数是「全站所有番的排期」，日历要的是后者。
+ *
+ * 三处实测出来的坑（都会让代码"看起来对但结果是错的"）：
+ * 1. `pageInfo.total` 又是 5000 封顶，**不能用它判断翻页**
+ * 2. 连 `hasNextPage` 都不能信——实测第 4 页开始就没有数据了，它一直说"还有下一页"，
+ *    直到第 12 页才变 false。唯一的停止条件是「某一页返回 0 条」
+ * 3. 返回的条目**不是按时间排序的**，必须自己重排（见 fetchWeekSchedule）
+ */
+const CALENDAR_WEEK_QUERY = `
+  query CalendarWeek($page: Int!, $from: Int!, $to: Int!) {
+    Page(page: $page, perPage: 50) {
+      airingSchedules(airingAt_greater: $from, airingAt_lesser: $to) {
+        airingAt
+        episode
+        media {
+          ${ANIME_LIST_FIELDS}
+          isAdult
+        }
+      }
+    }
+  }
+`;
+
+/** 翻页硬上限。正常一周 3 页就取完了，这只是防呆，避免异常时死循环打爆接口 */
+const SCHEDULE_MAX_PAGES = 10;
+
+/**
  * 查一部番的详情。
  *
  * 几处刻意的选择：
@@ -157,6 +189,21 @@ interface AnimeDetailResponse {
 /** AniList 的返回外形。出错的字段叫 errors，成功的数据在 data.Page.media */
 interface AniListResponse {
   data?: { Page?: { media?: Anime[] } };
+  errors?: { message: string }[];
+}
+
+/** 日历查询的返回外形。数据在 data.Page.airingSchedules，不是 media */
+interface AniListScheduleResponse {
+  data?: {
+    Page?: {
+      airingSchedules?: {
+        airingAt: number;
+        episode: number;
+        /** 比 Anime 多一个 isAdult，用来剔掉限制级 */
+        media: Anime & { isAdult: boolean };
+      }[];
+    };
+  };
   errors?: { message: string }[];
 }
 
@@ -295,6 +342,66 @@ export async function fetchAnimeByIds(ids: number[]): Promise<Anime[]> {
   }
 
   return withEmptyZh(json.data?.Page?.media ?? []);
+}
+
+/**
+ * 取 [from, to) 这段时间里全站的播出排期，按播出时间升序返回。
+ *
+ * 翻页靠「某一页返回 0 条就停」——不能用 pageInfo.total（5000 封顶），
+ * 也不能用 hasNextPage（实测空页之后还在说 true）。详见 CALENDAR_WEEK_QUERY 的注释。
+ *
+ * @param from 起始时间，Unix 时间戳（秒），包含
+ * @param to   结束时间，Unix 时间戳（秒），不包含
+ */
+export async function fetchWeekSchedule(from: number, to: number): Promise<ScheduleEntry[]> {
+  const entries: ScheduleEntry[] = [];
+
+  for (let page = 1; page <= SCHEDULE_MAX_PAGES; page++) {
+    const response = await fetch(ANILIST_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        query: CALENDAR_WEEK_QUERY,
+        variables: { page, from, to },
+      }),
+      // 同首页：Next 16 的 fetch 默认不缓存，要显式开启（见 fetchSeasonAnime 的注释）
+      cache: "force-cache",
+      next: { revalidate: CACHE_SECONDS },
+    });
+
+    if (!response.ok) {
+      throw new Error(`AniList 排期请求失败：HTTP ${response.status}`);
+    }
+
+    const json = (await response.json()) as AniListScheduleResponse;
+
+    if (json.errors?.length) {
+      throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
+    }
+
+    const nodes = json.data?.Page?.airingSchedules ?? [];
+
+    // 空页 = 取完了。这是唯一的停止条件（原因见上面的注释）
+    if (nodes.length === 0) {
+      break;
+    }
+
+    for (const node of nodes) {
+      // isAdult 只用来过滤，不属于 Anime，拆出来别混进返回值
+      const { isAdult, ...anime } = node.media;
+      if (isAdult) {
+        continue;
+      }
+      entries.push({
+        anime: { ...anime, title: { ...anime.title, zh: null } },
+        episode: node.episode,
+        airingAt: node.airingAt,
+      });
+    }
+  }
+
+  // AniList 返回的顺序是乱的（实测），必须自己按时间排，否则每天列里顺序随机
+  return entries.sort((a, b) => a.airingAt - b.airingAt);
 }
 
 /**

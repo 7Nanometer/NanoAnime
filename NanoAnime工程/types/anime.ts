@@ -128,3 +128,45 @@ export interface AnimeDetail extends Anime {
   /** 剧集列表，按集号升序。**只包含 AniList 真有数据的那几集**，缺的由展示层补「—」 */
   episodeList: Episode[];
 }
+
+/**
+ * 排期里的一条：某部番的某一集，在某个时刻播出。
+ * 日历页的一格就是一条这个。由 lib/anilist.ts 的 fetchWeekSchedule() 产出。
+ */
+export interface ScheduleEntry {
+  anime: Anime;
+  /** 第几集 */
+  episode: number;
+  /** 播出时间，Unix 时间戳（单位：秒） */
+  airingAt: number;
+}
+
+/** 日历里的一天 */
+export interface CalendarDay {
+  /** 北京时间的日期，形如 `"2026-10-01"`。同时也是把排期分到每一天用的键 */
+  dateKey: string;
+  /** 星期几，形如「周四」 */
+  weekdayLabel: string;
+  /** 月日，形如「10月1日」 */
+  dateLabel: string;
+  /** 是不是今天。**由服务端按北京时间判定**，客户端直接照用，不自己算 */
+  isToday: boolean;
+  /** 这天播出的全部剧集，按播出时间升序 */
+  entries: ScheduleEntry[];
+}
+
+/**
+ * 一周的日历。
+ * 放在 types/ 而不是 lib/calendar.ts，是因为客户端组件要用 `import type` 拿它——
+ * 那样不会把服务端模块（AniList 访问层、本地对照表）连带打进浏览器包里。
+ */
+export interface CalendarResult {
+  /** 周一，形如 `"2026-09-28"` */
+  weekStart: string;
+  /** 周日，形如 `"2026-10-04"` */
+  weekEnd: string;
+  /** 周一到周日共 7 天，顺序固定（中文日历习惯，周一在最前） */
+  days: CalendarDay[];
+  /** 这一周一共多少集 */
+  totalCount: number;
+}
