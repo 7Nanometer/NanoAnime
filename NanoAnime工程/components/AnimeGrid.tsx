@@ -46,7 +46,7 @@ export function AnimeGrid() {
         <h1 className="text-xl font-bold">
           {data.seasonYear} 年{getSeasonLabel(data.season)}新番 · 共 {data.anime.length} 部
         </h1>
-        {/* 两个页面的入口。没有它们 /calendar 和 /search 只能靠手敲网址到达 */}
+        {/* 几个页面的入口。没有它们其它页只能靠手敲网址到达 */}
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
           <Link
             href="/calendar"
@@ -59,6 +59,12 @@ export function AnimeGrid() {
             className="text-sm text-muted-foreground underline-offset-4 hover:underline"
           >
             搜索其他番剧 →
+          </Link>
+          <Link
+            href="/my"
+            className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+          >
+            我的追番 →
           </Link>
         </div>
       </div>

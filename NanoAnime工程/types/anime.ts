@@ -170,3 +170,37 @@ export interface CalendarResult {
   /** 这一周一共多少集 */
   totalCount: number;
 }
+
+/**
+ * 番剧 + 它的剧集排期。
+ * 用途：`/my` 追番列表要一次拿到多部番的剧集数据（打钩用）。
+ * 和 AnimeDetail 的区别：详情页要的是全量（简介、制作公司、类型…），
+ * 这里只要画打钩列表所需的最小集合。
+ */
+export interface AnimeWithSchedule extends Anime {
+  /** 剧集列表，按集号升序。**只包含 AniList 真有排期数据的那几集**，缺的由展示层补 */
+  episodeList: Episode[];
+}
+
+/**
+ * 一条本地追番记录。读写都在 lib/collection.ts 里，页面不许直接碰 localStorage。
+ *
+ * 字段刻意跟 `docs/产品方案.md` 里云端的 `collection` 表对齐——
+ * 那边存的就是 (anime_id, progress, added_at)，这边一一对应，
+ * 以后换 Supabase 时不用改造数据结构。
+ */
+export interface CollectionEntry {
+  /** AniList 的番剧 id */
+  animeId: number;
+  /** 看到第几集。0 = 一集都没看。「打第 N 集」就是把它设成 N */
+  progress: number;
+  /** 加入追番的时间（Unix 毫秒） */
+  addedAt: number;
+  /**
+   * 加入那一刻的番剧信息快照，**只用于显示，不是权威数据**。
+   * 存它是为了 `/my` 能秒出，而且 AniList 超时或断网时列表照样在——
+   * 否则「我追了哪些番」明明记在本地，却会看起来像丢了。
+   * 拉到新数据后会被盖掉。
+   */
+  anime: Anime;
+}

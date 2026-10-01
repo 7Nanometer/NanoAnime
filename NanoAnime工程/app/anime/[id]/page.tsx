@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { EpisodeList } from "@/components/EpisodeList";
+import { FollowButton } from "@/components/FollowButton";
 import { fetchAnimeDetail } from "@/lib/anilist";
 import {
   buildEpisodeRows,
@@ -123,6 +124,11 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
             评分 {getScoreLabel(detail.averageScore)} · {getFormatLabel(detail.format)} ·{" "}
             {getAiringStatus(detail)}
           </p>
+
+          {/* 追番按钮。它自己是个客户端组件，详情页仍然是服务端组件 */}
+          <div>
+            <FollowButton anime={detail} />
+          </div>
 
           <dl className="mt-1 grid gap-x-4 gap-y-1.5 text-sm sm:grid-cols-[auto_1fr]">
             {infoRows.map((row) => (

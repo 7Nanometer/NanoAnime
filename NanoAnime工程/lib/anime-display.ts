@@ -212,13 +212,15 @@ export interface EpisodeRow {
  * 例外：集数超过 EPISODE_LIST_LIMIT 的（ONE PIECE 500 集），只列有排期数据的那几集，
  * 并回传 `truncated: true`，由界面写明"只列出了有数据的部分"。
  */
-export function buildEpisodeRows(detail: AnimeDetail): EpisodeListResult {
-  const byNumber = new Map(detail.episodeList.map((episode) => [episode.number, episode]));
+export function buildEpisodeRows(
+  source: Pick<AnimeDetail, "episodes" | "episodeList">,
+): EpisodeListResult {
+  const byNumber = new Map(source.episodeList.map((episode) => [episode.number, episode]));
 
   // 集数上限取「总集数」与「排期里最大的集号」的较大者：
   // 未开播的番总集数常为 null，得靠排期推出来
-  const maxScheduled = detail.episodeList.reduce((max, item) => Math.max(max, item.number), 0);
-  const total = Math.max(detail.episodes ?? 0, maxScheduled);
+  const maxScheduled = source.episodeList.reduce((max, item) => Math.max(max, item.number), 0);
+  const total = Math.max(source.episodes ?? 0, maxScheduled);
 
   if (total === 0) {
     return { rows: [], truncated: false, total: 0 };

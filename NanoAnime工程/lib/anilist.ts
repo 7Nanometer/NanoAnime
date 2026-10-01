@@ -4,6 +4,7 @@
 import type {
   Anime,
   AnimeDetail,
+  AnimeWithSchedule,
   DateParts,
   Episode,
   MediaSeason,
@@ -88,6 +89,32 @@ const ANIME_BY_IDS_QUERY = `
     Page(page: 1, perPage: 50) {
       media(id_in: $ids, type: ANIME) {
         ${ANIME_LIST_FIELDS}
+      }
+    }
+  }
+`;
+
+/**
+ * 按 id 批量取番剧**并带上剧集排期**——`/my` 追番列表打钩用。
+ *
+ * 和上面那个 ANIME_BY_IDS_QUERY 的区别就是多了 `airingSchedule`：
+ * 打钩要知道「这部番有哪些集」，光有 `episodes`（总集数）不够——
+ * 实测 ONE PIECE 的 `episodes` 是 **null**，而 `nextAiringEpisode` 给的集号（1181）
+ * 和排期最大集号（1147）**对不上**。所以「最近更新到第几集」只能从排期里取，
+ * 它有真实日期，是可信的那个。
+ *
+ * 复用 `${ANIME_LIST_FIELDS}` 而不是另写一份字段列表——防止两处慢慢长歪
+ * （这是 M1-2 把它抽出来的原因）。
+ *
+ * **不取 `streamingEpisodes`**：打钩只要集号，不需要英文集标题，少取点数据。
+ * 另外 `airingSchedule` 单次上限被服务端压到 25 条，对长番正好是「最近 25 集」。
+ */
+const COLLECTION_ANIME_QUERY = `
+  query CollectionAnime($ids: [Int]) {
+    Page(page: 1, perPage: 50) {
+      media(id_in: $ids, type: ANIME) {
+        ${ANIME_LIST_FIELDS}
+        airingSchedule(perPage: 50) { nodes { episode airingAt } }
       }
     }
   }
@@ -189,6 +216,18 @@ interface AnimeDetailResponse {
 /** AniList 的返回外形。出错的字段叫 errors，成功的数据在 data.Page.media */
 interface AniListResponse {
   data?: { Page?: { media?: Anime[] } };
+  errors?: { message: string }[];
+}
+
+/** 带排期的批量查询返回外形。media 里比 Anime 多一个 airingSchedule */
+interface AniListWithScheduleResponse {
+  data?: {
+    Page?: {
+      media?: (Anime & {
+        airingSchedule: { nodes: { episode: number; airingAt: number }[] } | null;
+      })[];
+    };
+  };
   errors?: { message: string }[];
 }
 
@@ -342,6 +381,49 @@ export async function fetchAnimeByIds(ids: number[]): Promise<Anime[]> {
   }
 
   return withEmptyZh(json.data?.Page?.media ?? []);
+}
+
+/**
+ * 按 id 批量取番剧，**并带上剧集排期**——`/my` 追番列表用。
+ *
+ * 一次请求拿全部，不要在调用方循环单查（AniList 限流 30~90 次/分钟）。
+ *
+ * ⚠️ 和 `fetchAnimeByIds` 一样，返回顺序**不保证**跟传入的 ids 一致，
+ * 调用方要自己按需要的顺序重排。
+ */
+export async function fetchAnimeWithSchedule(ids: number[]): Promise<AnimeWithSchedule[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const response = await fetch(ANILIST_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ query: COLLECTION_ANIME_QUERY, variables: { ids } }),
+    // 同首页：Next 16 的 fetch 默认不缓存，要显式开启（见 fetchSeasonAnime 的注释）
+    cache: "force-cache",
+    next: { revalidate: CACHE_SECONDS },
+  });
+
+  if (!response.ok) {
+    throw new Error(`AniList 按 id 取数失败：HTTP ${response.status}`);
+  }
+
+  const json = (await response.json()) as AniListWithScheduleResponse;
+
+  if (json.errors?.length) {
+    throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
+  }
+
+  return (json.data?.Page?.media ?? []).map((media) => ({
+    ...media,
+    // AniList 不返回中文名，先填空（同 withEmptyZh 的做法），由调用方用 getTitleZh() 补
+    title: { ...media.title, zh: null },
+    // 这里不需要集标题（打钩只要集号），所以 title 一律 null——不编造
+    episodeList: (media.airingSchedule?.nodes ?? [])
+      .map((node) => ({ number: node.episode, airingAt: node.airingAt, title: null }))
+      .sort((a, b) => a.number - b.number),
+  }));
 }
 
 /**
