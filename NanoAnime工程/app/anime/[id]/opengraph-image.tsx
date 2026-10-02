@@ -75,6 +75,6 @@ export default async function Image({ params }: { params: Promise<{ id: string }
         </div>
       </div>
     ),
-    { ...OG_SIZE, fonts: await ogFonts() },
+    { ...OG_SIZE, fonts: ogFonts() },
   );
 }

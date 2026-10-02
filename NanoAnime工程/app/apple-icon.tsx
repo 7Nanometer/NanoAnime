@@ -30,6 +30,6 @@ export default async function AppleIcon() {
         番
       </div>
     ),
-    { ...size, fonts: await ogFonts() },
+    { ...size, fonts: ogFonts() },
   );
 }

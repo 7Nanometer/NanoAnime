@@ -31,6 +31,6 @@ export default async function Icon() {
         番
       </div>
     ),
-    { ...size, fonts: await ogFonts() },
+    { ...size, fonts: ogFonts() },
   );
 }

@@ -50,6 +50,6 @@ export default async function Image() {
       </div>
     ),
     // size 里的 width / height 直接复用给 ImageResponse，免得两处对不上
-    { ...OG_SIZE, fonts: await ogFonts() },
+    { ...OG_SIZE, fonts: ogFonts() },
   );
 }

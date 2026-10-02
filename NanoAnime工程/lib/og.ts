@@ -1,7 +1,6 @@
 // 生成分享图 / 图标时的公用东西。
 //
-// ⚠️ **这个文件只能被服务端引用**（它读了 `node:fs`）。目前只有 `app/` 下那几个
-// 图片路由用它，页面组件别碰。
+// 目前只有 `app/` 下那几个图片路由用它（分享图、favicon、主屏图标），页面组件用不上。
 //
 // ⚠️ 为什么要自带字体文件：`ImageResponse` 底层是 satori，中文字形它自己没有。
 // **不传字体时，它会在渲染那一刻联网去 Google Fonts 抓 Noto Sans SC**——
@@ -17,8 +16,7 @@
 // 否则 satori 会悄悄退回去联网抓 Google Fonts——国内抓不到，那个字就是空白，
 // 而且它不抛错，只是画不出来。
 
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { OG_FONT_BASE64 } from "@/lib/og-font-data";
 
 /** 站点名称。分享图上印的就是它 */
 export const BRAND = "NanoAnime番鉴";
@@ -41,21 +39,31 @@ export const OG_COLORS = {
 };
 
 /**
- * 载入中文字体子集。
+ * 中文字体子集的字节。
  *
- * 用 `process.cwd()` 拼路径是 Next 官方文档给的写法，构建时会被文件追踪带上，
- * 所以部署到 Vercel 也能读到。
+ * ⚠️ **是内联的 base64，不是从硬盘读的**，这是故意的：
+ * 之前用 `readFile(join(process.cwd(), "assets", ...))` 的写法在 Vercel 上**构建直接崩了**——
+ * Turbopack 处理含中文的路径时有 bug（报 `start byte index 10 is not a char boundary;
+ * it is inside '工'`，「NanoAnime工程」里的「工」被从字节中间切开），
+ * 而读硬盘上的文件正好把项目根目录的完整路径带进了构建产物的命名流程，一脚踩中。
+ * 内联之后代码里不再有"读硬盘"这回事，那条路径就不会进构建产物了。
+ * 详见 scripts/build-og-font.ts 顶部。
  */
-export async function loadOgFont(): Promise<Buffer> {
-  return readFile(join(process.cwd(), "assets", "NotoSansSC-subset.ttf"));
+function ogFontData(): ArrayBuffer {
+  const binary = atob(OG_FONT_BASE64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
 }
 
 /** `ImageResponse` 的 fonts 选项，各图片路由共用 */
-export async function ogFonts() {
+export function ogFonts() {
   return [
     {
       name: "NotoSansSC",
-      data: await loadOgFont(),
+      data: ogFontData(),
       style: "normal" as const,
       weight: 400 as const,
     },
