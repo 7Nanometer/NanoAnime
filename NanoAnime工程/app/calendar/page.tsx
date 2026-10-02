@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { CalendarBoard } from "@/components/CalendarBoard";
 
@@ -21,13 +20,7 @@ export const metadata: Metadata = {
 export default function CalendarPage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
-      <Link href="/" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
-        ← 返回本季新番
-      </Link>
-
-      <div className="mt-6">
-        <CalendarBoard />
-      </div>
+      <CalendarBoard />
     </main>
   );
 }

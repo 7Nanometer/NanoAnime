@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { EpisodeList } from "@/components/EpisodeList";
@@ -82,15 +81,8 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
-      <Link
-        href="/"
-        className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-      >
-        ← 返回本季新番
-      </Link>
-
       {/* 顶部：大封面 + 名字 + 评分 */}
-      <div className="mt-6 flex flex-col gap-6 sm:flex-row">
+      <div className="flex flex-col gap-6 sm:flex-row">
         <div
           className="relative aspect-[2/3] w-40 shrink-0 self-start overflow-hidden rounded-lg bg-muted sm:w-56"
           style={
