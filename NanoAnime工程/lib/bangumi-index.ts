@@ -23,6 +23,44 @@ export function getTitleZh(anilistId: number): string | null {
 }
 
 /**
+ * 判断一段文字是不是日文。
+ *
+ * 用假名判定：简体中文正文里基本不会出现平假名/片假名，而日文必然有。
+ * 实测印证过这条判据——本季新番 17 条简介**全部**命中假名（都是日文原文），
+ * 而老番（葬送的芙莉莲、进击的巨人、鬼灭之刃…）6 条全是 0 个假名（都是中文）。
+ */
+function hasKana(text: string): boolean {
+  return /[぀-ゟ゠-ヿ]/.test(text);
+}
+
+/** 简介 + 它的语言 */
+export interface BangumiSummary {
+  text: string;
+  /**
+   * true = 这条是**日文原文**。
+   *
+   * ⚠️ 为什么会有日文：Bangumi 的新条目刚建立时，简介里填的是官方日文原文，
+   * 要等志愿者后来翻译成中文。**本季 17 条全是日文**（老番才是中文）。
+   * 界面必须如实标注这一点，不能让用户以为中文简介加载错了。
+   */
+  isJapanese: boolean;
+}
+
+/**
+ * 按 AniList 的 id 取简介。没配对上、或 Bangumi 上没填简介的返回 null。
+ *
+ * 详情页的简介优先用这个，拿不到才退回 AniList 的英文简介。
+ * 注意旧版的 title-zh.json 里没有 summary 这个键，所以这里用 `?.` 兜着。
+ */
+export function getBangumiSummary(anilistId: number): BangumiSummary | null {
+  const text = INDEX[String(anilistId)]?.summary?.trim();
+  if (!text) {
+    return null;
+  }
+  return { text, isJapanese: hasKana(text) };
+}
+
+/**
  * 拿中文关键词在本地对照表里找，返回命中的 AniList id。
  *
  * 这是搜索功能**唯一**的中文入口：实测把本地 18 个中文名逐个喂给 AniList 的搜索接口，

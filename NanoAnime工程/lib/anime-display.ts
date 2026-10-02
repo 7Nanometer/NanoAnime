@@ -17,8 +17,12 @@ const SEASON_LABELS: Record<MediaSeason, string> = {
   FALL: "秋",
 };
 
-/** 连名字都没有时的最后兜底，保证卡片上永远不会出现空字符串 */
-const UNKNOWN_TITLE = "未知作品";
+/**
+ * 连名字都没有时的最后兜底，保证卡片上永远不会出现空字符串。
+ * 导出是给 lib/watch.ts 用的：它要判断「是不是连名字都没有」，
+ * 拿「未知作品」去搜索引擎搜等于瞎搜，那种情况就不该给搜索链接。
+ */
+export const UNKNOWN_TITLE = "未知作品";
 
 /** 字段缺失时统一显示的破折号。绝不返回 null / 空串，界面上不会出现空洞 */
 const DASH = "—";

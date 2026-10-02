@@ -75,8 +75,11 @@ async function main(): Promise<void> {
       // 三个名字都拿去比：有些番 Bangumi 直接用英文名登记
       const hit = matchSubject([item.title.native, item.title.romaji, item.title.english], year, candidates);
       if (hit) {
-        index[String(item.id)] = { bangumi_id: hit.id, title_zh: hit.name_cn };
-        line += `${hit.name_cn}   [bgm ${hit.id} / ${hit.date || "无日期"}]`;
+        // summary 一并落盘：详情页的简介优先用这个中文的，拿不到才退回 AniList 的英文。
+        // 空串统一写成 null，和项目里「缺数据就是 null」的习惯保持一致
+        const summary = hit.summary?.trim() || null;
+        index[String(item.id)] = { bangumi_id: hit.id, title_zh: hit.name_cn, summary };
+        line += `${hit.name_cn}   [bgm ${hit.id} / ${hit.date || "无日期"} / 简介 ${summary ? summary.length + " 字" : "无"}]`;
       } else {
         line += `— 未匹配（拿到 ${candidates.length} 条候选，没有标题和年份都对得上的）`;
       }

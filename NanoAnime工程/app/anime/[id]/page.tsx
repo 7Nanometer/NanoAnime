@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { EpisodeList } from "@/components/EpisodeList";
 import { FollowButton } from "@/components/FollowButton";
+import { WatchLinks } from "@/components/WatchLinks";
 import { fetchAnimeDetail } from "@/lib/anilist";
 import {
   buildEpisodeRows,
@@ -16,7 +17,7 @@ import {
   getStatusLabel,
   getStudioNames,
 } from "@/lib/anime-display";
-import { getTitleZh } from "@/lib/bangumi-index";
+import { getBangumiSummary, getTitleZh } from "@/lib/bangumi-index";
 import type { AnimeDetail } from "@/types/anime";
 
 /**
@@ -68,6 +69,9 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
   const secondary = getSecondaryTitle(detail);
   const cover = detail.coverImage.extraLarge;
   const episodes = buildEpisodeRows(detail);
+  // 简介也是 M1-0 那张离线表里带的（scripts/fetch-title-zh.ts 抓的 summary），
+  // 读本地文件，**不请求 Bangumi**。没配对上就是 null，退回 AniList 的英文简介
+  const summary = getBangumiSummary(detail.id);
 
   // 信息栏。**每一项都必须有值**，缺数据的显示「—」，不留空
   const infoRows: { label: string; value: string }[] = [
@@ -133,15 +137,35 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
         </div>
       </div>
 
-      {/* 简介：AniList 只提供英文。等 M3 接 TMDB 时再换中文 */}
+      {/* 简介：优先用 Bangumi 的（离线抓进 data/title-zh.json），拿不到才退回 AniList 英文 */}
       <section className="mt-10">
         <h2 className="mb-3 text-lg font-medium">简介</h2>
-        {detail.description ? (
-          <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
-            {detail.description}
-          </p>
+        {summary ? (
+          <>
+            {/* ⚠️ 如实标注语言：Bangumi 的新条目简介填的是官方日文原文，
+                要等志愿者翻译成中文。本季 17 条全是日文。不说清楚的话，
+                用户会以为中文简介加载出错了 */}
+            {summary.isJapanese ? (
+              <p className="mb-2 text-xs text-muted-foreground">
+                Bangumi 上目前只有日文简介，暂无中文。
+              </p>
+            ) : null}
+            <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+              {summary.text}
+            </p>
+          </>
+        ) : detail.description ? (
+          <>
+            {/* 同上，退而求其次也要说清楚 */}
+            <p className="mb-2 text-xs text-muted-foreground">
+              Bangumi 上没有这部作品的简介，下面是 AniList 的英文原文。
+            </p>
+            <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+              {detail.description}
+            </p>
+          </>
         ) : (
-          <p className="text-sm text-muted-foreground">AniList 上没有这部作品的简介。</p>
+          <p className="text-sm text-muted-foreground">这部作品暂时没有简介。</p>
         )}
       </section>
 
@@ -151,15 +175,10 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
         <EpisodeList list={episodes} />
       </section>
 
-      {/* 哪里能看——M3 才接真实数据。这里如实写明，不要放任何播放链接 */}
+      {/* 哪里能看。数据在 lib/watch.ts 里组装，红线都收在那个文件里——这里只显示，只跳转不播放 */}
       <section className="mt-10">
         <h2 className="mb-3 text-lg font-medium">哪里能看</h2>
-        <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-          <p>正版观看渠道正在接入中，M3 上线。</p>
-          <p className="mt-1 text-xs">
-            本站不提供在线播放，只做正版平台的跳转指引。
-          </p>
-        </div>
+        <WatchLinks detail={detail} />
       </section>
     </main>
   );

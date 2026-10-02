@@ -16,6 +16,11 @@ export interface BangumiSubject {
   name_cn: string | null;
   /** 放送开始日期，形如 "2023-09-29"；也可能只有 "2026" 或直接为 null */
   date: string | null;
+  /**
+   * 中文简介。**Bangumi 的简介是用户众筹写的，不是每部都有**，实测可能为 null 或空串。
+   * 用途：详情页的简介优先用它（中文），拿不到才退回 AniList 的英文简介。
+   */
+  summary: string | null;
 }
 
 /** 搜索接口的返回外形 */
@@ -33,6 +38,11 @@ export interface BangumiIndexEntry {
   bangumi_id: number;
   /** 中文名 */
   title_zh: string;
+  /**
+   * 中文简介。**Bangumi 上没填时是 null**（不写空串——和项目里「缺数据就是 null」的习惯一致）。
+   * 旧版的 title-zh.json 里没有这个键，所以读取时要按「可能没有」处理。
+   */
+  summary: string | null;
 }
 
 /** `data/title-zh.json` 的整体结构，键是 AniList 的 id（字符串形式，JSON 的键只能是字符串） */

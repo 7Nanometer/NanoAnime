@@ -112,6 +112,22 @@ export interface Episode {
 }
 
 /**
+ * AniList 上的一部作品的外链。
+ *
+ * ⚠️ **拿到不等于能展示**。实测这批链接里混着两种不能直接给用户点的东西：
+ * 「只有域名、没有具体页面」的空壳链接（占 39%，点进去是平台首页），
+ * 以及 YouTube 的播放地址（`watch?v=`，碰红线）。
+ * 展示前必须过 `lib/watch.ts` 的 `buildWatchLinks()`，那里有四道过滤。
+ */
+export interface ExternalLink {
+  url: string;
+  /** 平台名，例如 "Crunchyroll"，可直接当文案显示 */
+  site: string;
+  /** AniList 给的链接类型：STREAMING（观看）/ SOCIAL / INFO */
+  type: string;
+}
+
+/**
  * 番剧详情（详情页用）。
  * 继承 Anime，这样 lib/anime-display.ts 里现成的 getPrimaryTitle / getAiringStatus
  * 等函数能直接复用，不必为详情页再写一套。
@@ -127,6 +143,11 @@ export interface AnimeDetail extends Anime {
   genres: string[];
   /** 剧集列表，按集号升序。**只包含 AniList 真有数据的那几集**，缺的由展示层补「—」 */
   episodeList: Episode[];
+  /**
+   * 作品的外链，**原样存着，不代表每条都能展示**。
+   * 要显示「哪里能看」请走 `lib/watch.ts` 的 `buildWatchLinks()`，那里会筛掉空壳链接和播放地址。
+   */
+  externalLinks: ExternalLink[];
 }
 
 /**

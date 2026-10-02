@@ -7,6 +7,7 @@ import type {
   AnimeWithSchedule,
   DateParts,
   Episode,
+  ExternalLink,
   MediaSeason,
   SeasonAnimeResult,
   SeasonRef,
@@ -160,6 +161,10 @@ const SCHEDULE_MAX_PAGES = 10;
  * - `airingSchedule` 只请求一页：单次上限被服务端压到 25 条，翻页对长番意义也不大。
  * - `streamingEpisodes` **只取 title，绝不取 url / site**——那个字段里带着 Crunchyroll
  *   的播放地址，本项目不接任何播放链接（红线）。集标题只是文本，可以用。
+ * - `externalLinks` **可以取**，这是「哪里能看」的数据来源：里面装的是各平台的作品页
+ *   （如 `crunchyroll.com/series/xxx`、`netflix.com/title/xxx`），不是播放地址。
+ *   ⚠️ 但**取到不等于能展示**——实测这批链接里混着「只有域名没有具体页面」的空壳链接
+ *   和 YouTube 的 `watch?v=` 播放地址。展示前必须过 `lib/watch.ts` 的四道过滤。
  */
 const ANIME_DETAIL_QUERY = `
   query AnimeDetail($id: Int!) {
@@ -180,6 +185,7 @@ const ANIME_DETAIL_QUERY = `
       nextAiringEpisode { episode airingAt }
       airingSchedule(perPage: 50) { nodes { episode airingAt } }
       streamingEpisodes { title }
+      externalLinks { url site type }
     }
   }
 `;
@@ -208,6 +214,7 @@ interface AnimeDetailResponse {
       nextAiringEpisode: Anime["nextAiringEpisode"];
       airingSchedule: { nodes: { episode: number; airingAt: number }[] } | null;
       streamingEpisodes: { title: string | null }[] | null;
+      externalLinks: ExternalLink[] | null;
     };
   };
   errors?: { message: string }[];
@@ -543,6 +550,9 @@ export async function fetchAnimeDetail(id: number): Promise<AnimeDetail | null> 
       media.airingSchedule?.nodes ?? [],
       media.streamingEpisodes ?? [],
     ),
+    // 原样存着，**筛不筛是展示层的事**（见 lib/watch.ts）。这里不做任何取舍，
+    // 免得以后想放宽规则还得回头改查询
+    externalLinks: media.externalLinks ?? [],
   };
 }
 
