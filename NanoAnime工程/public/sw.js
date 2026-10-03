@@ -15,10 +15,12 @@
 //   2. **每个文件单独 try/catch** —— 任何一个抓不到（断网、超时、配额满），
 //      都不能让整个安装失败，否则用户连在线时都用不了。
 //   3. **只缓存状态码 200 的正常响应**。
-//   4. **改了缓存逻辑必须改下面的 CACHE_VERSION** —— 不改的话，
-//      老用户手里那份旧缓存永远不会被替换掉。
+//   4. **已经存进去的东西不再可信时，必须把下面的 CACHE_VERSION +1** ——
+//      否则老用户手里那份旧缓存永远不会被替换掉。
+//      （只是新增预缓存条目、或者改上面这些逻辑，**不用** +1：脚本一变浏览器就会
+//      装新版本，而那些旧条目本身没坏，白清一遍等于让用户重新下载几十个文件。）
 
-// 缓存版本号。改缓存策略 / 缓存内容时把它 +1，老缓存会在下次激活时被整个删掉。
+// 缓存版本号。改了它，所有 `nanoanime-` 开头的旧缓存在下次激活时会被整个删掉。
 const CACHE_VERSION = "v1";
 
 // 四个缓存桶。分开存是为了能各自单独更新和清理。
@@ -45,6 +47,18 @@ const PRECACHE_PAGES = ["/", "/calendar", "/my"];
 /** 顺带预存的小文件（主屏图标、应用清单） */
 const PRECACHE_ASSETS = ["/manifest.webmanifest", "/icon", "/apple-icon"];
 
+/**
+ * 顺带预取的两个接口。
+ *
+ * ⚠️ 为什么必须有这一段：**用户第一次打开页面时，接口请求发生在 service worker
+ * 接管之前**——那一次响应根本没人拦，自然也就没进缓存。实测过：这样首页断网打开
+ * 会停在「正在加载本季新番…」，页面壳在、数据没了。
+ *
+ * 这两个接口都不带参数，可以预先抓。`/api/anime/by-ids` 带用户的追番 id，抓不了；
+ * 但 `/my` 有 localStorage 快照兜底，本来就不依赖网络。
+ */
+const PRECACHE_APIS = ["/api/anime/season", "/api/calendar"];
+
 /** 封面图缓存上限（张）。超了就按「先存先删」清理最旧的，避免吃满浏览器配额。 */
 const IMAGE_CACHE_LIMIT = 120;
 
@@ -65,6 +79,7 @@ self.addEventListener("install", (event) => {
 async function precacheAppShell() {
   const pagesCache = await caches.open(PAGES_CACHE);
   const staticCache = await caches.open(STATIC_CACHE);
+  const apiCache = await caches.open(API_CACHE);
 
   // 图标、应用清单：抓不到就算了，不影响安装
   await Promise.allSettled(
@@ -72,6 +87,16 @@ async function precacheAppShell() {
       const response = await fetch(path, { cache: "no-cache" });
       if (isCacheable(response)) {
         await putSafely(staticCache, path, response);
+      }
+    }),
+  );
+
+  // 两个不带参数的接口，先把数据备好（见 PRECACHE_APIS 的说明）
+  await Promise.allSettled(
+    PRECACHE_APIS.map(async (path) => {
+      const response = await fetch(path);
+      if (isCacheable(response)) {
+        await putSafely(apiCache, path, response);
       }
     }),
   );
