@@ -21,7 +21,11 @@
 //      装新版本，而那些旧条目本身没坏，白清一遍等于让用户重新下载几十个文件。）
 
 // 缓存版本号。改了它，所有 `nanoanime-` 开头的旧缓存在下次激活时会被整个删掉。
-const CACHE_VERSION = "v1";
+//
+// v2（2026-10-03）：v1 把 /login 这种「每人不同」的页面也缓存了，会端出别人的登录状态。
+// 那条规则已经修了（见 isCacheable），但**已经存在用户设备上的那份坏缓存必须清掉**，
+// 所以这里 +1。这正是上面第 4 条规矩说的那种情况。
+const CACHE_VERSION = "v2";
 
 // 四个缓存桶。分开存是为了能各自单独更新和清理。
 const PAGES_CACHE = `nanoanime-pages-${CACHE_VERSION}`;
@@ -282,10 +286,17 @@ async function networkFirst(request, cacheName, timeoutMs) {
       return cached;
     }
 
-    // 页面从来没打开过、缓存里没有 —— 给一个说人话的兜底页，
-    // 而不是把浏览器自带的白屏报错页甩给用户。
     if (request.mode === "navigate") {
-      return offlineFallbackResponse();
+      // ⚠️ 没有缓存可退时，**别急着说「离线」**。
+      // 上面那个超时是为了「弱网时别干等」，但**超时 ≠ 断网** ——
+      // 服务器只是慢（比如 /login 要等 Supabase 回应，实测就超过了 4 秒）
+      // 也会触发超时。这时候老实等网络，比给用户扣一顶「当前离线」的帽子诚实。
+      try {
+        return await fetch(request);
+      } catch {
+        // 这次才是真的连不上
+        return offlineFallbackResponse();
+      }
     }
 
     // 接口没缓存：抛出去，让页面自己的错误处理去管
@@ -396,12 +407,43 @@ function fetchWithTimeout(request, timeoutMs) {
  * 这份响应能不能存？
  * 只存正常拿到的 200。301/302 跳转、304、206 分段、404/500 一律不存。
  * 跨域图片拿不到状态码（浏览器把它标成 opaque，状态码显示 0），只能信它。
+ *
+ * ─────────────────────────────────────────────────────────────
+ * ⚠️⚠️ **必须听服务器的话：说了「别存」就不许存**（2026-10-03 实测踩坑后补的）
+ *
+ * 光看状态码是不够的。Next 会在响应头里**明确告诉**哪些页面是「专属于某个人」的：
+ *
+ *   静态页面（首页那种人人一样的）    Cache-Control: s-maxage=31536000
+ *   动态页面（比如 /login，每人不同）  Cache-Control: private, no-cache, no-store
+ *
+ * 不看这个头，就会把「A 已登录」的那个页面缓存下来，然后端给**未登录状态**看 ——
+ * 实测就是这样：登录后刷新显示未登录、退出后反而还显示着邮箱，来回跳。
+ *
+ * 这**不只是显示错乱，还是数据泄露**：共用设备上，后一个人能看到前一个人的邮箱。
+ *
+ * 接口那边不受影响：本项目 `/api/*` 压根不设 Cache-Control（实测过），
+ * 所以离线缓存照常工作。
+ * ─────────────────────────────────────────────────────────────
  */
 function isCacheable(response) {
   if (response.type === "opaque") {
     return true;
   }
-  return response.status === 200;
+  if (response.status !== 200) {
+    return false;
+  }
+
+  const cacheControl = response.headers.get("Cache-Control") ?? "";
+  if (/no-store|private/i.test(cacheControl)) {
+    return false;
+  }
+
+  // 带 Set-Cookie 的响应也是「只给这一个人」的，不能进共享的缓存
+  if (response.headers.has("Set-Cookie")) {
+    return false;
+  }
+
+  return true;
 }
 
 /** 存缓存。存不进去就当没发生（配额满、响应类型不允许等），不能让页面因此挂掉。 */

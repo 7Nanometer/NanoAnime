@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# 模板要提交：里面只有变量名、没有值。少了它，别人不知道要配哪几个变量。
+# ⚠️ 根目录那份 .gitignore 也有同样的规则，两处都要写——深层规则优先，
+#    只在根目录开这个口子是不生效的（实测踩过）。
+!.env.example
 
 # vercel
 .vercel

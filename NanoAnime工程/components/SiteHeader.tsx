@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { AuthStatus } from "@/components/AuthStatus";
 import { cn } from "@/lib/utils";
 
 /**
@@ -82,6 +83,11 @@ export function SiteHeader() {
             })}
           </ul>
         </nav>
+
+        {/* 账号入口。和导航之间用一道竖线隔开，视觉上区分「这是页面」和「这是账号」 */}
+        <div className="border-l border-border pl-2">
+          <AuthStatus />
+        </div>
       </div>
     </header>
   );

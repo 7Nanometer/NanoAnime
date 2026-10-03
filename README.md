@@ -28,6 +28,7 @@
 | `/anime/[id]` 详情 | 封面、中文名、评分、集数、简介、剧集列表、「哪里能看」 |
 | `/calendar` 日历 | 周一到周日 7 列，每天更新哪些番、第几集；今天那列高亮 |
 | `/my` 我的追番 | 追番列表 + 逐集打钩，进度存浏览器本地，刷新不丢 |
+| `/login` 账号 | 邮箱 + 密码注册 / 登录 / 退出；登录后服务端可读到当前用户 |
 
 - 全站顶栏导航，手机窄屏不溢出
 - PWA：可添加到手机主屏（图标 + manifest）
@@ -38,7 +39,7 @@
 
 ### 规划中
 
-- 账号系统 + 云同步（Supabase）——换设备、清缓存进度不丢
+- **云同步**（Supabase）——把本地追番数据存进账号，换设备、清缓存不丢
 - 评分与短评
 - 开播提醒（Web Push）
 - 年度报告（「我 2026 年看了 87 部番」）
@@ -49,8 +50,10 @@
 - **Next.js 16**（App Router）+ **TypeScript**（`strict`，全项目无 `any`）
 - **Tailwind CSS v4** + **shadcn/ui**
 - **TanStack Query**
+- **Supabase**（Postgres + Auth）—— 账号系统；`@supabase/ssr` 走 cookie，服务端组件可直接读当前用户。
+  数据安全靠数据库的**行级安全策略（RLS）**，不是靠藏密钥——`anon key` 本来就公开
 - 部署：**Vercel**（不用任何 Vercel 专有服务，保持标准 Next.js Node 形态，便于整体迁移）
-- 规划中：**Supabase**（Postgres + Auth），用于账号与云同步
+- 离线：**手写 service worker**（`public/sw.js`，零依赖）
 
 ## 数据来源
 
@@ -83,9 +86,22 @@ npm run dev
 
 打开 http://localhost:3000 。
 
-- **不需要任何 API Key 或环境变量**：AniList 免密钥，Bangumi 只在一个一次性同步脚本里用到。
 - 需要 **Node.js ≥ 20.9**（Next.js 16 的要求）。
-- 大陆网络直连 AniList 接口与图床较慢（图床实测 3~16 秒），建议自备网络条件。
+- **AniList 免密钥**，Bangumi 只在一个一次性同步脚本里用到。
+- **账号功能需要两个环境变量**：复制 `.env.example` 成 `.env.local`，填入自己的 Supabase
+  Project URL 和 publishable key（两者都不是密钥，可以公开）。不配也能跑，
+  只是登录页会提示「环境变量没配」。
+
+> ⚠️ **大陆网络注意事项**：直连 AniList、Supabase 都偏慢甚至间歇性超时
+> （实测 Supabase 直连 5 次里 3 次超时，走代理 5 次全在 1 秒内）。
+> 浏览器会自动走系统代理，但 **Node 进程不会**——本地开发时如果登录页转很久，
+> 用这条命令启动开发服务器即可：
+>
+> ```bash
+> HTTPS_PROXY=http://127.0.0.1:7897 NODE_USE_ENV_PROXY=1 npm run dev
+> ```
+>
+> （端口改成你自己代理的那个。这条只在本地开发需要；Vercel 上的服务器在海外，直连很快。）
 
 ## 项目文档
 
@@ -101,9 +117,11 @@ npm run dev
 NanoAnime工程/
   app/          页面与路由；app/api/ 是服务端接口（前端不直连第三方 API）
   components/   UI 组件
-  lib/          anilist.ts / bangumi.ts / watch.ts —— 第三方数据访问都在这里
+  lib/          anilist.ts / bangumi.ts / watch.ts / supabase/ —— 第三方数据访问都在这里
   data/         离线数据（中文名与简介），运行时直接读文件
+  proxy.ts      会话续期（Next 16 里 middleware 改名叫 proxy，叫旧名字不会被调用）
   public/       sw.js —— 离线缓存的 service worker（不经过打包器的原生 JS）
+  supabase/     数据库表结构的唯一出处（建表 + 行级安全策略）
   scripts/      一次性同步脚本
   assets/       字体子集及授权文件
 docs/           产品方案 / 项目宪法 / 提示词手册 / 进度
