@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Geist } from "next/font/google";
+import { OfflineBanner } from "@/components/OfflineBanner";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { cn } from "@/lib/utils";
@@ -52,6 +54,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="zh-CN" className={cn("font-sans", geist.variable)}>
       <body className="flex min-h-screen flex-col">
+        {/* 断网提示条。放在最顶上——它要压过顶栏，让用户第一眼就看到 */}
+        <OfflineBanner />
         {/* 全站顶栏。挂在 Providers 外面——它不依赖 TanStack Query，层次更清楚 */}
         <SiteHeader />
         {/* flex-1 让内容区把剩下的高度撑满，页脚才会被顶到底部，而不是浮在半空 */}
@@ -59,6 +63,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="flex-1">{children}</div>
         </Providers>
         <SiteFooter />
+        {/* 离线缓存的开机开关，不显示任何东西 */}
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

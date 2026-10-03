@@ -1,6 +1,32 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  /**
+   * 给 service worker 文件单独设响应头。
+   *
+   * 为什么必须设：浏览器会把 service worker 文件本身也缓存起来。如果沿用
+   * `public/` 目录的默认头（`public, max-age=0`，见 Next 官方 public-folder 文档），
+   * 还算是安全的；但这里明确写成「不许缓存」，两道保险——
+   * 否则以后改了 `public/sw.js`，用户可能几个月都拿不到新版，一直用着旧缓存逻辑。
+   *
+   * ⚠️ 官方 PWA 指南的示例里还有一条 `Content-Security-Policy: default-src 'self'`，
+   * **这里故意不加**：那条策略会把 service worker 自己去抓 AniList 封面图（跨域）
+   * 给拦掉，封面缓存直接失效。我们要缓存封面，所以不能加。
+   *
+   * 注意 `headers()` 对 `public/` 下的文件是生效的——官方 headers 文档原话是
+   * "Headers are checked before the filesystem which includes pages and /public files."
+   */
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+        ],
+      },
+    ];
+  },
   images: {
     // 开发环境关掉 Next 的图片优化：它的上游抓取有 7 秒硬超时且无法配置，
     // 而 AniList 图床国内直连实测要 3~16 秒，走优化器会有一半图被掐断返回 500。
