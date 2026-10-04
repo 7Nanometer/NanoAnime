@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 import { readSupabaseEnv } from "@/lib/supabase/env";
+import { timedFetch, withSupabaseTimeout } from "@/lib/supabase/timeout";
 
 /**
  * 会话续期。它是「用户不会莫名其妙被登出」的唯一保障。
@@ -41,34 +42,45 @@ export async function proxy(request: NextRequest) {
   // 先造一个「原样返回」的响应，待会儿把新 cookie 挂到它身上
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(env.url, env.anonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
+  // ⚠️ 这一段必须**整体套在超时里**，不能只给 fetch 挂 signal。
+  // 原因见 lib/supabase/timeout.ts：Supabase 连不上时，库内部会拿指数退避
+  // 一直重试到约 30 秒，而且它的重试判断不看 signal —— 光挂 signal 掐不掉。
+  // 后果有多严重：这个 proxy 跑在**每一个**页面上，不封顶就等于「Supabase 一抽风，
+  // 已登录用户每翻一页白屏半分钟」。
+  await withSupabaseTimeout(async (signal) => {
+    const supabase = createServerClient(env.url, env.anonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          // 两边都要改：
+          // 1. 改 request —— 让**本次**请求的后续代码（页面组件）能读到新 cookie
+          // 2. 改 response —— 让**下次**请求（浏览器）带上新 cookie
+          // 只改一处的话，要么这次读不到，要么下次又拿旧的，都会出怪问题。
+          for (const { name, value } of cookiesToSet) {
+            request.cookies.set(name, value);
+          }
+          response = NextResponse.next({ request });
+          for (const { name, value, options } of cookiesToSet) {
+            response.cookies.set(name, value, options);
+          }
+        },
       },
-      setAll(cookiesToSet) {
-        // 两边都要改：
-        // 1. 改 request —— 让**本次**请求的后续代码（页面组件）能读到新 cookie
-        // 2. 改 response —— 让**下次**请求（浏览器）带上新 cookie
-        // 只改一处的话，要么这次读不到，要么下次又拿旧的，都会出怪问题。
-        for (const { name, value } of cookiesToSet) {
-          request.cookies.set(name, value);
-        }
-        response = NextResponse.next({ request });
-        for (const { name, value, options } of cookiesToSet) {
-          response.cookies.set(name, value, options);
-        }
-      },
-    },
+      global: { fetch: timedFetch(signal) },
+    });
+
+    // ⚠️ 这一句**不能删**，看起来它什么也没干，其实干了两件事：
+    // 1. 触发上面 setAll 的执行（续期就是在这里发生的）
+    // 2. 核验凭证真伪
+    // Supabase 官方文档专门标注：不要在它和 createServerClient 之间插任何代码，
+    // 否则可能出现「随机登出」「JSON 解析错误」这类极难查的问题。
+    return supabase.auth.getUser();
   });
 
-  // ⚠️ 这一句**不能删**，看起来它什么也没干，其实干了两件事：
-  // 1. 触发上面 setAll 的执行（续期就是在这里发生的）
-  // 2. 核验凭证真伪
-  // Supabase 官方文档专门标注：不要在它和 createServerClient 之间插任何代码，
-  // 否则可能出现「随机登出」「JSON 解析错误」这类极难查的问题。
-  await supabase.auth.getUser();
-
+  // 超时/失败时走这里：放行，不续期，也**不碰任何 cookie**。
+  // 实测确认这样最安全 —— 用户的登录凭证原封不动，下一个请求照常重试，
+  // 表现为「这次显示未登录，刷新即恢复」，而不是「被登出」。
   return response;
 }
 

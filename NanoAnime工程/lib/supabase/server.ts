@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 import { MISSING_ENV_HINT, readSupabaseEnv } from "@/lib/supabase/env";
+import { timedFetch, withSupabaseTimeout } from "@/lib/supabase/timeout";
 
 /**
  * 服务端用的 Supabase 客户端 —— 「服务端能读到当前用户」就是靠它。
@@ -22,7 +23,7 @@ import { MISSING_ENV_HINT, readSupabaseEnv } from "@/lib/supabase/env";
  * （Next 16 里「middleware」已经改名叫 proxy，见工程根目录的 proxy.ts）
  * ─────────────────────────────────────────────────────────────
  */
-export async function createClient() {
+export async function createClient(signal?: AbortSignal) {
   const env = readSupabaseEnv();
 
   if (!env) {
@@ -49,6 +50,8 @@ export async function createClient() {
         }
       },
     },
+    // 传了 signal 才能被掐断。不传就是原来的行为（无限等）
+    ...(signal ? { global: { fetch: timedFetch(signal) } } : {}),
   });
 }
 
@@ -64,15 +67,18 @@ export async function createClient() {
  * 代价是每次多一次网络往返，所以只在真正需要「确认身份」的地方调用。
  */
 export async function getCurrentUser() {
-  try {
-    const supabase = await createClient();
+  // ⚠️ 这里也必须**整体**套超时，不能只给 proxy 加。
+  // 否则 proxy 3 秒放行了，页面自己这一句又干等 30 秒 —— 用户看到的还是白屏。
+  // 详见 lib/supabase/timeout.ts。
+  const user = await withSupabaseTimeout(async (signal) => {
+    const supabase = await createClient(signal);
     const {
       data: { user },
     } = await supabase.auth.getUser();
     return user;
-  } catch {
-    // 环境变量没配、Supabase 连不上等等 —— 一律当作「没登录」处理。
-    // 页面该显示未登录状态，而不是崩掉。
-    return null;
-  }
+  });
+
+  // 超时、环境变量没配、Supabase 连不上……一律当作「没登录」处理。
+  // 页面该显示未登录状态，而不是崩掉，更不该干等。
+  return user ?? null;
 }
