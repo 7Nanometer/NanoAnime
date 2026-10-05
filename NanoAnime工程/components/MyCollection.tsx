@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { EpisodeChecklist } from "@/components/EpisodeChecklist";
-import { useCollection, useStorageAvailable } from "@/components/useCollection";
+import { useCollection, useStorageAvailable, useSyncStatus } from "@/components/useCollection";
 import { buildEpisodeRows, getPrimaryTitle, getSecondaryTitle } from "@/lib/anime-display";
 import type { Anime, AnimeWithSchedule, CollectionEntry } from "@/types/anime";
 
@@ -134,6 +134,8 @@ function CollectionCard({
 export function MyCollection() {
   const { entries, isReady, remove, setProgress } = useCollection();
   const storageOk = useStorageAvailable();
+  // 云端同步的状态。只有"失败"才需要跟用户说一句，别的时候一声不响
+  const syncStatus = useSyncStatus();
 
   const ids = entries.map((entry) => entry.animeId);
 
@@ -195,6 +197,18 @@ export function MyCollection() {
         共 {entries.length} 部。点集数打钩，「已看」会跟着走；刷新、关掉浏览器再回来都不会丢。
       </p>
 
+      {/*
+        ⚠️ 云端同步失败时必须说话，而且要说对。
+        下面这些记录是**从本地读出来**的，一条都没少——合并只会变多不会变少，
+        而且拉取成功之前根本不写本地。所以这里不能让人以为"数据丢了"。
+      */}
+      {syncStatus === "error" ? (
+        <p className="rounded-md border border-border bg-muted px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+          云端同步失败，显示的是本地记录。你的追番一条都没少，改动会先存在本机；
+          联网后会自动重试。
+        </p>
+      ) : null}
+
       {error ? (
         <p className="text-xs text-muted-foreground">
           番剧信息暂时没能更新（可能是网络超时），下面显示的是加入追番时的记录。
@@ -210,7 +224,10 @@ export function MyCollection() {
             isLoading={isPending}
             onRemove={() => {
               // 取消追番会把观看进度一起清掉，先说清楚再动手
-              const name = getPrimaryTitle(entry.anime);
+              // ⚠️ 优先用 `fresh`（接口拉来的最新信息），本地快照只是兜底：
+              // 「换设备登录后拉下来的」那些记录，本地存的是**空占位快照**
+              // （云端表不存标题封面），只看 entry.anime 的话这里会弹出一个没有番名的确认框。
+              const name = getPrimaryTitle(fresh.get(entry.animeId) ?? entry.anime);
               if (window.confirm(`取消追番会一并清掉「${name}」的观看进度，确定吗？`)) {
                 remove(entry.animeId);
               }

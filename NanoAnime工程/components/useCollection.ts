@@ -5,10 +5,14 @@ import { useSyncExternalStore } from "react";
 import {
   addToCollection,
   COLLECTION_STORAGE_KEY,
+  getSyncStatus,
   isStorageAvailable,
   readCollection,
   removeFromCollection,
   setProgress,
+  startSyncEngine,
+  subscribeCollection,
+  type SyncStatus,
 } from "@/lib/collection";
 import type { Anime, CollectionEntry } from "@/types/anime";
 
@@ -95,6 +99,26 @@ if (typeof window !== "undefined") {
       emit();
     }
   });
+
+  // 启动云端同步。没登录 / 没配 Supabase 时它自己什么都不做，
+  // 所以未登录用户的行为和以前一模一样。
+  startSyncEngine();
+
+  // ─────────────────────────────────────────────────────────────
+  // ⚠️ 这一段是「云端拉下来的数据能显示出来」的关键，删不得。
+  //
+  // 云端拉取是在 lib/collection.ts 里**直接写 localStorage** 的，
+  // React 这边完全不知情：上面 getSnapshot 的快照是模块级缓存的，
+  // 而刷新它的路径原本只有两条——本标签页自己写入、或别的标签页改存储。
+  // 云端拉取两条都不沾，所以必须由 lib/collection.ts 主动广播一声。
+  //
+  // 收到广播就重读一次、换掉缓存引用、通知所有订阅者重渲染。
+  // ⚠️ 必须换**新对象引用**，直接改旧对象的话 React 看不见变化（这是上面注释里说的那个坑）。
+  // ─────────────────────────────────────────────────────────────
+  subscribeCollection(() => {
+    snapshot = { entries: readCollection(), isReady: true };
+    emit();
+  });
 }
 
 /** 写完统一走这里：换缓存 → 通知所有订阅者重渲染 */
@@ -132,4 +156,20 @@ export function useCollection(): {
 /** 本地存储能不能用。隐私模式下为 false，界面据此提示用户 */
 export function useStorageAvailable(): boolean {
   return useSyncExternalStore(subscribe, getStorageSnapshot, getServerStorageSnapshot);
+}
+
+/**
+ * 云端同步的状态。界面据此决定要不要显示「云端同步失败」那行字。
+ *
+ * 直接用 lib/collection.ts 里的值，不做本地缓存 —— 同步状态是个**字符串**，
+ * 每次返回的都是同一个原始值，不存在"引用一直变导致无限重渲染"的问题
+ * （那个坑只对对象和数组才存在）。
+ */
+export function useSyncStatus(): SyncStatus {
+  return useSyncExternalStore(subscribe, getSyncStatus, getServerSyncStatus);
+}
+
+function getServerSyncStatus(): SyncStatus {
+  // 服务端读不到登录状态，也就谈不上同步。先报「纯本地」，第一帧不会闪警告
+  return "local";
 }
