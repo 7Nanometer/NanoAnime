@@ -31,6 +31,29 @@ export default function AnimeDetailError({
 
   return (
     <main className="mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-24 text-center">
+      {/*
+        失败状态给一个明确的图形标记，而不是一行黑字。
+        深色界面上"一屏黑 + 几行灰字"和空白页几乎分不出，用户第一反应是"是不是我网断了"。
+        一个警示图标能立刻把"这是一次可恢复的错误"传达出去（图标是装饰，aria-hidden）。
+      */}
+      <span
+        aria-hidden
+        className="flex size-14 items-center justify-center rounded-2xl border border-destructive/25 bg-destructive/10"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          className="size-6 text-destructive"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.75}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+          <path d="M12 9v4M12 17h.01" />
+        </svg>
+      </span>
+
       <h1 className="text-xl font-semibold">这部作品没能打开</h1>
 
       <p className="text-sm leading-relaxed text-muted-foreground">
@@ -42,13 +65,13 @@ export default function AnimeDetailError({
         <button
           type="button"
           onClick={() => retry()}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          className="cursor-pointer rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all duration-150 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-[0.98]"
         >
           重试
         </button>
         <Link
           href="/"
-          className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
+          className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:bg-surface hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           返回本季新番
         </Link>
@@ -56,7 +79,7 @@ export default function AnimeDetailError({
 
       {/* 报错编号：报问题时把这串给出来，就能在服务端日志里定位到具体是哪个错 */}
       {error.digest ? (
-        <p className="mt-4 text-xs text-muted-foreground/60">错误编号 {error.digest}</p>
+        <p className="mt-4 text-xs text-muted-soft">错误编号 {error.digest}</p>
       ) : null}
     </main>
   );

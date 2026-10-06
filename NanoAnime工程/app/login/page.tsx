@@ -30,21 +30,42 @@ export default async function LoginPage() {
   const user = await getCurrentUser();
 
   return (
-    <main className="mx-auto max-w-md px-4 py-12">
-      <h1 className="text-2xl font-semibold">账号</h1>
+    <main className="mx-auto max-w-md px-4 py-12 sm:py-16">
+      <header className="mb-7 text-center">
+        {/* 品牌标记点，和顶栏那个同源——让"这是一张表单"和"这是站内"连起来 */}
+        <span
+          aria-hidden
+          className="mx-auto mb-4 flex size-11 items-center justify-center rounded-2xl bg-linear-to-br from-brand-strong to-primary shadow-[0_0_24px_var(--brand-soft)]"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="size-5 text-primary-foreground"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </span>
+        <h1 className="text-2xl font-bold tracking-tight">账号</h1>
+      </header>
 
       {user ? (
         // 这一行是「服务端确实读到了当前用户」的现场证据：
         // 这段 HTML 是服务器生成的，浏览器拿到的就是这串字。
-        <div className="mt-6 rounded-lg border border-border p-6">
-          <p className="text-lg font-medium break-all">已登录：{user.email}</p>
+        <div className="rounded-2xl border border-border bg-surface/60 p-6">
+          <p className="text-xs text-muted-foreground">已登录</p>
+          <p className="mt-1 text-base font-medium break-all">{user.email}</p>
 
           <div className="mt-6">
             <SignOutButton />
           </div>
         </div>
       ) : (
-        <div className="mt-6">
+        <div>
           <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
             登录后，追番记录就能跟着账号走，换手机、换浏览器都不会丢。
             <br />
@@ -54,7 +75,7 @@ export default async function LoginPage() {
         </div>
       )}
 
-      <p className="mt-8 text-xs leading-relaxed text-muted-foreground">
+      <p className="mt-8 border-t border-border pt-5 text-xs leading-relaxed text-muted-foreground">
         我们只保存邮箱和密码，不索取任何其他信息。密码由 Supabase 加密保管，
         本站看不到你的密码原文。
       </p>

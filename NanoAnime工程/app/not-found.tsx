@@ -18,6 +18,19 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <main className="mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-24 text-center">
+      {/*
+        404 用大号数字当图形元素。
+        加它的理由：这个页面上没有任何内容，如果只有两行字加两个按钮，
+        整页会显得像"加载失败"。一个淡化的大数字立刻让它变成"一个设计过的页面"。
+        aria-hidden ——数字是装饰，读屏软件念"四零四"只会添乱，下面那句标题已经说清楚了。
+      */}
+      <span
+        aria-hidden
+        className="text-7xl leading-none font-bold tracking-tighter text-transparent [-webkit-text-stroke:1.5px_var(--border-strong)]"
+      >
+        404
+      </span>
+
       <h1 className="text-xl font-semibold">没有这个页面</h1>
 
       <p className="text-sm leading-relaxed text-muted-foreground">
@@ -28,15 +41,21 @@ export default function NotFound() {
       <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
         <Link
           href="/"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all duration-150 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-[0.98]"
         >
           看本季新番
         </Link>
         <Link
           href="/calendar"
-          className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
+          className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:bg-surface hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           看本周日历
+        </Link>
+        <Link
+          href="/search"
+          className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:bg-surface hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          去搜索
         </Link>
       </div>
     </main>

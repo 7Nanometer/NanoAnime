@@ -1,9 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { AnimeCard } from "@/components/AnimeCard";
+import { AnimeGridSkeleton } from "@/components/AnimeGridSkeleton";
 import type { SearchResult } from "@/types/anime";
 
 /** 输入停下来多久才真正发请求。敲字过程中不发，避免每敲一个字母打一次接口 */
@@ -20,7 +22,9 @@ async function fetchSearch(keyword: string): Promise<SearchResult> {
 
 /** 各种提示语共用的样式 */
 function Hint({ children }: { children: React.ReactNode }) {
-  return <p className="py-16 text-center text-sm text-muted-foreground">{children}</p>;
+  return (
+    <p className="py-16 text-center text-sm leading-relaxed text-muted-foreground">{children}</p>
+  );
 }
 
 /**
@@ -55,7 +59,8 @@ export function AnimeSearch() {
   } else if (error) {
     body = <Hint>搜索失败，可能是网络超时。稍后再试。</Hint>;
   } else if (isPending || keyword.length === 0) {
-    body = <Hint>搜索中…</Hint>;
+    // 搜索中：用网格骨架，形状和结果一致，出结果时不会跳一下
+    body = <AnimeGridSkeleton count={10} />;
   } else if (data && data.anime.length === 0) {
     body = (
       <Hint>
@@ -65,11 +70,13 @@ export function AnimeSearch() {
   } else if (data) {
     body = (
       <>
-        <p className="text-sm text-muted-foreground">找到 {data.anime.length} 部</p>
+        <p className="text-sm text-muted-foreground">
+          找到 <span className="tabular-nums">{data.anime.length}</span> 部
+        </p>
         <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {data.anime.map((anime) => (
+          {data.anime.map((anime, index) => (
             // 搜索结果跨年份，所以显示年份而不是更新状态——续作靠它区分
-            <AnimeCard key={anime.id} anime={anime} showYear />
+            <AnimeCard key={anime.id} anime={anime} showYear priority={index < 5} />
           ))}
         </div>
         {data.truncated ? (
@@ -80,19 +87,34 @@ export function AnimeSearch() {
       </>
     );
   } else {
-    body = <Hint>搜索中…</Hint>;
+    body = <AnimeGridSkeleton count={10} />;
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <input
-        type="search"
-        value={input}
-        onChange={(event) => setInput(event.target.value)}
-        placeholder="例如：药屋、薬屋、Frieren"
-        aria-label="搜索番剧"
-        className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-      />
+      {/*
+        搜索框。
+        ⚠️ 三处不能省：
+        · 放大镜图标用 `pointer-events-none` + `absolute` 定位，它只是装饰，
+          绝不能挡住点击输入框的那一块；
+        · 输入框 `pl-10` 给图标让位，否则文字会压在图标上；
+        · focus 时描边换成品牌色而不是默认灰——深色界面里聚焦状态必须够明显，
+          否则键盘用户根本不知道焦点在哪。
+      */}
+      <div className="relative">
+        <Search
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+        />
+        <input
+          type="search"
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          placeholder="例如：药屋、薬屋、Frieren"
+          aria-label="搜索番剧"
+          className="w-full rounded-xl border border-border bg-surface px-4 py-3 pl-10 text-sm outline-none transition-colors duration-150 placeholder:text-muted-foreground/70 focus-visible:border-brand/60 focus-visible:bg-surface-elevated focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      </div>
       {body}
     </div>
   );

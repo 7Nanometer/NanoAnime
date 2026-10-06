@@ -87,7 +87,7 @@ export function AuthForm() {
   return (
     <div>
       {/* 两个标签页切换注册/登录。用按钮而不是链接——切换不换地址，只换表单 */}
-      <div className="mb-6 flex gap-1 rounded-lg bg-muted p-1">
+      <div className="mb-6 flex gap-1 rounded-xl border border-border bg-surface p-1">
         {(
           [
             { value: "signIn", label: "登录" },
@@ -103,9 +103,9 @@ export function AuthForm() {
             }}
             aria-pressed={mode === tab.value}
             className={
-              "flex-1 rounded-md px-3 py-1.5 text-sm transition-colors " +
+              "flex-1 cursor-pointer rounded-lg px-3 py-1.5 text-sm transition-all duration-150 " +
               (mode === tab.value
-                ? "bg-background font-medium text-foreground shadow-sm"
+                ? "bg-surface-elevated font-medium text-foreground shadow-sm ring-1 ring-border"
                 : "text-muted-foreground hover:text-foreground")
             }
           >
@@ -126,7 +126,7 @@ export function AuthForm() {
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="w-full rounded-lg border border-input bg-surface px-3.5 py-2.5 text-sm outline-none transition-colors duration-150 placeholder:text-muted-foreground/60 focus-visible:border-brand/60 focus-visible:bg-surface-elevated focus-visible:ring-2 focus-visible:ring-ring"
             placeholder="you@example.com"
           />
         </div>
@@ -143,14 +143,19 @@ export function AuthForm() {
             autoComplete={isSignUp ? "new-password" : "current-password"}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="w-full rounded-lg border border-input bg-surface px-3.5 py-2.5 text-sm outline-none transition-colors duration-150 placeholder:text-muted-foreground/60 focus-visible:border-brand/60 focus-visible:bg-surface-elevated focus-visible:ring-2 focus-visible:ring-ring"
             placeholder={isSignUp ? "至少 6 位" : ""}
           />
         </div>
 
         {errorText ? (
           // role="alert"：让读屏软件立刻念出来
-          <p role="alert" className="text-sm text-destructive">
+          // ⚠️ 错误信息带一个底色块，而不是原来的一行红字——深色底上孤立的一行红字
+          // 很容易被当成普通正文扫过去
+          <p
+            role="alert"
+            className="rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm leading-relaxed text-destructive"
+          >
             {errorText}
           </p>
         ) : null}
@@ -158,7 +163,7 @@ export function AuthForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="w-full cursor-pointer rounded-lg bg-primary px-3 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-150 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSubmitting ? "处理中…" : isSignUp ? "注册并登录" : "登录"}
         </button>

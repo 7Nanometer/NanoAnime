@@ -15,11 +15,13 @@ export const metadata: Metadata = {
  */
 export default function SearchPage() {
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-2xl font-semibold">搜索番剧</h1>
-      <p className="mt-1 mb-6 text-sm text-muted-foreground">
-        中文、日文原名、英文名都可以搜。点击结果进详情页。
-      </p>
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+      <header className="mb-6">
+        <h1 className="section-mark text-2xl font-bold tracking-tight">搜索番剧</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          中文、日文原名、英文名都可以搜。点击结果进详情页。
+        </p>
+      </header>
 
       <AnimeSearch />
     </main>

@@ -100,7 +100,7 @@ export function OfflineBanner() {
     <div
       // role="status" 让屏幕阅读器也能念出来，不只靠肉眼看
       role="status"
-      className="bg-muted px-4 py-2 text-center text-xs text-muted-foreground"
+      className="border-b border-warning/25 bg-warning/12 px-4 py-2 text-center text-xs text-warning"
     >
       当前处于离线状态，显示的是缓存内容，可能不是最新的
     </div>

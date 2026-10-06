@@ -41,7 +41,7 @@ export function SeriesTimeline({
 
   return (
     <div className="flex flex-col gap-2">
-      <ol className="divide-y divide-border rounded-lg border border-border">
+      <ol className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface/50">
         {visible.map((entry) => {
           const tag = getSeriesTag(entry.relationType);
           const isCurrent = entry.id === currentId;
@@ -54,16 +54,14 @@ export function SeriesTimeline({
               <span className="w-12 shrink-0 text-xs text-muted-foreground">
                 {getShortFormatLabel(entry.format)}
               </span>
-              <span className="min-w-0 flex-1 truncate">
-                {entry.titleNative ?? UNKNOWN_TITLE}
-              </span>
+              <span className="min-w-0 flex-1 truncate">{entry.titleNative ?? UNKNOWN_TITLE}</span>
               {tag ? (
-                <span className="shrink-0 rounded bg-muted px-1 py-0.5 text-[10px] leading-none text-muted-foreground">
+                <span className="shrink-0 rounded bg-surface-elevated px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground">
                   {tag}
                 </span>
               ) : null}
               {isCurrent ? (
-                <span className="shrink-0 rounded bg-primary px-1 py-0.5 text-[10px] leading-none text-primary-foreground">
+                <span className="shrink-0 rounded bg-primary px-1.5 py-0.5 text-[10px] leading-none font-medium text-primary-foreground">
                   当前
                 </span>
               ) : null}
@@ -73,12 +71,15 @@ export function SeriesTimeline({
           return (
             <li key={entry.id}>
               {isCurrent ? (
-                // 当前这一部不做成链接：点了等于刷新自己，没有意义
-                <div className="flex items-baseline gap-3 bg-muted px-3 py-2 text-sm">{row}</div>
+                // 当前这一部不做成链接：点了等于刷新自己，没有意义。
+                // 底色用品牌淡色而不是中性灰——"当前"是个状态，要一眼看到
+                <div className="flex items-baseline gap-3 bg-brand-tint px-3.5 py-2.5 text-sm">
+                  {row}
+                </div>
               ) : (
                 <Link
                   href={`/anime/${entry.id}`}
-                  className="flex items-baseline gap-3 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                  className="flex items-baseline gap-3 px-3.5 py-2.5 text-sm transition-colors duration-150 hover:bg-brand-tint focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   {row}
                 </Link>
@@ -93,7 +94,7 @@ export function SeriesTimeline({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="self-start rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="cursor-pointer self-start rounded-lg border border-border px-3.5 py-1.5 text-sm transition-colors duration-150 hover:border-border-strong hover:bg-surface focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           {/*
             ⚠️ 抓没抓全，按钮文案必须跟着变：

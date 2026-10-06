@@ -36,7 +36,7 @@ export function SignOutButton() {
       type="button"
       onClick={handleSignOut}
       disabled={isPending}
-      className="rounded-md border border-border px-4 py-2 text-sm transition-colors hover:bg-muted disabled:opacity-50"
+      className="cursor-pointer rounded-lg border border-border px-4 py-2 text-sm transition-colors duration-150 hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
     >
       {isPending ? "退出中…" : "退出登录"}
     </button>

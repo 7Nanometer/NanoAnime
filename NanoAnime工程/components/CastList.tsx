@@ -44,7 +44,7 @@ export function CastList({
     // 第 ② 种如果说成「还没有登记角色」就是在说假话——页面明明能列出角色。
     // 措辞刻意**不带数字**：那是从被截断的数据里数出来的（理由见上面 missingCount 的注释）
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
         {missingCount > 0
           ? "这部作品在 AniList 上暂时查不到日语声优资料。"
           : "暂无角色资料——AniList 上这部作品还没有登记角色。"}
@@ -56,13 +56,16 @@ export function CastList({
 
   return (
     <div className="flex flex-col gap-2">
-      <ol className="divide-y divide-border rounded-lg border border-border">
+      <ol className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface/50">
         {visible.map((member) => (
-          <li key={member.id} className="flex flex-col gap-0.5 px-3 py-2 text-sm">
+          <li
+            key={member.id}
+            className="flex flex-col gap-0.5 px-3.5 py-2.5 text-sm transition-colors duration-150 hover:bg-brand-tint"
+          >
             {/* 声优名点进人物页（和制作人员块同一个 /person/[id]） */}
             <Link
               href={`/person/${member.id}`}
-              className="break-words underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="w-fit break-words decoration-brand/50 underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               {member.nameNative ?? member.nameFull ?? UNKNOWN_TITLE}
             </Link>

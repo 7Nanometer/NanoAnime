@@ -76,7 +76,7 @@ export function EpisodeChecklist({
   return (
     <div className="flex flex-col gap-1.5">
       {truncated ? (
-        <p className="px-3 text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           共 {total} 集，这里只列出 AniList 有排期数据的 {rows.length} 集。
         </p>
       ) : null}
@@ -84,7 +84,7 @@ export function EpisodeChecklist({
       <div
         ref={containerRef}
         className={cn(
-          "relative rounded-lg border border-border",
+          "relative overflow-hidden rounded-lg border border-border bg-surface/60",
           // 行数少就不做滚动框，全列出来；多了才限高
           scrollable && "max-h-80 overflow-y-auto",
         )}
@@ -101,27 +101,61 @@ export function EpisodeChecklist({
                   type="button"
                   onClick={() => onSetProgress(next)}
                   aria-pressed={done}
-                  className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-sm transition-colors hover:bg-muted"
+                  className={cn(
+                    "flex w-full cursor-pointer items-center gap-2.5 px-3 py-1.5 text-left text-sm",
+                    "transition-colors duration-150 hover:bg-brand-tint",
+                    done && "bg-brand-tint/40",
+                  )}
                 >
+                  {/*
+                    勾选框。
+                    ⚠️ 未打钩时用 `border-border-strong` 而不是 `border-border`：
+                    边框是纯装饰，不受 3:1 对比度要求约束，但**能被看见**是一个可用性底线——
+                    在深色底上一条 9% 白色的细线几乎看不见，用户会以为这里不可点。
+                  */}
                   <span
                     className={cn(
-                      "flex size-4 shrink-0 items-center justify-center rounded border text-[10px] leading-none",
+                      "flex size-4 shrink-0 items-center justify-center rounded-[4px] border text-[10px] leading-none transition-colors duration-150",
                       done
                         ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border",
+                        : "border-border-strong bg-surface",
                     )}
                   >
-                    {done ? "✓" : ""}
+                    {done ? (
+                      // 勾用 SVG 不用「✓」字符：字符在各平台的基线和大小的表现不一致
+                      <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden
+                        className="size-3"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={3.5}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    ) : null}
                   </span>
 
                   <span
                     className={cn(
-                      "w-16 shrink-0 tabular-nums",
-                      done && "text-muted-foreground",
+                      "w-16 shrink-0 text-xs tabular-nums",
+                      done ? "text-muted-foreground" : "text-foreground",
                     )}
                   >
                     第 {row.number} 集
                   </span>
+
+                  {/*
+                    当前进度的那一集单独标出来（它点击的语义和别的行不一样：点它是"退回上一集"）。
+                    不标的话用户看不出自己在哪儿，只知道"前面都打了钩"。
+                  */}
+                  {row.number === progress ? (
+                    <span className="rounded bg-brand-soft px-1.5 py-0.5 text-[10px] leading-none font-medium text-brand-strong">
+                      看到这里
+                    </span>
+                  ) : null}
 
                   <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
                     {row.dateLabel}

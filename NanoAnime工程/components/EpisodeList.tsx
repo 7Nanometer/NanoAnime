@@ -9,7 +9,7 @@ import type { EpisodeListResult } from "@/lib/anime-display";
 export function EpisodeList({ list }: { list: EpisodeListResult }) {
   if (list.rows.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
         暂无剧集信息——AniList 上没有这部作品的排期数据。
       </p>
     );
@@ -23,13 +23,13 @@ export function EpisodeList({ list }: { list: EpisodeListResult }) {
         </p>
       ) : null}
 
-      <ol className="divide-y divide-border rounded-lg border border-border">
+      <ol className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface/50">
         {list.rows.map((row) => (
           <li
             key={row.number}
-            className="flex items-baseline gap-3 px-3 py-2 text-sm"
+            className="flex items-baseline gap-3 px-3.5 py-2.5 text-sm transition-colors duration-150 hover:bg-brand-tint"
           >
-            <span className="w-14 shrink-0 tabular-nums text-muted-foreground">
+            <span className="w-14 shrink-0 text-xs tabular-nums text-muted-foreground">
               第 {row.number} 集
             </span>
             {/* 大多数番没有集标题（AniList 只对上了 Crunchyroll 的番才有），留空即可 */}

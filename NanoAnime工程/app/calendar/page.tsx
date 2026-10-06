@@ -19,7 +19,7 @@ export const metadata: Metadata = {
  */
 export default function CalendarPage() {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:py-10">
       <CalendarBoard />
     </main>
   );

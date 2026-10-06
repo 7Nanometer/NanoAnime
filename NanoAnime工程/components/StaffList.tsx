@@ -18,7 +18,7 @@ import type { StaffMember } from "@/types/anime";
 export function StaffList({ staff }: { staff: StaffMember[] }) {
   if (staff.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
         暂无制作人员资料——AniList 上这部作品还没有登记 staff。
       </p>
     );
@@ -26,7 +26,7 @@ export function StaffList({ staff }: { staff: StaffMember[] }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <ol className="divide-y divide-border rounded-lg border border-border">
+      <ol className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface/50">
         {staff.map((member) => {
           // 职位：AniList 的原文可能带集数后缀（`Director (eps 1-479)`），
           // 由 formatRoles() 去掉括号再查中文表；没命中的原样显示英文，不硬翻。
@@ -34,14 +34,17 @@ export function StaffList({ staff }: { staff: StaffMember[] }) {
           const roles = formatRoles(member.roles);
 
           return (
-            <li key={member.id} className="flex flex-col gap-0.5 px-3 py-2 text-sm">
+            <li
+              key={member.id}
+              className="flex flex-col gap-0.5 px-3.5 py-2.5 text-sm transition-colors duration-150 hover:bg-brand-tint"
+            >
               {/*
                 名字取 native（日文写法），没有才退到罗马音。点进人物页。
                 `break-words` 不能省：职位串最长能到五六个词，窄屏不换行会撑破容器。
               */}
               <Link
                 href={`/person/${member.id}`}
-                className="break-words underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="w-fit break-words decoration-brand/50 underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 {member.nameNative ?? member.nameFull ?? UNKNOWN_TITLE}
               </Link>

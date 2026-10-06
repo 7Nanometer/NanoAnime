@@ -81,10 +81,18 @@ export default async function PersonPage(props: PageProps<"/person/[id]">) {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:py-10">
       {/* 头部：头像 + 名字 + 职业 + 信息行 + 简介（默认折叠） */}
       <div className="flex flex-col gap-6 sm:flex-row">
-        <div className="relative aspect-[2/3] w-32 shrink-0 self-start overflow-hidden rounded-lg bg-muted sm:w-40">
+        {/*
+          头像改成了**方形圆角**（原来是 2:3 的竖版），和详情页封面区分开。
+          ⚠️ 为什么不用圆形头像：AniList 的人物图大多是「演艺人公式照」的竖构图，
+          裁成圆形会把脸以外的部分全切掉，而且头像只占 2:3 画幅的一小块，看着很小。
+          方形圆角能在同样宽度下露出更多画面，视觉重量也更稳。
+        */}
+        <div
+          className="relative aspect-square w-32 shrink-0 self-start overflow-hidden rounded-xl bg-surface ring-1 ring-border sm:w-40"
+        >
           {person.imageLarge ? (
             <Image
               src={person.imageLarge}
@@ -97,26 +105,42 @@ export default async function PersonPage(props: PageProps<"/person/[id]">) {
           ) : (
             // 没有头像时不留裂图、不破版：灰底 + 名字首字（实测 20/20 有头像，
             // 但这是真会出现的状态，兜底不能省）
-            <span className="absolute inset-0 flex items-center justify-center text-2xl text-muted-foreground">
+            <span className="absolute inset-0 flex items-center justify-center text-3xl font-medium text-muted-foreground">
               {name.slice(0, 1)}
             </span>
           )}
         </div>
 
         <div className="flex min-w-0 flex-col gap-2">
-          <h1 className="text-2xl leading-tight font-semibold">{name}</h1>
+          <h1 className="text-2xl leading-tight font-bold tracking-tight">{name}</h1>
           {/* 副行是罗马音——要复制去搜人时用它（底部还有一行专门说明）。
               主副名字相同时不重复渲染 */}
           {person.nameFull && person.nameFull !== name ? (
-            <p className="text-sm text-muted-foreground">{person.nameFull}</p>
+            <p className="-mt-1 text-sm text-muted-foreground">{person.nameFull}</p>
           ) : null}
 
+          {/*
+            职业标签改成 chip 样式。
+            原来是一行用「/」连起来的纯文字，和下面的信息行视觉重量几乎一样，
+            分不出哪个是"这个人是谁"、哪个是"这个人的一些数字"。
+          */}
           {occupations.length > 0 ? (
-            <p className="text-sm text-muted-foreground">{occupations.join(" / ")}</p>
+            <ul className="flex flex-wrap gap-1.5">
+              {occupations.map((occupation) => (
+                <li
+                  key={occupation}
+                  className="rounded-md border border-brand/25 bg-brand-tint px-2 py-0.5 text-xs font-medium text-brand-strong"
+                >
+                  {occupation}
+                </li>
+              ))}
+            </ul>
           ) : null}
 
           {infoItems.length > 0 ? (
-            <p className="text-xs text-muted-foreground">{infoItems.join(" · ")}</p>
+            <p className="text-xs tabular-nums text-muted-foreground">
+              {infoItems.join(" · ")}
+            </p>
           ) : null}
 
           {/*
@@ -125,11 +149,26 @@ export default async function PersonPage(props: PageProps<"/person/[id]">) {
             `details` 原生折叠，不需要 JS——这块没有交互逻辑，不必做成客户端组件。
           */}
           {person.description ? (
-            <details className="mt-1 text-sm">
-              <summary className="cursor-pointer text-muted-foreground">
-                英文简介（来自 AniList）
+            <details className="group mt-1 rounded-lg border border-border bg-surface/60">
+              <summary className="cursor-pointer list-none px-3 py-2 text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground [&::-webkit-details-marker]:hidden">
+                <span className="inline-flex items-center gap-1.5">
+                  {/* 三角标用 SVG 并跟着 open 状态旋转——原生那个 marker 在各个浏览器长得都不一样 */}
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden
+                    className="size-3.5 transition-transform duration-200 group-open:rotate-90"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M9 6l6 6-6 6" />
+                  </svg>
+                  英文简介（来自 AniList）
+                </span>
               </summary>
-              <p className="mt-2 leading-relaxed whitespace-pre-line text-muted-foreground">
+              <p className="border-t border-border px-3 py-3 text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
                 {person.description}
               </p>
             </details>
@@ -146,8 +185,8 @@ export default async function PersonPage(props: PageProps<"/person/[id]">) {
         参与作品。标题**不写数字**（「共 N 部」是禁用语——总数的来路不可靠，见通用纪律）。
         列表本身是客户端组件：它管「加载更多」
       */}
-      <section className="mt-10">
-        <h2 className="mb-3 text-lg font-medium">参与作品</h2>
+      <section className="mt-12">
+        <h2 className="section-mark mb-4 text-lg font-semibold">参与作品</h2>
         <PersonWorks personId={person.id} initialWorks={works} initialDone={done} />
       </section>
     </main>

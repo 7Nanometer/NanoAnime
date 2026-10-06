@@ -70,7 +70,7 @@ export function AuthStatus() {
     <Link
       href="/login"
       title={email ?? "登录"}
-      className="flex max-w-[9rem] shrink-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      className="flex max-w-[9rem] shrink-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-surface hover:text-foreground"
     >
       <User aria-hidden className="size-4 shrink-0" />
       {/* 邮箱可能很长，用 truncate 截断，绝不能让它把顶栏撑破 */}

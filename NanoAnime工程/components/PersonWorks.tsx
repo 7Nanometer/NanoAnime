@@ -96,13 +96,15 @@ export function PersonWorks({
   // 两个来源都查不到作品。措辞**不带数字、不说「全部」**（见验收的通用纪律）
   if (works.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">AniList 上暂时查不到这个人参与的作品。</p>
+      <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+        AniList 上暂时查不到这个人参与的作品。
+      </p>
     );
   }
 
   return (
     <div className="flex flex-col gap-2">
-      <ol className="divide-y divide-border rounded-lg border border-border">
+      <ol className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface/50">
         {visible.map((work) => {
           const roles = formatRolesLimited(work.roles);
           const dubbing =
@@ -114,7 +116,7 @@ export function PersonWorks({
               {/* 整行都是链接：点进作品详情页（往返闭环） */}
               <Link
                 href={`/anime/${work.mediaId}`}
-                className="flex flex-col gap-0.5 px-3 py-2 text-sm transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="flex flex-col gap-0.5 px-3.5 py-2.5 text-sm transition-colors duration-150 hover:bg-brand-tint focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 <span className="flex items-baseline gap-3">
                   <span className="w-10 shrink-0 text-xs tabular-nums text-muted-foreground">
@@ -147,7 +149,7 @@ export function PersonWorks({
           type="button"
           onClick={loadMore}
           disabled={loading}
-          className="self-start rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60"
+          className="cursor-pointer self-start rounded-lg border border-border px-3.5 py-1.5 text-sm transition-colors duration-150 hover:border-border-strong hover:bg-surface focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "加载中…" : "加载更多"}
         </button>

@@ -15,12 +15,12 @@ export const metadata: Metadata = {
  */
 export default function MyPage() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="text-2xl font-semibold">我的追番</h1>
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:py-10">
+      <header className="mb-6">
+        <h1 className="section-mark text-2xl font-bold tracking-tight">我的追番</h1>
+      </header>
 
-      <div className="mt-6">
-        <MyCollection />
-      </div>
+      <MyCollection />
     </main>
   );
 }
