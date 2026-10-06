@@ -4,18 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 
+import { fetchCalendar } from "@/lib/calendar-client";
 import { getBeijingClock, getPrimaryTitle } from "@/lib/anime-display";
 import { cn } from "@/lib/utils";
-import type { CalendarDay, CalendarResult, ScheduleEntry } from "@/types/anime";
-
-/** 前端只请求自家接口，不直连 AniList（CLAUDE.md 第五条铁律） */
-async function fetchCalendar(): Promise<CalendarResult> {
-  const response = await fetch("/api/calendar");
-  if (!response.ok) {
-    throw new Error(`接口返回 HTTP ${response.status}`);
-  }
-  return (await response.json()) as CalendarResult;
-}
+import type { CalendarDay, ScheduleEntry } from "@/types/anime";
 
 /** 一条排期：小封面 + 名字 + 时间/集数，整条链到详情页 */
 function EntryRow({ entry }: { entry: ScheduleEntry }) {

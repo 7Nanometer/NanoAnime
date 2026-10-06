@@ -84,8 +84,10 @@ export function AnimeCard({
             src={cover}
             alt={title}
             fill
-            // 告诉浏览器不同屏幕下图片的实际显示宽度，避免下载过大的图
-            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+            // 告诉浏览器不同屏幕下图片的实际显示宽度，避免下载过大的图。
+            // ⚠️ 分档必须跟着网格的列数断点走（见 lib/anime-constants.ts 的 ANIME_GRID_CLASS）：
+            // 10-07 加 xl 七列档之后末尾从 20vw 收紧到 13vw，否则宽屏按 20vw 取图、封面发糊
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 13vw"
             priority={priority}
             // 鼠标移上去时封面轻微放大，提示这张卡片可以点
             className="object-cover transition-transform duration-500 ease-[var(--ease-out-soft)] group-hover:scale-105"

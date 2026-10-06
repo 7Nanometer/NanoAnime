@@ -1,14 +1,9 @@
 // 本季新番的服务端代理。
 // 前端只请求这个地址，绝不直连 AniList（CLAUDE.md 第五条铁律）。
 
+import { HERO_COUNT } from "@/lib/anime-constants";
 import { fetchSeasonAnime } from "@/lib/anilist";
 import { attachChineseTitles, getBangumiSummary } from "@/lib/bangumi-index";
-
-/**
- * 焦点位带简介的条数（首页 `HeroSpotlight` 取人气前几部轮播，两处要一致）。
- * ⚠️ 只给前几部补简介：95 部全带会把列表接口吹大好几倍，而其余卡片根本不显示简介。
- */
-const HERO_COUNT = 5;
 
 export async function GET() {
   try {
@@ -17,6 +12,8 @@ export async function GET() {
     // 中文名是本地文件里查的，不额外发请求
     const withTitles = attachChineseTitles(result);
 
+    // 只有焦点位会显示简介（口径见 lib/anime-constants.ts 的 HERO_COUNT）：
+    // 95 部全挂上会把列表接口吹大好几倍，而卡片根本不显示简介。
     const anime = withTitles.anime.map((item, index) => {
       if (index >= HERO_COUNT) {
         return item;

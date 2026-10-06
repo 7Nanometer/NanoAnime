@@ -14,4 +14,14 @@
  * 就成环了。
  */
 export const ANIME_GRID_CLASS =
-  "grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
+  "grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7";
+
+/**
+ * 首页焦点位轮播的条数（2026-10-07 三期改版从 5 提到 7）。
+ *
+ * ⚠️ **三处必须同源**：HeroSpotlight 取前 N 部轮播；`/api/anime/season` 只给前 N 部
+ * 补中文简介；AnimeGrid 的首页模式从第 N+1 部开始取（跳过焦点位那几部，
+ * 避免同一部在首页出现两次）。任何一处写歪都不会报错——症状是焦点位后几部
+ * 突然没有简介段、或首页同一部番出现两次，都属于"看起来对但其实错了"。
+ */
+export const HERO_COUNT = 7;

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { useSeasonAnime } from "@/components/useSeasonAnime";
+import { HERO_COUNT } from "@/lib/anime-constants";
 import {
   getFormatLabel,
   getGenreLabel,
@@ -14,13 +15,6 @@ import {
 } from "@/lib/anime-display";
 import { SITE_CONTAINER } from "@/lib/layout";
 import { cn } from "@/lib/utils";
-
-/**
- * 焦点位轮播的条数。
- * ⚠️ 必须和 `/api/anime/season` 里 `HERO_COUNT` 一致——那边只给前几部带中文简介，
- * 取多了后面的条目没有简介段。
- */
-const HERO_COUNT = 5;
 
 /** 自动轮播间隔。7 秒比参考站略慢：简介有三行，得给人读完的时间 */
 const AUTOPLAY_MS = 7000;
@@ -175,7 +169,7 @@ export function HeroSpotlight() {
             <p className="text-xs tabular-nums text-muted-foreground sm:text-sm">{metaLine}</p>
 
             {slide.summary ? (
-              // 简介来自本地里的中文简介（服务端只给前 5 部带上）。没有就整段不渲染，
+              // 简介来自本地里的中文简介（服务端只给前 HERO_COUNT 部带上）。没有就整段不渲染，
               // 不留"暂无简介"的占位——焦点位上的空洞比少一段话更难看
               <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
                 {slide.summary}
