@@ -1,3 +1,5 @@
+import { ANIME_GRID_CLASS } from "@/lib/anime-constants";
+
 /**
  * 封面墙的骨架屏。
  *
@@ -27,7 +29,7 @@ export function AnimeGridSkeleton({ count = 20 }: { count?: number }) {
       {/* 标题占位。宽度固定成一个典型标题的宽度，别占满整行——占满会显得很假 */}
       <div className="mb-6 h-7 w-64 animate-pulse rounded-md bg-surface" />
 
-      <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      <div className={ANIME_GRID_CLASS}>
         {Array.from({ length: count }, (_, index) => (
           <div key={index} className="flex flex-col gap-2.5">
             {/* 封面占位：2:3，和 AnimeCard 的封面容器同比例同圆角 */}

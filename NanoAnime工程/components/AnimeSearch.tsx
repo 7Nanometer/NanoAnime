@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { AnimeCard } from "@/components/AnimeCard";
 import { AnimeGridSkeleton } from "@/components/AnimeGridSkeleton";
+import { ANIME_GRID_CLASS } from "@/lib/anime-constants";
 import type { SearchResult } from "@/types/anime";
 
 /** 输入停下来多久才真正发请求。敲字过程中不发，避免每敲一个字母打一次接口 */
@@ -73,7 +74,7 @@ export function AnimeSearch() {
         <p className="text-sm text-muted-foreground">
           找到 <span className="tabular-nums">{data.anime.length}</span> 部
         </p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className={ANIME_GRID_CLASS}>
           {data.anime.map((anime, index) => (
             // 卡片固定带年份行（M7 起），搜索结果里的续作正好靠它区分
             <AnimeCard key={anime.id} anime={anime} priority={index < 5} />

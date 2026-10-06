@@ -2,6 +2,7 @@
 
 import { useSyncStatus } from "@/components/useCollection";
 import { declineSyncConsent, giveSyncConsent } from "@/lib/collection";
+import { SITE_CONTAINER } from "@/lib/layout";
 
 /**
  * 「开始同步前先说明白」的横幅 —— 只在**有一笔改动等着推上云端、而用户还没表过态**时出现
@@ -32,7 +33,7 @@ export function SyncConsentBanner() {
       // 透明度 10% + 左侧一道实色竖线，既醒目又不至于盖过底下的内容
       className="border-b border-border bg-brand-tint px-4 py-3"
     >
-      <div className="mx-auto flex max-w-7xl flex-col gap-2 border-l-2 border-brand pl-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className={`${SITE_CONTAINER} flex flex-col gap-2 border-l-2 border-brand pl-3 sm:flex-row sm:items-center sm:justify-between`}>
         <p className="text-xs leading-relaxed text-muted-foreground">
           开始同步前请先了解：同步后你的追番记录会<strong className="font-medium text-foreground">存到云端账号里</strong>
           ——换设备登录能拉回来，只有你自己能看到。选「暂不同步」的话，新的改动只存在本机

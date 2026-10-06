@@ -4,12 +4,17 @@ import { AnimeCard } from "@/components/AnimeCard";
 import { AnimeGridSkeleton } from "@/components/AnimeGridSkeleton";
 import { useSeasonAnime } from "@/components/useSeasonAnime";
 import { getSeasonLabel } from "@/lib/anime-display";
+import { ANIME_GRID_CLASS } from "@/lib/anime-constants";
 
 /**
  * 本季新番封面墙。数据走 useSeasonAnime（与首页焦点位共用同一份请求与缓存）。
  *
  * 加载态用骨架屏（见 AnimeGridSkeleton 的注释）——
  * 原来那行灰字会在数据到达时把页面高度从 28px 撑到 2000px，是实打实的布局偏移。
+ *
+ * ⚠️ 网格列数的 class 来自 `lib/anime-constants.ts` 的 ANIME_GRID_CLASS——
+ * 骨架屏、搜索页和 /updates 页共用同一个值，不许在任何一处另抄一份。
+ * 网格与骨架的列数只要差一档，数据到达的瞬间页面就会跳一下。
  */
 export function AnimeGrid() {
   const { data, isPending, error, refetch } = useSeasonAnime();
@@ -48,7 +53,7 @@ export function AnimeGrid() {
         </p>
       </header>
 
-      <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      <div className={ANIME_GRID_CLASS}>
         {data.anime.map((anime, index) => (
           <AnimeCard
             key={anime.id}
@@ -69,8 +74,10 @@ export function AnimeGrid() {
  * ⚠️ 比原来多了一个「重试」按钮。原来只写「加载失败：xxx」，用户唯一的出路是刷新整页。
  * 而这里失败的原因通常是海外数据源超时（国内访问 AniList 的老问题，详情页和追番周表
  * 早就都给了重试入口），重试的成功率其实很高——不给按钮等于让用户白等一次加载。
+ *
+ * 导出是给 `/updates` 页复用的——同一个数据源、同一种失败，不许复制第二份。
  */
-function ErrorHint({ onRetry }: { onRetry: () => void }) {
+export function ErrorHint({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center gap-4 py-20 text-center">
       <p className="text-sm leading-relaxed text-muted-foreground">
@@ -89,14 +96,21 @@ function ErrorHint({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-/** 这一季确实一部都没收录到。给出下一步去处，不留死路 */
-function EmptyHint() {
+/**
+ * 这一季确实一部都没收录到。给出下一步去处，不留死路。
+ *
+ * 导出是给 `/updates` 页复用的（同 ErrorHint）。`note` 用来替换第二行的去处建议——
+ * 默认那句指向「上面的周表」，只在首页成立；其它页面上要传自己那句。
+ */
+export function EmptyHint({
+  note = "可以先看看上面的「追番周表」，本周有哪些番在播。",
+}: {
+  note?: string;
+}) {
   return (
     <div className="flex flex-col items-center gap-3 py-20 text-center">
       <p className="text-sm text-muted-foreground">这一季还没有收录到作品。</p>
-      <p className="text-xs text-muted-foreground/80">
-        可以先看看上面的「追番周表」，本周有哪些番在播。
-      </p>
+      <p className="text-xs text-muted-foreground/80">{note}</p>
     </div>
   );
 }

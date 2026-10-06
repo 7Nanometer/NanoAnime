@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { AnimeSearch } from "@/components/AnimeSearch";
+import { SITE_CONTAINER } from "@/lib/layout";
 
 export const metadata: Metadata = {
   title: "搜索 · NanoAnime番鉴",
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
  */
 export default function SearchPage() {
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+    <main className={`${SITE_CONTAINER} py-8 sm:py-10`}>
       <header className="mb-6">
         <h1 className="section-mark text-2xl font-bold tracking-tight">搜索番剧</h1>
         <p className="mt-2 text-sm text-muted-foreground">

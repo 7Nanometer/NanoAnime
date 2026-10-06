@@ -46,7 +46,7 @@ export default function NotFound() {
           看本季新番
         </Link>
         <Link
-          href="/#calendar"
+          href="/calendar"
           className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:bg-surface hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           看本周更新

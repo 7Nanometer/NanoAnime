@@ -7,8 +7,8 @@
 //    代价：这里**不能用 import、不能用 npm 包、不能写 TypeScript**，
 //    只能用浏览器原生的东西（self / caches / fetch / Response）。
 //
-// 它干的活：让「首页 / 我的追番」在断网时也能打开。
-// （追番周表在 2026-10-06 M7 并进了首页，跟着首页一起离线可用；原 /calendar 页面已删。）
+// 它干的活：让「首页 / 我的追番 / 最近更新 / 周表」在断网时也能打开。
+// （2026-10-07 三期改版起：周表恢复成独立页 /calendar、新增 /updates，两者都进预缓存。）
 //
 // 四条铁律（改这个文件之前先读一遍）：
 //   1. **页面内跳转的请求绝不缓存** —— 它和「地址栏直接打开」共用同一个网址，
@@ -44,10 +44,12 @@ const CURRENT_CACHES = [PAGES_CACHE, STATIC_CACHE, API_CACHE, IMAGE_CACHE];
  * 所以 /my 的 HTML 如果只靠运行时缓存，得等用户手动在地址栏敲过一次 /my 才会有。
  * 预存这两个，保证「装好就能离线打开」。
  *
- * 只放用户点名的页面（首页含追番周表）。搜索页离线没有意义（搜索本身就要联网），
- * 详情页是动态生成的、每部番一份，没法预先挑。
+ * 清单：首页（焦点位 + 周表一行）、/my（追番记录在本机，离线照常可用）、
+ * /updates（最近更新）与 /calendar（完整周表）——后两个是 2026-10-07 三期改版
+ * 新增/恢复的页面，数据都走已预取的接口（见 PRECACHE_APIS）。
+ * 搜索页离线没有意义（搜索本身就要联网），详情页是动态生成的、每部番一份，没法预先挑。
  */
-const PRECACHE_PAGES = ["/", "/my"];
+const PRECACHE_PAGES = ["/", "/my", "/updates", "/calendar"];
 
 /** 顺带预存的小文件（主屏图标、应用清单） */
 const PRECACHE_ASSETS = ["/manifest.webmanifest", "/icon", "/apple-icon"];
@@ -492,7 +494,9 @@ function offlineFallbackResponse() {
 <p style="font-size:1.5rem;font-weight:700;margin:0 0 0.75rem;">当前处于离线状态</p>
 <p style="color:#a1a1aa;line-height:1.7;margin:0 0 1.5rem;">这个页面还没有缓存过，现在又没有网络，所以打不开。<br>下面这几个页面是可以离线打开的：</p>
 <p style="margin:0;display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
-<a href="/" style="color:#fafafa;border:1px solid #3f3f46;border-radius:0.5rem;padding:0.5rem 1rem;text-decoration:none;">首页（含追番周表）</a>
+<a href="/" style="color:#fafafa;border:1px solid #3f3f46;border-radius:0.5rem;padding:0.5rem 1rem;text-decoration:none;">首页</a>
+<a href="/updates" style="color:#fafafa;border:1px solid #3f3f46;border-radius:0.5rem;padding:0.5rem 1rem;text-decoration:none;">最近更新</a>
+<a href="/calendar" style="color:#fafafa;border:1px solid #3f3f46;border-radius:0.5rem;padding:0.5rem 1rem;text-decoration:none;">周表</a>
 <a href="/my" style="color:#fafafa;border:1px solid #3f3f46;border-radius:0.5rem;padding:0.5rem 1rem;text-decoration:none;">我的追番</a>
 </p>
 </div>

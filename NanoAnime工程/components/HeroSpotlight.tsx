@@ -12,6 +12,7 @@ import {
   getPrimaryTitle,
   getSeasonLabel,
 } from "@/lib/anime-display";
+import { SITE_CONTAINER } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 
 /**
@@ -25,7 +26,12 @@ const HERO_COUNT = 5;
 const AUTOPLAY_MS = 7000;
 
 /**
- * 首页焦点位：当季人气前 5 的轮播。
+ * 首页焦点位：当季人气前几部（HERO_COUNT 部）的轮播。
+ *
+ * 2026-10-07 三期改版：改**真全宽**——section 直接铺满视口（父级 <main> 是满宽的
+ * 块级元素，不用 w-screen：那个含滚动条宽度，会出横向滚动条），内容栅格套
+ * SITE_CONTAINER 与下面的区块左右对齐。圆角和描边同时撤掉了：全宽带保留圆角，
+ * 屏幕四角会露出底色的缺口。**左右箭头改为 ≥2xl 才显示**，原因见箭头处的注释。
  *
  * 数据走 `useSeasonAnime`（与下面的新番墙共用同一份请求与缓存，不会多打接口）。
  *
@@ -78,13 +84,14 @@ export function HeroSpotlight() {
   }, [autoplay, slides.length, index]);
 
   if (isPending) {
-    // 骨架占位。高度对齐真实焦点位，避免数据到达时页面跳一下（CLS）
+    // 骨架占位。高度对齐真实焦点位，避免数据到达时页面跳一下（CLS）。
+    // ⚠️ 和真身一样是全宽条带（无圆角）——形状对不上时，替换的瞬间会跳
     return (
       <div
         role="status"
         aria-busy="true"
         aria-label="正在加载焦点推荐"
-        className="mb-14 h-[340px] animate-pulse rounded-2xl bg-surface sm:h-[420px]"
+        className="mb-14 h-[340px] animate-pulse bg-surface sm:h-[420px]"
       />
     );
   }
@@ -111,7 +118,7 @@ export function HeroSpotlight() {
   return (
     <section
       aria-label="当季焦点"
-      className="relative mb-14 overflow-hidden rounded-2xl ring-1 ring-border"
+      className="relative mb-14 overflow-hidden"
     >
       {/*
         同一次切换里把背景图和新内容一起重挂（key=slide.id）——这样任意时刻
@@ -127,7 +134,8 @@ export function HeroSpotlight() {
             aria-hidden
             fill
             priority={current === 0}
-            sizes="(max-width: 1152px) 100vw, 1152px"
+            // 全宽带：图铺满视口。sizes 必须跟着改，否则浏览器按旧宽度取小图、宽屏发糊
+            sizes="100vw"
             className="scale-110 object-cover object-top opacity-40 blur-2xl"
           />
         ) : null}
@@ -137,10 +145,15 @@ export function HeroSpotlight() {
         />
 
         {/*
-          ⚠️ sm 起左右各留 64px：两侧的圆形箭头（left-3/right-3 + 36px 宽）占掉两侧约
-          48px，内边距不够的话箭头会压到文字列上（实测 sm:px-8 时箭头与元信息行重叠 8px）。
+          内容栅格。版心用 SITE_CONTAINER——文字列与下面区块的标题左右对齐，
+          这是"真全宽但内容不散"的关键（A3 验收查的就是这个对齐）。
         */}
-        <div className="relative grid gap-6 px-5 py-8 sm:grid-cols-[1fr_auto] sm:items-center sm:px-16 sm:py-10">
+        <div
+          className={cn(
+            SITE_CONTAINER,
+            "relative grid gap-6 py-8 sm:grid-cols-[1fr_auto] sm:items-center sm:py-10",
+          )}
+        >
           <div className="flex max-w-xl flex-col gap-3.5">
             <h2 className="line-clamp-2 text-2xl leading-tight font-bold tracking-tight sm:text-4xl">
               {title}
@@ -207,12 +220,23 @@ export function HeroSpotlight() {
 
       {slides.length > 1 ? (
         <>
-          {/* 左右箭头（≥sm 显示在两侧中间；手机上收进底部那排，见下） */}
+          {/*
+            左右箭头只在 ≥2xl（1536px）显示。
+            ⚠️ 为什么：箭头压在两侧、宽 36px + 距边 12px = 右缘在 48px 处；
+            而版心的左右内边距最宽才 32px（lg），也就是说**视口比版心宽出至少
+            约 24px 外边距**时，箭头才落在文字列外面不压字。
+            1536 是第一个满足这个条件的默认断点；更窄的宽度上用底部那对箭头
+            （原本只有手机显示，现在一直显示到 2xl）。
+            为什么不做成"永远显示、把文字右缩进 64px"：那样文字列在 1024~1536px
+            区间会比下面的区块多缩进 32px，和版心对不齐——A3 验收查的就是这个对齐。
+            （这条是 10-06 实测过 8px 压字的教训的彻底解法：把重叠的可能性去掉，
+            而不是靠调内边距躲。）
+          */}
           <button
             type="button"
             onClick={() => setIndex((i) => (i - 1 + slides.length) % slides.length)}
             aria-label="上一部"
-            className="absolute top-1/2 left-3 hidden size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background/70 text-foreground ring-1 ring-border backdrop-blur transition-colors duration-150 hover:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:flex"
+            className="absolute top-1/2 left-3 hidden size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background/70 text-foreground ring-1 ring-border backdrop-blur transition-colors duration-150 hover:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none 2xl:flex"
           >
             <Chevron direction="left" />
           </button>
@@ -220,18 +244,18 @@ export function HeroSpotlight() {
             type="button"
             onClick={() => setIndex((i) => (i + 1) % slides.length)}
             aria-label="下一部"
-            className="absolute top-1/2 right-3 hidden size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background/70 text-foreground ring-1 ring-border backdrop-blur transition-colors duration-150 hover:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:flex"
+            className="absolute top-1/2 right-3 hidden size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background/70 text-foreground ring-1 ring-border backdrop-blur transition-colors duration-150 hover:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none 2xl:flex"
           >
             <Chevron direction="right" />
           </button>
 
           <div className="absolute inset-x-0 bottom-3 flex items-center justify-center gap-3">
-            {/* 手机上的左右箭头（桌面用两侧那对） */}
+            {/* 宽度不够放两侧箭头时的左右箭头（≥2xl 用两侧那对） */}
             <button
               type="button"
               onClick={() => setIndex((i) => (i - 1 + slides.length) % slides.length)}
               aria-label="上一部"
-              className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-background/70 text-foreground ring-1 ring-border sm:hidden"
+              className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-background/70 text-foreground ring-1 ring-border 2xl:hidden"
             >
               <Chevron direction="left" />
             </button>
@@ -256,7 +280,7 @@ export function HeroSpotlight() {
               type="button"
               onClick={() => setIndex((i) => (i + 1) % slides.length)}
               aria-label="下一部"
-              className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-background/70 text-foreground ring-1 ring-border sm:hidden"
+              className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-background/70 text-foreground ring-1 ring-border 2xl:hidden"
             >
               <Chevron direction="right" />
             </button>

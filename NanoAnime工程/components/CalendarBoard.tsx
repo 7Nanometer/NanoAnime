@@ -116,9 +116,12 @@ function DayColumn({ day }: { day: CalendarDay }) {
 }
 
 /**
- * 追番周表：周一 ~ 周日 7 列。
+ * 追番周表：周一 ~ 周日 7 列。挂在独立页 `/calendar` 上。
  *
- * 2026-10-06 M7 起它挂在**首页**（id="calendar" 的区块里），不再是独立页面。
+ * 版式变化史：2026-10-06（M7 A+B）它曾被并进首页、不再是独立页面；
+ * 2026-10-07（三期改版）首页只留一行 7 部（见 components/CalendarStrip.tsx），
+ * 完整周表**恢复成独立页**——本组件从此只被 /calendar 使用。
+ *
  * 数据由服务端 /api/calendar 算好——**连「今天是哪一天」也是服务端按北京时间判定的**
  * （`day.isToday`），客户端不自己算时区，两边不会打架。
  *
@@ -173,8 +176,8 @@ export function CalendarBoard() {
   return (
     <section>
       <header className="mb-7">
-        {/* 挂首页后标题降一级（h2）——页面级的 h1 留给下面的新番墙 */}
-        <h2 className="section-mark text-2xl font-bold tracking-tight">追番周表</h2>
+        {/* 独立页的主标题（10-07 恢复成独立页后，从降级的 h2 改回 h1） */}
+        <h1 className="section-mark text-2xl font-bold tracking-tight">追番周表</h1>
         <p className="mt-2 text-sm tabular-nums text-muted-foreground">
           {first.dateLabel} ~ {last.dateLabel} · 本周共 {data.totalCount} 集 ·{" "}
           {todayCount > 0 ? `今天 ${todayCount} 集更新` : "今天暂无更新"}

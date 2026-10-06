@@ -1,3 +1,5 @@
+import { SITE_CONTAINER } from "@/lib/layout";
+
 /**
  * 全站页脚。
  *
@@ -16,7 +18,7 @@
 export function SiteFooter() {
   return (
     <footer className="mt-16 border-t border-border">
-      <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-8 text-xs leading-relaxed">
+      <div className={`${SITE_CONTAINER} flex flex-col gap-2 py-8 text-xs leading-relaxed`}>
         <p className="text-muted-foreground">
           本站不提供在线播放，只做正版平台的跳转指引。观看请支持正版。
         </p>
