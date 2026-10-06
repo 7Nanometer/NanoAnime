@@ -46,10 +46,32 @@ export interface SyncEntry {
  * 时间列在数据库里是 `timestamptz`，通过接口拿到的是 ISO 字符串。
  */
 export interface RemoteRow {
+  /**
+   * 这一行是谁的。
+   * ⚠️ 拉取查询里已经有 `.eq("user_id", …)` 过滤，这里把它取回来是给
+   * filterOwnRows 当**第二道锁**用（几行成本的兜底防护，见那个函数的说明）。
+   */
+  user_id: string;
   anilist_id: number;
   progress: number;
   added_at: string | null;
   client_updated_at: string;
+}
+
+/**
+ * 只留下"属于这个用户"的云端行 —— 拉取过滤的**第二道锁**。
+ *
+ * ⚠️ 为什么查询里已经有 `.eq("user_id", …)` 了还要再滤一遍：
+ * "看不见别人的行"靠两样东西叠着：查询里那句过滤 + 数据库的 RLS。
+ * 两道都在——但这道锁只要几行，防的是"将来某次改动手滑删掉或改坏了其中一道"：
+ * 别人的行一旦被并进本地列表，还会被当成"我自己的"推回云端 —— 又静默又传染。
+ * 有它在，那种事故最多是"白拉了一次请求"，进不了本地。
+ */
+export function filterOwnRows<T extends { user_id: string }>(
+  rows: readonly T[],
+  userId: string,
+): T[] {
+  return rows.filter((row) => row.user_id === userId);
 }
 
 /** 写回云端时要给的列（不含 user_id —— 那个由调用方按当前登录用户填） */

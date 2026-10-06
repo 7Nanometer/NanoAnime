@@ -20,6 +20,7 @@ import type { Anime, CollectionEntry } from "@/types/anime";
 import { createClient } from "@/lib/supabase/client";
 import { withSupabaseTimeout } from "@/lib/supabase/timeout";
 import {
+  filterOwnRows,
   mergeSyncEntries,
   remoteRowToSyncEntry,
   shouldLocalPush,
@@ -283,8 +284,12 @@ function emitChange(): void {
  * - `syncing` 正在同步
  * - `synced`  上一次同步成功
  * - `error`   上一次同步失败（本地记录仍然完好，界面要如实说明）
+ * - `consent` 有一笔改动等着推上云端，但用户还没确认过"首次同步"。
+ *             **首次推送前必须先说明白**（见 SyncConsentBanner）：推送 = 数据离开本机。
+ * - `paused`  用户明确选了"暂不同步"（横幅上的另一个按钮）。从此不推、也不再问——
+ *             拉取照常（读自己的云端记录不涉及外发）；「我的追番」里有常驻入口可随时再开启。
  */
-export type SyncStatus = "local" | "syncing" | "synced" | "error";
+export type SyncStatus = "local" | "syncing" | "synced" | "error" | "consent" | "paused";
 
 let syncStatus: SyncStatus = "local";
 
@@ -427,8 +432,11 @@ async function runSync(): Promise<void> {
 
     currentUserId = identity.userId;
     setSyncStatus("syncing");
-    await syncOnce(supabase, identity.userId);
-    setSyncStatus("synced");
+    const outcome = await syncOnce(supabase, identity.userId);
+    // 如实报状态，界面各管各的：consent → 出横幅；paused → /my 上那行常驻说明
+    setSyncStatus(
+      outcome === "needs-consent" ? "consent" : outcome === "paused" ? "paused" : "synced",
+    );
   } catch {
     // 拉取/写入/推送任一环节出错都到这里。
     // 本地数据完好（拉取成功前不写本地），界面负责说明。
@@ -475,8 +483,93 @@ async function resolveIdentity(supabase: Client): Promise<Identity> {
   return result ?? { kind: "offline" };
 }
 
-/** 一轮同步的实体：拉 → 合并 → 写本地 → 推 */
-async function syncOnce(supabase: Client, userId: string): Promise<void> {
+// ═══════════════════════════════════════════════════════════════════════
+// 知情同意 —— 首次推送前必须过一次
+// ═══════════════════════════════════════════════════════════════════════
+//
+// 一笔改动被推上去，意味着它**离开这台设备**、存进云端账号（换设备能拉回来）。
+// 在数据第一次离开本机之前，先让用户知情、自己按下"开始同步"
+// （界面横幅见 components/SyncConsentBanner.tsx）。
+//
+// 三种状态，两条路：
+//   · 同意（"1"）  → 正常同步
+//   · 拒绝（"0"）  → **记住这个选择**：从此不推、也不再弹横幅（不能反复打扰），
+//                    但「我的追番」里留一个常驻入口可以随时改主意（不能死锁）。
+//                    拒绝之后状态报 `paused`，界面必须说清"记录不会同步到云端"。
+//   · 没表过态     → 有东西要推时弹横幅问一次
+
+/** 同意标记的键前缀。**按账号分开存** —— 共用设备上 A 确认过 ≠ B 确认过（宪法第 13 条） */
+const SYNC_CONSENT_KEY_PREFIX = "nanoanime.sync-consent.v1";
+
+type SyncConsent = "granted" | "declined" | "unset";
+
+function readSyncConsent(userId: string): SyncConsent {
+  const storage = getStorage();
+  if (!storage) {
+    return "unset";
+  }
+  try {
+    const value = storage.getItem(`${SYNC_CONSENT_KEY_PREFIX}.${userId}`);
+    return value === "1" ? "granted" : value === "0" ? "declined" : "unset";
+  } catch {
+    return "unset";
+  }
+}
+
+/** 记下选择（本机、按账号）。存不上就当作没表过态——下次再问，总比假装记下了强 */
+function writeSyncConsent(userId: string, consent: "granted" | "declined"): void {
+  const storage = getStorage();
+  if (!storage) {
+    return;
+  }
+  try {
+    storage.setItem(`${SYNC_CONSENT_KEY_PREFIX}.${userId}`, consent === "granted" ? "1" : "0");
+  } catch {
+    // 静默：标记没写成，下次同步还会再问一遍——不算错
+  }
+}
+
+/**
+ * 用户点了横幅上的「我知道了，开始同步」：记下同意（本机、按账号），立刻重跑一轮
+ * ——把刚才拦下的推送补上。
+ *
+ * ⚠️ 标记存本机不存云端：换一台设备会**再问一次**。这是有意的——
+ * "每台设备第一次往外推送之前，先告诉用这台设备的人"正是我们要的语义。
+ */
+export function giveSyncConsent(): void {
+  const userId = currentUserId;
+  if (!userId) {
+    return;
+  }
+  writeSyncConsent(userId, "granted");
+  void runSync();
+}
+
+/**
+ * 用户点了横幅上的「暂不同步」：**记住这个选择**。
+ *
+ * 之后的行为（三条，一条都不能少）：
+ * 1. 永远不推 —— 记录只在本机，换设备看不到
+ * 2. **横幅不再出现**（不反复打扰）
+ * 3. 「我的追番」里有一条常驻说明 + 「开启同步」按钮（想改主意随时可以，不死锁）
+ */
+export function declineSyncConsent(): void {
+  const userId = currentUserId;
+  if (!userId) {
+    return;
+  }
+  writeSyncConsent(userId, "declined");
+  // 立刻如实报状态（不等下一轮同步）——界面据此把那行说明显示出来
+  setSyncStatus("paused");
+  // 再跑一轮：拉取照常（把自己的云端记录拉回来不涉及外发），推送会被上面的"declined"拦住
+  void runSync();
+}
+
+/** 一轮同步的实体：拉 → 合并 → 写本地 → 推（推之前要看"同意"状态） */
+async function syncOnce(
+  supabase: Client,
+  userId: string,
+): Promise<"ok" | "needs-consent" | "paused"> {
   // ── 1. 先处理"欠账"：把之前没能删掉的云端记录删掉 ──
   // 放在拉取之前：不先把它们删掉的话，下面一拉取就把它们拉回来了。
   // ⚠️ 只处理**属于当前用户**的那几笔（见 pendingDeletes 的说明）
@@ -505,10 +598,13 @@ async function syncOnce(supabase: Client, userId: string): Promise<void> {
   const myPendingDeleteSet = new Set(myPendingDeletes);
 
   // ── 2. 拉云端 ──
+  // ⚠️ 列名**显式列出**，不用 `select("*")`：只取用得上的列（note 这类将来可能装
+  //    私密内容的列尤其不该"顺手全取"），接口形态也更稳定。
+  //    多取了一个 user_id —— 给下面 filterOwnRows 那道兜底锁用。
   const rows = await withSupabaseTimeout(async (signal) => {
     const { data, error } = await supabase
       .from("collection")
-      .select("anilist_id, progress, added_at, client_updated_at")
+      .select("user_id, anilist_id, progress, added_at, client_updated_at")
       .eq("user_id", userId)
       .abortSignal(signal);
     if (error) {
@@ -522,7 +618,9 @@ async function syncOnce(supabase: Client, userId: string): Promise<void> {
     throw new Error("拉取云端记录超时");
   }
 
-  const remoteEntries = rows.map(remoteRowToSyncEntry);
+  // ⚠️ 第二道锁：拉回来的每一行再验一次归属（见 filterOwnRows 的说明）。
+  // 查询里那句 .eq 是第一道；两道都在，防的是"将来某次改动手滑改坏其中一道"。
+  const remoteEntries = filterOwnRows(rows, userId).map(remoteRowToSyncEntry);
   const remoteById = new Map(remoteEntries.map((entry) => [entry.animeId, entry]));
 
   // ── 3. 合并 ──
@@ -579,8 +677,26 @@ async function syncOnce(supabase: Client, userId: string): Promise<void> {
   const toPush = merged.filter((entry) =>
     shouldLocalPush(entry, remoteById.get(entry.animeId)),
   );
+
+  // 🔑 推送 = 数据离开本机（第一次之前要先说明白，见上面的"知情同意"）。
+  // 所以推之前先看用户表过态没有：
+  const consent = readSyncConsent(userId);
+
+  if (consent === "declined") {
+    // 用户明确选了"暂不同步"：永远不推、之后也不再问（横幅不会再出现）。
+    // 拉取照常（上面几步已经做完）——读自己的云端记录不涉及外发，跟"推"是两回事。
+    return "paused";
+  }
+
   if (toPush.length === 0) {
-    return;
+    // 没有要推的东西，就不打扰用户（没表态也先不弹横幅——等真有东西要上传再说）
+    return "ok";
+  }
+
+  if (consent === "unset") {
+    // 第一次要往外推送：停下来问一次（横幅）。上面"拉取 + 合并 + 写本地"都做完了，
+    // 本地记录一条不少，只是暂时不上云。
+    return "needs-consent";
   }
 
   const payload = toPush.map((entry) => ({
@@ -598,6 +714,8 @@ async function syncOnce(supabase: Client, userId: string): Promise<void> {
     }
     return true;
   });
+
+  return "ok";
 }
 
 /**
