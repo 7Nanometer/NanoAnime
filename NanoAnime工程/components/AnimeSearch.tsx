@@ -59,7 +59,7 @@ export function AnimeSearch() {
   } else if (data && data.anime.length === 0) {
     body = (
       <Hint>
-        没找到「{keyword}」。中文搜索目前只覆盖本季新番，可试试日文原名或英文名。
+        没找到「{keyword}」。中文搜索覆盖常用番剧，比较冷门的可试试日文原名或英文名。
       </Hint>
     );
   } else if (data) {

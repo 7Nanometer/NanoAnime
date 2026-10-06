@@ -64,6 +64,23 @@ const SEASON_ANIME_QUERY = `
 `;
 
 /**
+ * 按人气取番剧，**不限季度**。
+ * 用途：批量补中文名时扩大覆盖范围（`scripts/fetch-title-zh.ts --scope=top2000`）。
+ *
+ * ⚠️ 翻页必须按**固定页数**来，不能靠 `pageInfo.total` —— 实测它不可信
+ * （热门查询一律返回 5000 封顶，见下面 SEARCH_ANIME_QUERY 的说明）。
+ */
+const POPULAR_ANIME_QUERY = `
+  query PopularAnime($page: Int!, $perPage: Int!) {
+    Page(page: $page, perPage: $perPage) {
+      media(type: ANIME, isAdult: false, sort: POPULARITY_DESC) {
+        ${ANIME_LIST_FIELDS}
+      }
+    }
+  }
+`;
+
+/**
  * 按关键词搜索。
  * `sort: SEARCH_MATCH` 是按相关度排（不是按人气），搜索场景必须用这个。
  * ⚠️ 返回里的 `pageInfo.total` **不可信**——实测热门关键词一律返回 5000 封顶，
@@ -318,6 +335,42 @@ export async function fetchSeasonAnime(perPage = 20): Promise<SeasonAnimeResult>
     seasonYear,
     anime: withEmptyZh(json.data?.Page?.media ?? []),
   };
+}
+
+/**
+ * 按人气从高到低取**一页**番剧（不限季度）。
+ *
+ * ⚠️ 这个函数是给**离线批量脚本**用的，应用运行时不用它。所以刻意**不加**
+ * `cache: "force-cache"` 和 `next: { revalidate }` —— 那两个是给 Next 运行时用的，
+ * 脚本里是 Node 直接跑，加了没有任何意义，反而让人误以为这里有缓存。
+ *
+ * @param page 第几页，从 1 开始
+ * @param perPage 每页多少部（AniList 的上限是 50）
+ */
+export async function fetchPopularAnime(
+  page: number,
+  perPage: number,
+): Promise<Anime[]> {
+  const response = await fetch(ANILIST_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      query: POPULAR_ANIME_QUERY,
+      variables: { page, perPage },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`AniList 请求失败：HTTP ${response.status}`);
+  }
+
+  const json = (await response.json()) as AniListResponse;
+
+  if (json.errors?.length) {
+    throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
+  }
+
+  return withEmptyZh(json.data?.Page?.media ?? []);
 }
 
 /**

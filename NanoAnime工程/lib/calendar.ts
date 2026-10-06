@@ -116,7 +116,7 @@ export function buildCalendar(entries: ScheduleEntry[], week: WeekRange): Calend
  * 取本周日历。接口层面只调这一个函数。
  *
  * 中文名走本地 data/title-zh.json（`getTitleZh`）——**不发任何请求**。
- * 那张表目前只覆盖本季 20 部，所以日历里绝大多数番显示的还是日文原名，
+ * 那张表覆盖 AniList 人气前 2000 部左右，所以日历里**冷门番显示的还是日文原名**，
  * 这是预期行为，不是 bug。
  *
  * @param now 当前时间。留着这个参数是为了能测「别的某一天」；正常调用不用传

@@ -21,8 +21,14 @@ export const SEARCH_RESULT_LIMIT = 24;
 /**
  * 搜番剧。两个来源合并 + 去重，本地中文命中排在前面。
  *
- * 排序理由：能用中文命中的只有本季那 18 部，用户输中文时最想找的正是它们；
- * 而 AniList 对中文的命中率是 0，所以中文命中优先不会跟 AniList 的相关度排序打架。
+ * 排序理由：AniList 对中文的命中率是 0，用户输中文时命中的**只可能**来自本地表，
+ * 所以中文命中优先不会跟 AniList 的相关度排序打架。
+ *
+ * ⚠️ 表已经从「本季 18 部」扩到「AniList 人气前 2000 部」（M5-0）。
+ * 表小的时候这个排序没问题；表大之后，一个宽泛的中文词会命中很多条，
+ * 而下面 `findLocalMatches` 是按 id 升序返回的、又只取前 24 条——
+ * **拿到的是"id 最小的 24 部"而不是最相关的 24 部**。
+ * 这一轮按约束没动搜索逻辑，记在这里免得将来当成新 bug 查。
  */
 export async function searchAnime(keyword: string): Promise<SearchResult> {
   const trimmed = keyword.trim();
