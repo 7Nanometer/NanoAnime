@@ -230,6 +230,40 @@ export interface AnimeDetail extends Anime {
 export type { SeriesEntry } from "@/lib/series-graph";
 
 /**
+ * 人物页作品列表的一行（**已合并去重**）。
+ * 类型本体定义在 `lib/person.ts`（合并/排序规则的唯一出处），这里转出去，
+ * 理由同上——客户端组件只用 `import type` 就能拿到。
+ */
+export type { PersonWork } from "@/lib/person";
+
+/**
+ * 人物（AniList 的 Staff）本体，人物页头部用。
+ *
+ * ⚠️ 字段可空性来自实测（2026-10-06，20 人抽样）：
+ * 头像 20/20 有、简介 15/20 有（全是英文）、职业标签 32/32 有，出生年/活跃起点部分有。
+ * 展示层的规矩：**有一项显示一项，缺的不显示**（不是显示「—」）。
+ */
+export interface PersonDetail {
+  id: number;
+  /** 日文写法（中文读者大部分能认，复制去搜搜不到——界面上有专门一行说明） */
+  nameNative: string | null;
+  /** 罗马音（要搜人时用这个） */
+  nameFull: string | null;
+  /** AniList 头像（图床 s4.anilist.co）。20/20 抽样都有，但展示层仍要兜底 */
+  imageLarge: string | null;
+  /** 英文简介（AniList 上没有中文；已清掉 HTML/markdown 残渣）。没有时为 null，那整块不显示 */
+  description: string | null;
+  /** 职业标签原文（Director / Voice Actor / …）。中文转换在展示层做，见 lib/staff-roles.ts */
+  occupations: string[];
+  /** AniList 用户收藏数。没有时为 null */
+  favourites: number | null;
+  /** 出生年份（AniList 只给到年/月/日三段里的部分）。没有时为 null */
+  birthYear: number | null;
+  /** 从哪一年开始活跃。没有时为 null */
+  yearsActiveStart: number | null;
+}
+
+/**
  * 排期里的一条：某部番的某一集，在某个时刻播出。
  * 日历页的一格就是一条这个。由 lib/anilist.ts 的 fetchWeekSchedule() 产出。
  */

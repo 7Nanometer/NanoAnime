@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { PersonNameNote } from "@/components/PersonNameNote";
 import { UNKNOWN_TITLE } from "@/lib/anime-display";
 import { formatRoles } from "@/lib/staff-roles";
@@ -10,8 +12,8 @@ import type { StaffMember } from "@/types/anime";
  * （《鲁路修》），截断的默认值只要小于 26 就会把音乐藏掉；给到 30 以上又和全列没区别。
  * 少一个交互，少一处会出错的地方。
  *
- * ⚠️ 名字**不是链接**。人物页本轮不做，做成链接点了会跳 404——
- * 宁可点了没反应，也不能给一个坏链接。
+ * 人名链到 `/person/[id]`（人物页在 M5-1-1 下半场做好后接上的）。
+ * 样式上只加 `hover:underline`，**不加颜色变化**——整块 47 行全变色会很吵。
  */
 export function StaffList({ staff }: { staff: StaffMember[] }) {
   if (staff.length === 0) {
@@ -34,12 +36,15 @@ export function StaffList({ staff }: { staff: StaffMember[] }) {
           return (
             <li key={member.id} className="flex flex-col gap-0.5 px-3 py-2 text-sm">
               {/*
-                名字取 native（日文写法），没有才退到罗马音。
+                名字取 native（日文写法），没有才退到罗马音。点进人物页。
                 `break-words` 不能省：职位串最长能到五六个词，窄屏不换行会撑破容器。
               */}
-              <span className="break-words">
+              <Link
+                href={`/person/${member.id}`}
+                className="break-words underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
                 {member.nameNative ?? member.nameFull ?? UNKNOWN_TITLE}
-              </span>
+              </Link>
               {member.nameNative && member.nameFull ? (
                 <span className="break-words text-xs text-muted-foreground">
                   {member.nameFull}

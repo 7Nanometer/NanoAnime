@@ -2,6 +2,7 @@
 // 铁律（CLAUDE.md 第五条）：第三方请求只能走这里，页面组件里不许裸写 fetch。
 
 import type { SeriesEdgeInfo, SeriesRecord } from "@/lib/series-graph";
+import type { PersonWorkEdge } from "@/lib/person";
 import type {
   Anime,
   AnimeDetail,
@@ -11,6 +12,7 @@ import type {
   Episode,
   ExternalLink,
   MediaSeason,
+  PersonDetail,
   SeasonAnimeResult,
   SeasonRef,
   ScheduleEntry,
@@ -31,6 +33,15 @@ const CACHE_SECONDS = 60 * 60;
  * （铁律是「缓存 ≥ 1 小时」，这里给 24 小时不违反。）
  */
 const SERIES_CACHE_SECONDS = 24 * 60 * 60;
+
+/**
+ * 人物页数据的缓存时长：24 小时。
+ *
+ * 和系列关系同档：人物资料几乎不变，作品列表只是缓慢增长（一年几部新番）。
+ * 首屏一次请求里带着两个来源各 2 页，是除了年表补抓之外最贵的一次取数，
+ * 缓存给长一点，等于把「同一个人反复点同一个名字」的成本压到接近 0。
+ */
+const PERSON_CACHE_SECONDS = 24 * 60 * 60;
 
 /** 距下一季开播不足这么多天时，就提前显示下一季（季末大家已经在看新番表了） */
 const SEASON_LEAD_DAYS = 21;
@@ -1017,4 +1028,293 @@ function buildEpisodeList(
   }
 
   return [...merged.values()].sort((a, b) => a.number - b.number);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// 人物页（/person/[id]）
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * 人物页作品列表的边字段。**两个来源分开写、不共用**：
+ * staffRole 只在制作来源上有值，characters 只在配音来源上有值，
+ * 混在一起写 Query 虽然能过，但会让人误以为两个来源字段一样。
+ *
+ * node.type 必须带——characterMedia **没有 type 参数**（内省确认），
+ * 非动画的边只能拿回来之后自己挡掉（见 lib/person.ts 的 mergePersonWorks）。
+ */
+const PERSON_STAFF_EDGE_FIELDS = `
+  staffRole
+  node { id type title { native } format startDate { year } popularity }
+`;
+
+const PERSON_CAST_EDGE_FIELDS = `
+  characters { name { native full } }
+  node { id type title { native } format startDate { year } popularity }
+`;
+
+/**
+ * 人物页首屏：人物本体 + 两个来源各 3 页作品。
+ *
+ * ⚠️ 六条连接（staffMedia ×3、characterMedia ×3）用**别名**塞进同一个请求——
+ * 和 staff 取 2 页同一个手法，**不增加请求数**（限流按 HTTP 请求数算）。
+ *
+ * ⚠️ 为什么是 3 页而不是 2 页：**首屏要填满 24 行**。实测「一页边 ≠ 一部作品」——
+ * 澤野弘之 2 页（50 条边）合并后只有 **20 部**，24 行填不满；3 页（75 条边）才够。
+ * 代价只是响应体大一点，请求数不变。
+ *
+ * sort: [POPULARITY_DESC] 是用户裁定的「代表作优先」；翻页终止仍然按铁律
+ * 「返回 0 条」判断（pageInfo.total 不可信，实测同一查询翻页会给出不同的总数）。
+ */
+const PERSON_DETAIL_QUERY = `
+  query PersonDetail($id: Int!) {
+    Staff(id: $id) {
+      id
+      name { native full }
+      image { large }
+      description(asHtml: true)
+      primaryOccupations
+      favourites
+      dateOfBirth { year }
+      yearsActive
+      s1: staffMedia(page: 1, perPage: 25, type: ANIME, sort: [POPULARITY_DESC]) { edges {${PERSON_STAFF_EDGE_FIELDS}} }
+      s2: staffMedia(page: 2, perPage: 25, type: ANIME, sort: [POPULARITY_DESC]) { edges {${PERSON_STAFF_EDGE_FIELDS}} }
+      s3: staffMedia(page: 3, perPage: 25, type: ANIME, sort: [POPULARITY_DESC]) { edges {${PERSON_STAFF_EDGE_FIELDS}} }
+      c1: characterMedia(page: 1, perPage: 25, sort: [POPULARITY_DESC]) { edges {${PERSON_CAST_EDGE_FIELDS}} }
+      c2: characterMedia(page: 2, perPage: 25, sort: [POPULARITY_DESC]) { edges {${PERSON_CAST_EDGE_FIELDS}} }
+      c3: characterMedia(page: 3, perPage: 25, sort: [POPULARITY_DESC]) { edges {${PERSON_CAST_EDGE_FIELDS}} }
+    }
+  }
+`;
+
+/** 「加载更多」：同样的四条连接，页码变成调用方给的两页 */
+const PERSON_WORKS_QUERY = `
+  query PersonWorks($id: Int!, $pageA: Int!, $pageB: Int!) {
+    Staff(id: $id) {
+      s1: staffMedia(page: $pageA, perPage: 25, type: ANIME, sort: [POPULARITY_DESC]) { edges {${PERSON_STAFF_EDGE_FIELDS}} }
+      s2: staffMedia(page: $pageB, perPage: 25, type: ANIME, sort: [POPULARITY_DESC]) { edges {${PERSON_STAFF_EDGE_FIELDS}} }
+      c1: characterMedia(page: $pageA, perPage: 25, sort: [POPULARITY_DESC]) { edges {${PERSON_CAST_EDGE_FIELDS}} }
+      c2: characterMedia(page: $pageB, perPage: 25, sort: [POPULARITY_DESC]) { edges {${PERSON_CAST_EDGE_FIELDS}} }
+    }
+  }
+`;
+
+/** 作品边上那部作品的字段（两个来源共用同一个 node 形状） */
+interface AniListPersonMediaNode {
+  id: number;
+  type: string;
+  title: { native: string | null };
+  format: string | null;
+  startDate: { year: number | null } | null;
+  popularity: number | null;
+}
+
+interface AniListPersonStaffEdge {
+  staffRole: string | null;
+  node: AniListPersonMediaNode;
+}
+
+interface AniListPersonCastEdge {
+  characters: { name: { native: string | null; full: string | null } }[];
+  node: AniListPersonMediaNode;
+}
+
+interface AniListPersonStaff {
+  id: number;
+  name: { native: string | null; full: string | null };
+  image: { large: string | null } | null;
+  description: string | null;
+  primaryOccupations: string[] | null;
+  favourites: number | null;
+  dateOfBirth: { year: number | null } | null;
+  // yearsActive 是 [Int]（实测是单个起始年组成的数组）
+  yearsActive: number[] | null;
+}
+
+/** 作品列表的别名连接（两个来源 × 三页，首屏用） */
+interface AniListPersonWorksConnection {
+  s1: { edges: AniListPersonStaffEdge[] };
+  s2: { edges: AniListPersonStaffEdge[] };
+  s3: { edges: AniListPersonStaffEdge[] };
+  c1: { edges: AniListPersonCastEdge[] };
+  c2: { edges: AniListPersonCastEdge[] };
+  c3: { edges: AniListPersonCastEdge[] };
+}
+
+interface AniListPersonDetailResponse {
+  data?: { Staff?: (AniListPersonStaff & AniListPersonWorksConnection) | null };
+  errors?: { message: string }[];
+}
+
+interface AniListPersonWorksResponse {
+  data?: { Staff?: AniListPersonWorksConnection | null };
+  errors?: { message: string }[];
+}
+
+/** 把两个来源的边抹平成 lib/person.ts 要的形状 */
+function toPersonStaffEdge(edge: AniListPersonStaffEdge): PersonWorkEdge {
+  return {
+    mediaId: edge.node.id,
+    mediaType: edge.node.type,
+    titleNative: edge.node.title.native,
+    format: edge.node.format,
+    year: edge.node.startDate?.year ?? null,
+    popularity: edge.node.popularity,
+    role: edge.staffRole,
+    characterName: null,
+  };
+}
+
+function toPersonCastEdge(edge: AniListPersonCastEdge): PersonWorkEdge {
+  // 实测每条配音边只挂一个角色；角色名可能为 null（也可能整串假名）。
+  // 这里取第一个有名字的——没有就留 null，展示层据此不渲染那一行
+  const character = edge.characters.find(
+    (item) => item.name.native !== null || item.name.full !== null,
+  );
+  return {
+    mediaId: edge.node.id,
+    mediaType: edge.node.type,
+    titleNative: edge.node.title.native,
+    format: edge.node.format,
+    year: edge.node.startDate?.year ?? null,
+    popularity: edge.node.popularity,
+    role: null,
+    characterName: character?.name.native ?? character?.name.full ?? null,
+  };
+}
+
+/** 人物页首屏的取数结果 */
+export interface PersonDetailResult {
+  person: PersonDetail;
+  /** 两个来源的边（**还没合并**——合并去重是 lib/person.ts 的事） */
+  staffEdges: PersonWorkEdge[];
+  castEdges: PersonWorkEdge[];
+  /** 首屏这批已经取完：两个来源的**第 2 页**都返回 0 条 → 界面上连按钮都不出现 */
+  done: boolean;
+}
+
+/** 「加载更多」一批的结果 */
+export interface PersonWorksBatch {
+  staffEdges: PersonWorkEdge[];
+  castEdges: PersonWorkEdge[];
+  /** 这一批取完了：两个来源的**后一页**都返回 0 条 */
+  done: boolean;
+}
+
+/**
+ * 清人物简介。
+ *
+ * 走的是和番剧简介同一个 parseDescription（查人物时传 asHtml: true——**实测有效**，
+ * 返回的是真 HTML；不传的话会拿到 `[Wiki (jp)](https://…)` 这种 markdown 原文）。
+ * 清完再兜一道 markdown 语法，因为人物简介里还实测有 `__Height:__` 这种下划线强调写法。
+ */
+function parsePersonDescription(raw: string | null): string | null {
+  const text = parseDescription(raw);
+  if (!text) {
+    return null;
+  }
+  return (
+    text
+      // 兜底：asHtml 对某些条目不生效（实测諫山創的简介就留着 markdown 原文）
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      // 还有源头就坏掉的：`["Heart Break One"](`——括号后**没有链接**（AniList 自己没转成功），
+      // 上面那条匹配不到。实测諫山創的简介里就这样，照原样显示会很难看
+      .replace(/\[([^\]]*)\]\(/g, "$1")
+      .replace(/\*\*([^*\n]+)\*\*/g, "$1")
+      .replace(/__([^_\n]+)__/g, "$1")
+      .trim() || null
+  );
+}
+
+/**
+ * 取一个人物的资料 + 首屏作品（2 页 × 2 来源，都在同一个请求里）。
+ *
+ * 不存在的 id：AniList 返回 Staff: null（伴随 Not Found 错误）——
+ * 那不是故障，是正常结果，返回 null 让页面走 404。
+ */
+export async function fetchPersonDetail(id: number): Promise<PersonDetailResult | null> {
+  const response = await fetch(ANILIST_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ query: PERSON_DETAIL_QUERY, variables: { id } }),
+    cache: "force-cache",
+    next: { revalidate: PERSON_CACHE_SECONDS },
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(`AniList 请求失败：HTTP ${response.status}`);
+  }
+
+  const json = (await response.json()) as AniListPersonDetailResponse;
+  const staff = json.data?.Staff;
+  if (!staff) {
+    // 不存在的 id 走这里（errors 里会有 Not Found；data.Staff 为 null）
+    return null;
+  }
+  if (json.errors?.length) {
+    throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
+  }
+
+  return {
+    person: {
+      id: staff.id,
+      nameNative: staff.name.native,
+      nameFull: staff.name.full,
+      imageLarge: staff.image?.large ?? null,
+      description: parsePersonDescription(staff.description),
+      occupations: staff.primaryOccupations ?? [],
+      favourites: staff.favourites,
+      birthYear: staff.dateOfBirth?.year ?? null,
+      // 实测 yearsActive 是数组，通常只有一个起始年；取最小的那个当"始于"
+      yearsActiveStart:
+        staff.yearsActive && staff.yearsActive.length > 0
+          ? Math.min(...staff.yearsActive)
+          : null,
+    },
+    staffEdges: [...staff.s1.edges, ...staff.s2.edges, ...staff.s3.edges].map(toPersonStaffEdge),
+    castEdges: [...staff.c1.edges, ...staff.c2.edges, ...staff.c3.edges].map(toPersonCastEdge),
+    // 终止条件是「返回 0 条」：只有两个来源的**最后一页**都空了，才算取完
+    done: staff.s3.edges.length === 0 && staff.c3.edges.length === 0,
+  };
+}
+
+/**
+ * 「加载更多」：取接下来的两页（pageA、pageA + 1）× 两个来源。
+ *
+ * 同一个请求里四条连接照样用别名（**1 次出网**）。这里**不做合并去重**——
+ * 合并是 lib/person.ts 的事，跨批去重在客户端做（同一作品的多条边可能被页边界切开）。
+ */
+export async function fetchPersonWorks(id: number, pageA: number): Promise<PersonWorksBatch> {
+  const response = await fetch(ANILIST_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      query: PERSON_WORKS_QUERY,
+      variables: { id, pageA, pageB: pageA + 1 },
+    }),
+    cache: "force-cache",
+    next: { revalidate: PERSON_CACHE_SECONDS },
+  });
+
+  if (!response.ok) {
+    throw new Error(`AniList 请求失败：HTTP ${response.status}`);
+  }
+
+  const json = (await response.json()) as AniListPersonWorksResponse;
+  const staff = json.data?.Staff;
+  if (!staff) {
+    // 页面能打开说明人就在；走到这里只可能是数据被删了——按"取完"处理，不报错
+    return { staffEdges: [], castEdges: [], done: true };
+  }
+  if (json.errors?.length) {
+    throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
+  }
+
+  return {
+    staffEdges: [...staff.s1.edges, ...staff.s2.edges].map(toPersonStaffEdge),
+    castEdges: [...staff.c1.edges, ...staff.c2.edges].map(toPersonCastEdge),
+    done: staff.s2.edges.length === 0 && staff.c2.edges.length === 0,
+  };
 }

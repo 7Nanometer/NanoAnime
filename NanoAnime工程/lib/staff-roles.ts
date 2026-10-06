@@ -119,6 +119,77 @@ export function getRoleLabel(role: string): string {
 }
 
 /**
+ * 人物页「职位标签」（AniList 的 `primaryOccupations`）用的中文表。
+ *
+ * ⚠️ **这是另一套词汇**，和上面的职位名不是一批：上面是「在某部作品里干了什么」
+ * （`Director (eps 1-479)`、`Key Animation (ep 3)`…），这里是「这个人的职业」
+ * （Director / Voice Actor / Animator / Mangaka…）。
+ *
+ * 实测口径（2026-10-06，抽 32 人：12 位名人 + 20 位从《进击的巨人》staff 深页取的冷门人）：
+ * 出现 **13 种**取值，而原职位表只覆盖其中 1 种（Director）——所以单开这一张。
+ * 补表后 **13/13 全命中**。频率：Animator ×14、Director ×9、Voice Actor ×6、Designer ×5、
+ * Storyboard Artist ×4、Mangaka ×4，其余 7 种各 1~3 次。
+ *
+ * 为什么**不并进上面那张表**：并进去会顺手改变详情页制作人员的显示
+ * （有番的 staff 职位就叫 `Animator` 之类的话），那是本页之外的行为变化，不该捎带。
+ */
+const OCCUPATION_LABELS: Record<string, string> = {
+  Animator: "动画师",
+  Director: "监督",
+  "Voice Actor": "声优",
+  Designer: "设计师",
+  "Storyboard Artist": "分镜",
+  Mangaka: "漫画家",
+  // Writer 和 Scriptwriter 分开译：中文语境里「编剧」对应脚本岗（Scriptwriter），
+  // Writer 更宽（也写小说/原案），译「作者」既不与前者重复、也不至于失真
+  Scriptwriter: "编剧",
+  Writer: "作者",
+  Composer: "作曲",
+  Lyricist: "作词",
+  Vocalist: "歌手",
+  Musician: "音乐家",
+  // ADR = 后期配音（Automated Dialogue Replacement），这个人管配音录制
+  "ADR Director": "配音监督",
+};
+
+/** 职业标签 → 中文。没命中原样英文（同职位名的规则，不硬翻） */
+export function getOccupationLabel(occupation: string): string {
+  const key = occupation.trim();
+  return OCCUPATION_LABELS[key] ?? key;
+}
+
+/**
+ * 作品行里的职位串：**先归一化（去括号）→ 再去重 → 最多 max 个，其余折成「+N」**。
+ *
+ * 口径顺序不能换，实测反例：《ギルティクラウン》里澤野弘之有 8 条登记，
+ * 其中 6 条归一化后都是同一个标签（`Insert Song Composition ("Bios"; ep 1)` →
+ * `Insert Song Composition`）——**不去重会数成「+5」，是错的**；去重后只剩 2 个标签。
+ *
+ * 详情页的制作人员块**不用这个函数**（那边是「全列、不折叠」，行为不能变）——
+ * 这是人物页作品行专用的。
+ */
+export function formatRolesLimited(roles: readonly string[], max = 3): string | null {
+  const labels: string[] = [];
+  for (const role of roles) {
+    if (role.trim().length === 0) {
+      continue;
+    }
+    const label = getRoleLabel(role);
+    if (!labels.includes(label)) {
+      labels.push(label);
+    }
+  }
+
+  if (labels.length === 0) {
+    return null;
+  }
+  if (labels.length <= max) {
+    return labels.join(" / ");
+  }
+  return `${labels.slice(0, max).join(" / ")} +${labels.length - max}`;
+}
+
+/**
  * 把**一个人的多个职位**拼成显示用的那一行（AniList 会把身兼多职的人拆成多条边）。
  *
  * ⚠️ 职位为空时返回 **null**，不是空串——界面据此**整行不渲染**。

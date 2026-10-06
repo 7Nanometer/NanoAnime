@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { PersonNameNote } from "@/components/PersonNameNote";
 import { UNKNOWN_TITLE } from "@/lib/anime-display";
 import type { CastMember } from "@/types/anime";
@@ -16,7 +18,8 @@ const CAST_LIMIT = 12;
  * 主角名常写成片假名（「エレン・イェーガー」「うちはサスケ」），中文读者认不出；
  * 而声优名 91% 是汉字。所以「人」当主体，「角色」当附注。
  *
- * ⚠️ 名字**不是链接**。人物页本轮不做，做成链接点了会跳 404——宁可点了没反应。
+ * 声优名链到 `/person/[id]`（人物页在 M5-1-1 下半场做好后接上的）——
+ * 和制作人员块同一个路由、同一套 id。
  */
 export function CastList({
   cast,
@@ -56,9 +59,13 @@ export function CastList({
       <ol className="divide-y divide-border rounded-lg border border-border">
         {visible.map((member) => (
           <li key={member.id} className="flex flex-col gap-0.5 px-3 py-2 text-sm">
-            <span className="break-words">
+            {/* 声优名点进人物页（和制作人员块同一个 /person/[id]） */}
+            <Link
+              href={`/person/${member.id}`}
+              className="break-words underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
               {member.nameNative ?? member.nameFull ?? UNKNOWN_TITLE}
-            </span>
+            </Link>
             {member.nameNative && member.nameFull ? (
               <span className="break-words text-xs text-muted-foreground">
                 {member.nameFull}
