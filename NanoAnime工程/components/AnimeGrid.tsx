@@ -45,9 +45,12 @@ export function AnimeGrid() {
     <section>
       {/* 其它页面的入口已经挪到全站顶栏（components/SiteHeader.tsx），这里不再堆链接 */}
       {/*
-        ⚠️ 这里**不能写「共 N 部」**。这个数不是"本季一共多少部"——每季实际有 50+ 部，
-        我们只主动取了**人气最高的前 N 部**（查询里的 sort: POPULARITY_DESC）。
-        写「共」会把"我们取了多少"说成"本季总共多少"，是一句假话。
+        「本季收录 N 部」——2026-10-06 M7 改版后这个数才敢写。
+        原来只取第 1 页（人气前 20），写「共 N 部」会把"我们取了多少"说成
+        "本季总共多少"，是假话。现在接口翻页取全（停在空页），N 就是**我们真收录到的**
+        本季条数。措辞仍用「收录」不用「共」，原因有二：
+          ① 形式过滤排除了 MUSIC / SPECIAL（口径见 lib/anilist.ts 的 SEASON_FORMATS）；
+          ② AniList 上个别作品可能没标季度年份，不在这个查询里。
         判据不是"数字从哪来"，而是**这句话会不会被读成总数**（见验收文件的通用纪律）。
       */}
       <header className="mb-7">
@@ -55,7 +58,7 @@ export function AnimeGrid() {
           {data.seasonYear} 年{getSeasonLabel(data.season)}新番
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          按人气排序 · 本页展示 <span className="tabular-nums">{data.anime.length}</span> 部
+          按人气排序 · 本季收录 <span className="tabular-nums">{data.anime.length}</span> 部
         </p>
       </header>
 
@@ -65,7 +68,7 @@ export function AnimeGrid() {
             key={anime.id}
             anime={anime}
             // 首屏前 5 张优先加载：lg 断点下正好是第一行。
-            // ⚠️ 不要给全部 20 张都加，那样等于没有优先级，还挤掉了后面的懒加载
+            // ⚠️ 不要给整墙都加，那样等于没有优先级，还挤掉了后面本该懒加载的图
             priority={index < 5}
           />
         ))}
@@ -78,7 +81,7 @@ export function AnimeGrid() {
  * 加载失败。
  *
  * ⚠️ 比原来多了一个「重试」按钮。原来只写「加载失败：xxx」，用户唯一的出路是刷新整页。
- * 而这里失败的原因通常是海外数据源超时（国内访问 AniList 的老问题，详情页和日历页
+ * 而这里失败的原因通常是海外数据源超时（国内访问 AniList 的老问题，详情页和追番周表
  * 早就都给了重试入口），重试的成功率其实很高——不给按钮等于让用户白等一次加载。
  */
 function ErrorHint({ onRetry }: { onRetry: () => void }) {
@@ -106,7 +109,7 @@ function EmptyHint() {
     <div className="flex flex-col items-center gap-3 py-20 text-center">
       <p className="text-sm text-muted-foreground">这一季还没有收录到作品。</p>
       <p className="text-xs text-muted-foreground/80">
-        可以先到「日历」看看本周有哪些番在播。
+        可以先看看上面的「追番周表」，本周有哪些番在播。
       </p>
     </div>
   );

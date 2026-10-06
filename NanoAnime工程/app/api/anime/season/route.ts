@@ -6,7 +6,8 @@ import { attachChineseTitles } from "@/lib/bangumi-index";
 
 export async function GET() {
   try {
-    const result = await fetchSeasonAnime(20);
+    // 取本季全量（形式过滤后），翻页在 lib/anilist.ts 里做——这里不再传死数字
+    const result = await fetchSeasonAnime();
     // 中文名是本地文件里查的，不额外发请求
     return Response.json(attachChineseTitles(result));
   } catch (error) {

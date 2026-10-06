@@ -1,7 +1,9 @@
 # 依赖与构建产物
 # （NanoAnime工程/ 里另有一份 Next.js 自带的 .gitignore 管同样的东西，这里是根目录兜底）
 node_modules/
-.next/
+# `.next*/` 罩住 .next 和它的变体目录（实测出现过 .next_devstale、.next_build_tmp
+# 这类构建残余），别让它们混进提交
+.next*/
 
 # 环境变量：密钥只写进 .env.local，永不提交
 .env*

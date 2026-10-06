@@ -2,6 +2,22 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /**
+   * 老地址跳转。
+   *
+   * `/calendar`（日历页）在 2026-10-06 M7 首页改版里并进了首页的「追番周表」区块，
+   * 页面本身删掉了。但顶栏旧入口、用户收藏、搜索引擎里的老链接都还指着它——
+   * 用 308（`permanent: true` 的语义）永久跳到首页的锚点：
+   * 链接不失效，搜索引擎也会把老地址的权重转到新位置。
+   *
+   * ⚠️ 目标地址里的 `#calendar` 只在浏览器端生效（哈希不会发给服务器）。
+   * 能落对位置靠的是首页服务端 HTML 里就有 id="calendar" 的区块（见 app/page.tsx），
+   * 所以直接打开 /calendar 也会先跳到首页、再滚到周表。
+   */
+  async redirects() {
+    return [{ source: "/calendar", destination: "/#calendar", permanent: true }];
+  },
+
+  /**
    * 给 service worker 文件单独设响应头。
    *
    * 为什么必须设：浏览器会把 service worker 文件本身也缓存起来。如果沿用

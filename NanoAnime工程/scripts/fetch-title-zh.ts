@@ -8,7 +8,8 @@
 //
 // 参数：
 //   --scope=season|top2000|all   跑哪些番。
-//                                season（默认）= 本季 20 部，和以前一样
+//                                season（默认）= **本季全量**（形式过滤后的整季，
+//                                 2026-10-06 M7 起；此前只取人气前 20），约 100 部、2 分钟
 //                                top2000       = AniList 按人气排序前 2000 部
 //                                all           = 全部（⚠️ 两万部以上，按 1 秒/部要跑 6 小时+）
 //   --limit=N                    只跑前 N 部（调试用，免得每次都等 40 分钟）
@@ -57,9 +58,6 @@ const ANILIST_PAGE_SIZE = 50;
 
 /** AniList 翻页之间也停一下：它限流 30~90 次/分钟，40 次翻页不能一口气打完 */
 const ANILIST_PAGE_DELAY_MS = 700;
-
-/** 本季模式取多少部（保持原样） */
-const SEASON_COUNT = 20;
 
 /** top2000 模式取多少部 */
 const TOP2000_COUNT = 2000;
@@ -156,13 +154,17 @@ function parseArgs(argv: string[]): Options {
 async function loadTargets(options: Options): Promise<Anime[]> {
   if (options.scope === "season") {
     const { season, seasonYear } = getCurrentSeason();
-    const count = options.limit ?? SEASON_COUNT;
-    console.log(`范围：本季（${seasonYear} ${season}），取 ${count} 部`);
-    const { anime } = await fetchSeasonAnime(count);
-    if (anime.length === 0) {
+    // M7 起本季 = 整季全量（fetchSeasonAnime 自己翻页取到空页为止，形式过滤后）
+    const { anime } = await fetchSeasonAnime();
+    const targets = options.limit ? anime.slice(0, options.limit) : anime;
+    console.log(
+      `范围：本季（${seasonYear} ${season}）全量 ${anime.length} 部` +
+        (options.limit ? `，按 --limit 截前 ${targets.length} 部` : ""),
+    );
+    if (targets.length === 0) {
       throw new Error("AniList 没返回任何番剧，先检查网络再跑");
     }
-    return anime;
+    return targets;
   }
 
   const want =

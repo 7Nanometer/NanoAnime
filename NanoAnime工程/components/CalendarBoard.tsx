@@ -69,7 +69,7 @@ function DayColumn({ day }: { day: CalendarDay }) {
       className={cn(
         "rounded-xl border p-3 transition-colors duration-150",
         // 今天那列：品牌色边框 + 外圈高亮 + 淡色底 + 一道顶部色条，四重区分。
-        // ⚠️ 为什么要叠这么多层：日历一周 7 列全长得一样，用户扫视时的第一个任务
+        // ⚠️ 为什么要叠这么多层：周表 7 列全长得一样，用户扫视时的第一个任务
         // 就是"找到今天在哪"。只靠一个边框颜色太弱（一屏 82 集，注意力全在番名上），
         // 顶部色条是"从很远处也能一眼看到"的那个信号。
         day.isToday
@@ -116,8 +116,9 @@ function DayColumn({ day }: { day: CalendarDay }) {
 }
 
 /**
- * 本周日历：周一 ~ 周日 7 列。
+ * 追番周表：周一 ~ 周日 7 列。
  *
+ * 2026-10-06 M7 起它挂在**首页**（id="calendar" 的区块里），不再是独立页面。
  * 数据由服务端 /api/calendar 算好——**连「今天是哪一天」也是服务端按北京时间判定的**
  * （`day.isToday`），客户端不自己算时区，两边不会打架。
  *
@@ -138,7 +139,7 @@ export function CalendarBoard() {
     return (
       <div className="flex flex-col items-center gap-4 py-20 text-center">
         <p className="text-sm leading-relaxed text-muted-foreground">
-          日历加载失败，可能是网络超时。
+          周表加载失败，可能是网络超时。
           <br />
           过一会儿重试通常就好。
         </p>
@@ -169,7 +170,8 @@ export function CalendarBoard() {
   return (
     <section>
       <header className="mb-7">
-        <h1 className="section-mark text-2xl font-bold tracking-tight">新番日历</h1>
+        {/* 挂首页后标题降一级（h2）——页面级的 h1 留给下面的新番墙 */}
+        <h2 className="section-mark text-2xl font-bold tracking-tight">追番周表</h2>
         <p className="mt-2 text-sm tabular-nums text-muted-foreground">
           {first.dateLabel} ~ {last.dateLabel} · 本周共 {data.totalCount} 集
         </p>
@@ -190,7 +192,7 @@ export function CalendarBoard() {
 }
 
 /**
- * 日历加载态。
+ * 周表加载态。
  *
  * 七天 × 若干条的骨架。
  * ⚠️ 高度不必和真实排期完全一致（每天的集数不固定，算不准），但**列数必须一致**——
@@ -198,7 +200,7 @@ export function CalendarBoard() {
  */
 function CalendarSkeleton() {
   return (
-    <div role="status" aria-busy="true" aria-label="正在加载本周日历">
+    <div role="status" aria-busy="true" aria-label="正在加载追番周表">
       <div className="mb-7 space-y-2">
         <div className="h-7 w-32 animate-pulse rounded-md bg-surface" />
         <div className="h-4 w-56 animate-pulse rounded bg-surface" />

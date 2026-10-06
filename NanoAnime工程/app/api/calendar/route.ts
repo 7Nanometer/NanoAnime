@@ -1,10 +1,10 @@
-// 日历的服务端代理。
+// 追番周表数据的服务端代理（接口路径沿用历史名字 /api/calendar）。
 // 前端只请求这个地址，绝不直连 AniList（CLAUDE.md 第五条铁律）。
 
 import { fetchCalendar } from "@/lib/calendar";
 
 /**
- * 按当前时间取本周日历。
+ * 按当前时间取本周排期（周表用）。
  *
  * ⚠️ **这里不要加 `export const dynamic = "force-dynamic"`。**
  * 看着好像该加（"今天是哪天"每次请求都得重算），但 Next 16 文档里写明它等价于

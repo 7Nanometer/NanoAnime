@@ -7,7 +7,8 @@
 //    代价：这里**不能用 import、不能用 npm 包、不能写 TypeScript**，
 //    只能用浏览器原生的东西（self / caches / fetch / Response）。
 //
-// 它干的活：让「首页 / 日历 / 我的追番」在断网时也能打开。
+// 它干的活：让「首页 / 我的追番」在断网时也能打开。
+// （追番周表在 2026-10-06 M7 并进了首页，跟着首页一起离线可用；原 /calendar 页面已删。）
 //
 // 四条铁律（改这个文件之前先读一遍）：
 //   1. **页面内跳转的请求绝不缓存** —— 它和「地址栏直接打开」共用同一个网址，
@@ -41,12 +42,12 @@ const CURRENT_CACHES = [PAGES_CACHE, STATIC_CACHE, API_CACHE, IMAGE_CACHE];
  * 为什么要「预先」存，而不是等用户打开时顺手存：
  * 页面内点链接跳转（点顶栏）**不会产生文档请求**，走的是另一条路。
  * 所以 /my 的 HTML 如果只靠运行时缓存，得等用户手动在地址栏敲过一次 /my 才会有。
- * 预存这三个，保证「装好就能离线打开」。
+ * 预存这两个，保证「装好就能离线打开」。
  *
- * 只放用户点名的三个页面。搜索页离线没有意义（搜索本身就要联网），详情页是动态生成的、
- * 每部番一份，没法预先挑。
+ * 只放用户点名的页面（首页含追番周表）。搜索页离线没有意义（搜索本身就要联网），
+ * 详情页是动态生成的、每部番一份，没法预先挑。
  */
-const PRECACHE_PAGES = ["/", "/calendar", "/my"];
+const PRECACHE_PAGES = ["/", "/my"];
 
 /** 顺带预存的小文件（主屏图标、应用清单） */
 const PRECACHE_ASSETS = ["/manifest.webmanifest", "/icon", "/apple-icon"];
@@ -207,7 +208,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 6. 自家接口（首页那一墙、日历、我的追番的数据都从这儿来）
+  // 6. 自家接口（首页的追番周表、新番墙、我的追番的数据都从这儿来）
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(networkFirst(request, API_CACHE, API_TIMEOUT_MS));
     return;
@@ -491,8 +492,7 @@ function offlineFallbackResponse() {
 <p style="font-size:1.5rem;font-weight:700;margin:0 0 0.75rem;">当前处于离线状态</p>
 <p style="color:#a1a1aa;line-height:1.7;margin:0 0 1.5rem;">这个页面还没有缓存过，现在又没有网络，所以打不开。<br>下面这几个页面是可以离线打开的：</p>
 <p style="margin:0;display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
-<a href="/" style="color:#fafafa;border:1px solid #3f3f46;border-radius:0.5rem;padding:0.5rem 1rem;text-decoration:none;">首页</a>
-<a href="/calendar" style="color:#fafafa;border:1px solid #3f3f46;border-radius:0.5rem;padding:0.5rem 1rem;text-decoration:none;">日历</a>
+<a href="/" style="color:#fafafa;border:1px solid #3f3f46;border-radius:0.5rem;padding:0.5rem 1rem;text-decoration:none;">首页（含追番周表）</a>
 <a href="/my" style="color:#fafafa;border:1px solid #3f3f46;border-radius:0.5rem;padding:0.5rem 1rem;text-decoration:none;">我的追番</a>
 </p>
 </div>

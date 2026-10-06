@@ -6,7 +6,7 @@ import type { Anime, AnimeDetail, DateParts, MediaFormat, MediaSeason, MediaStat
 
 /**
  * 一周七天。下标正好是 `getUTCDay()` 的返回值（0 = 周日）。
- * 日历页要按「周一到周日」排，用 `WEEKDAYS[(i + 1) % 7]` 换算即可（见 lib/calendar.ts）。
+ * 追番周表要按「周一到周日」排，用 `WEEKDAYS[(i + 1) % 7]` 换算即可（见 lib/calendar.ts）。
  */
 export const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 
@@ -327,7 +327,7 @@ function pad2(value: number): string {
 
 /**
  * Unix 时间戳（秒）→ 北京时间的日期键，形如 `"2026-10-01"`。
- * 日历页用它把排期分到每一天，也用它判断「是不是今天」。
+ * 追番周表用它把排期分到每一天，也用它判断「是不是今天」。
  * 为什么不用 `toISOString()` 直接切：那样得到的是 UTC 日期，深夜播出的番会差一天。
  */
 export function getBeijingDateKey(airingAt: number): string {

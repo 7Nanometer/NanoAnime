@@ -1,5 +1,6 @@
-// 日历页的组装逻辑：算「本周是哪一周」→ 取这一周的全站排期 → 按天分好。
+// 追番周表的组装逻辑：算「本周是哪一周」→ 取这一周的全站排期 → 按天分好。
 // 放在 lib/ 里而不是页面/接口里（CLAUDE.md 第六条：页面组件里不塞长逻辑）。
+// 2026-10-06 M7 起它服务于首页的周表区块（原独立日历页已并入首页）。
 
 import { fetchWeekSchedule } from "@/lib/anilist";
 import { getBeijingDateKey, toBeijingTime, WEEKDAYS } from "@/lib/anime-display";
@@ -113,10 +114,10 @@ export function buildCalendar(entries: ScheduleEntry[], week: WeekRange): Calend
 }
 
 /**
- * 取本周日历。接口层面只调这一个函数。
+ * 取本周周表。接口层面只调这一个函数。
  *
  * 中文名走本地 data/title-zh.json（`getTitleZh`）——**不发任何请求**。
- * 那张表覆盖 AniList 人气前 2000 部左右，所以日历里**冷门番显示的还是日文原名**，
+ * 那张表覆盖 AniList 人气前 2000 部左右，所以周表里**冷门番显示的还是日文原名**，
  * 这是预期行为，不是 bug。
  *
  * @param now 当前时间。留着这个参数是为了能测「别的某一天」；正常调用不用传

@@ -8,7 +8,10 @@ const eslintConfig = defineConfig([
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
-    ".next/**",
+    // ⚠️ 用 `.next*/**` 而不是 `.next/**`：构建残余目录不止一种写法
+    // （实测出现过 `.next_devstale/`），漏一个就会把几万个压缩 JS 的行
+    // 当成源码来 lint、报出成百上千条假错误。
+    ".next*/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

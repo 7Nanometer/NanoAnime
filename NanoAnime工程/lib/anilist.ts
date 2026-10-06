@@ -11,6 +11,7 @@ import type {
   DateParts,
   Episode,
   ExternalLink,
+  MediaFormat,
   MediaSeason,
   PersonDetail,
   SeasonAnimeResult,
@@ -67,18 +68,44 @@ const ANIME_LIST_FIELDS = `
 `;
 
 /**
+ * 本季列表收录的作品形式（2026-10-06 M7 改版时用户拍板）。
+ *
+ * 排除 MUSIC（多为 MV / 宣传片）与 SPECIAL（多为特番 / 总集篇）——混进
+ * 「本季新番」墙会让人误解。实测近四个季度里 MUSIC 一部都没有、SPECIAL 每季
+ * 1~6 部、OVA 每季 0~4 部，加不加差别很小；这条规则的意义是**先把口径立住**，
+ * 将来某个 MV 扎堆的季度不至于污染首页。
+ */
+const SEASON_FORMATS: MediaFormat[] = ["TV", "TV_SHORT", "ONA", "MOVIE", "OVA"];
+
+/** 本季每页取多少部。50 是 AniList 顶层 Page 的实测上限 */
+const SEASON_PAGE_SIZE = 50;
+
+/**
+ * 本季翻页的硬上限。实测一季 96~110 部，2~3 页就到底；
+ * 这只是防呆，避免上游异常时死循环打爆接口（同 SCHEDULE_MAX_PAGES 的做法）。
+ */
+const SEASON_MAX_PAGES = 10;
+
+/**
  * 查询某一季的番剧。
  * 注意：AniList 没有「星期几」字段，播出星期只能从 nextAiringEpisode.airingAt
  * 这个时间戳自己换算——这是本查询里最容易记错的一点。
+ *
+ * ⚠️ 翻页的停止条件只有一个：**某一页返回 0 条**。
+ * 不能用 pageInfo.total（实测恒 5000 封顶，且同一查询翻不同页数字还会变），
+ * 也不能用 hasNextPage（实测空页之后还返回 true）。详见 CALENDAR_WEEK_QUERY 的注释。
+ *
+ * sort 固定 POPULARITY_DESC：**翻页必须靠稳定排序**，排序不稳会漏番或跨页重复。
  */
 const SEASON_ANIME_QUERY = `
-  query SeasonAnime($season: MediaSeason!, $seasonYear: Int!, $page: Int!, $perPage: Int!) {
+  query SeasonAnime($season: MediaSeason!, $seasonYear: Int!, $page: Int!, $perPage: Int!, $formats: [MediaFormat]) {
     Page(page: $page, perPage: $perPage) {
       media(
         type: ANIME
         season: $season
         seasonYear: $seasonYear
         isAdult: false
+        format_in: $formats
         sort: POPULARITY_DESC
       ) {
         ${ANIME_LIST_FIELDS}
@@ -184,11 +211,11 @@ const COLLECTION_ANIME_QUERY = `
 `;
 
 /**
- * 查一段时间里**全站**的播出排期——日历页用。
+ * 查一段时间里**全站**的播出排期——追番周表用。
  *
  * ⚠️ 注意这里用的是 `Page.airingSchedules`（复数），和详情页的
  * `Media.airingSchedule`（单数）**是两个完全不同的字段**：
- * 单数是「某一部番自己的排期」，复数是「全站所有番的排期」，日历要的是后者。
+ * 单数是「某一部番自己的排期」，复数是「全站所有番的排期」，周表要的是后者。
  *
  * 三处实测出来的坑（都会让代码"看起来对但结果是错的"）：
  * 1. `pageInfo.total` 又是 5000 封顶，**不能用它判断翻页**
@@ -468,7 +495,7 @@ interface AniListPopularityResponse {
   errors?: { message: string }[];
 }
 
-/** 日历查询的返回外形。数据在 data.Page.airingSchedules，不是 media */
+/** 周表查询的返回外形。数据在 data.Page.airingSchedules，不是 media */
 interface AniListScheduleResponse {
   data?: {
     Page?: {
@@ -512,41 +539,74 @@ export function getCurrentSeason(today: Date = new Date()): SeasonRef {
 }
 
 /**
- * 取本季新番，按人气从高到低。
- * @param perPage 取多少部
+ * 取本季新番**全部**（翻页取到空页为止），按人气从高到低。
+ *
+ * 2026-10-06 M7 首页改版：原来只取第 1 页（写死 20 部）当封面墙用；
+ * 首页改成「当季全部新番」之后翻页取全。实测一季 96~110 部（形式过滤后），
+ * 冷启动 3~4 次出网，之后 1 小时内全走服务端缓存。
  */
-export async function fetchSeasonAnime(perPage = 20): Promise<SeasonAnimeResult> {
+export async function fetchSeasonAnime(): Promise<SeasonAnimeResult> {
   const { season, seasonYear } = getCurrentSeason();
+  const anime: Anime[] = [];
 
-  const response = await fetch(ANILIST_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      query: SEASON_ANIME_QUERY,
-      variables: { season, seasonYear, page: 1, perPage },
-    }),
-    // Next.js 16 的 fetch 默认不缓存，必须显式开启。
-    // cache: "force-cache" 让 POST 请求也能进服务端缓存（官方文档明确支持 POST），
-    // revalidate 再把缓存寿命卡在 1 小时。
-    // 注意：这两个选项不能和 cache: "no-store" 混用，否则会双双失效。
-    cache: "force-cache",
-    next: { revalidate: CACHE_SECONDS },
+  for (let page = 1; page <= SEASON_MAX_PAGES; page++) {
+    const response = await fetch(ANILIST_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        query: SEASON_ANIME_QUERY,
+        variables: {
+          season,
+          seasonYear,
+          page,
+          perPage: SEASON_PAGE_SIZE,
+          formats: SEASON_FORMATS,
+        },
+      }),
+      // Next.js 16 的 fetch 默认不缓存，必须显式开启。
+      // cache: "force-cache" 让 POST 请求也能进服务端缓存（官方文档明确支持 POST），
+      // revalidate 再把缓存寿命卡在 1 小时。
+      // 注意：这两个选项不能和 cache: "no-store" 混用，否则会双双失效。
+      cache: "force-cache",
+      next: { revalidate: CACHE_SECONDS },
+    });
+
+    if (!response.ok) {
+      throw new Error(`AniList 请求失败：HTTP ${response.status}`);
+    }
+
+    const json = (await response.json()) as AniListResponse;
+
+    if (json.errors?.length) {
+      throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
+    }
+
+    const batch = json.data?.Page?.media ?? [];
+
+    // 空页 = 取完了。这是唯一的停止条件（原因见 SEASON_ANIME_QUERY 的注释）
+    if (batch.length === 0) {
+      break;
+    }
+
+    anime.push(...batch);
+  }
+
+  // 跨页去重的防护网：分页靠的是对方「按人气排序的稳定顺序」，万一上游在翻页
+  // 期间有数据变动，理论上可能同一部番出现在两页里。重复 id 会让 React 列表
+  // key 冲突、卡片出现两次。留一道防护，成本一个 Set；顺序保持第一次出现的位置。
+  const seen = new Set<number>();
+  const deduped = anime.filter((item) => {
+    if (seen.has(item.id)) {
+      return false;
+    }
+    seen.add(item.id);
+    return true;
   });
-
-  if (!response.ok) {
-    throw new Error(`AniList 请求失败：HTTP ${response.status}`);
-  }
-
-  const json = (await response.json()) as AniListResponse;
-
-  if (json.errors?.length) {
-    throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
-  }
 
   return {
     season,
     seasonYear,
-    anime: withEmptyZh(json.data?.Page?.media ?? []),
+    anime: withEmptyZh(deduped),
   };
 }
 

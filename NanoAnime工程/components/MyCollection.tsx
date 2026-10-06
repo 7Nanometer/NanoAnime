@@ -255,7 +255,7 @@ export function MyCollection() {
         <p className="text-sm leading-relaxed text-muted-foreground">
           还没追任何番。
           <br />
-          去首页或日历，进任意一部的详情页点「追番」，它就会出现在这里。
+          去首页，进任意一部的详情页点「追番」，它就会出现在这里。
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
@@ -265,10 +265,10 @@ export function MyCollection() {
             看本季新番
           </Link>
           <Link
-            href="/calendar"
+            href="/#calendar"
             className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:bg-surface hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            看本周日历
+            看本周更新
           </Link>
         </div>
       </div>
