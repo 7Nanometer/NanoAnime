@@ -95,7 +95,12 @@ export function SeriesTimeline({
           onClick={() => setExpanded(true)}
           className="self-start rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          展开全部 {entries.length} 部
+          {/*
+            ⚠️ 抓没抓全，按钮文案必须跟着变：
+            partial 时写「展开全部 N 部」会和下面的降级小字「没抓全」**自相矛盾**。
+            实测样本：Fate/Zero 要 10 轮 > 上限 8 轮，就是这一档。
+          */}
+          {partial ? `展开已抓到的 ${entries.length} 部` : `展开全部 ${entries.length} 部`}
         </button>
       ) : null}
 
