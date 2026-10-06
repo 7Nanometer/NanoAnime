@@ -8,6 +8,7 @@
 // 这里反过来，要读本地 JSON，只能在 Next 里用。混在一起脚本就跑不起来了。
 
 import rawIndex from "@/data/title-zh.json";
+import { rankLocalMatches, type LocalMatchCandidate } from "@/lib/local-match-rank";
 import type { SeasonAnimeResult } from "@/types/anime";
 import type { BangumiIndex } from "@/types/bangumi";
 
@@ -61,23 +62,29 @@ export function getBangumiSummary(anilistId: number): BangumiSummary | null {
 }
 
 /**
- * 拿中文关键词在本地对照表里找，返回命中的 AniList id。
+ * 拿中文关键词在本地对照表里找，返回命中的 AniList id，**已按相关度排好序**。
  *
  * 这是搜索功能**唯一**的中文入口：实测把本地 18 个中文名逐个喂给 AniList 的搜索接口，
  * 命中 0/18——AniList 根本没有中文索引。所以中文关键词只能靠这张表。
  *
- * 返回顺序沿用文件里的顺序（数字键的对象会按升序枚举，正好就是 id 升序）。
+ * 排序规则见 lib/local-match-rank.ts：先看匹配质量（完全相等 > 开头匹配 > 中间包含），
+ * 同一档位内按 AniList 人气值从高到低。
+ *
+ * ⚠️ 这里**不能**沿用「文件里的顺序」：JSON 的数字键会被 JS 按从小到大枚举，
+ * 那就等于「id 越小（越老）越靠前」。表只有 18 条时看不出来；扩到 1536 条后，
+ * 搜「之」这种宽泛词（命中 155 部）取前 24 条，拿到的是**最老的 24 部**而不是最相关的。
+ *
  * 关键词为空时返回空数组。
  */
 export function findLocalMatches(keyword: string): number[] {
-  const needle = keyword.trim().toLowerCase();
-  if (!needle) {
-    return [];
-  }
+  const candidates: LocalMatchCandidate[] = Object.entries(INDEX).map(([anilistId, entry]) => ({
+    anilistId: Number(anilistId),
+    titleZh: entry.title_zh,
+    // 旧版文件没有这个键 → undefined，交给 ?? 归一成 null（= 垫底，但不丢结果）
+    popularity: entry.popularity ?? null,
+  }));
 
-  return Object.entries(INDEX)
-    .filter(([, entry]) => entry.title_zh.toLowerCase().includes(needle))
-    .map(([anilistId]) => Number(anilistId));
+  return rankLocalMatches(candidates, keyword);
 }
 
 /**

@@ -43,6 +43,14 @@ export interface BangumiIndexEntry {
    * 旧版的 title-zh.json 里没有这个键，所以读取时要按「可能没有」处理。
    */
   summary: string | null;
+  /**
+   * AniList 的人气值（多少人看过 / 想看）。**搜索排序用**：
+   * 搜中文时，同一个匹配档位内按它从高到低排（规则见 lib/local-match-rank.ts）。
+   *
+   * 来源是 AniList 而不是 Bangumi——Bangumi 只负责中文名，别把两边的数据搞混。
+   * 旧版的 title-zh.json 里没有这个键，所以读取时同样要按「可能没有」处理。
+   */
+  popularity: number | null;
 }
 
 /** `data/title-zh.json` 的整体结构，键是 AniList 的 id（字符串形式，JSON 的键只能是字符串） */

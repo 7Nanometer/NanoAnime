@@ -25,6 +25,9 @@
 // 本脚本不是每次构建都跑。番剧表更新后想重新对齐，再跑一次即可。
 //
 // ─────────────────────────────────────────────────────────────
+// 除了中文名，本脚本还会顺带给每条补一个 **AniList 人气值**（搜索排序用，
+// 见 lib/local-match-rank.ts），所以跑完不需要再单独跑 npm run fetch-popularity。
+//
 // ⚠️ 这个脚本**只增不减**：表里已有的条目**永远不会被删掉**。
 //
 // 这条很要紧。反例：先跑了 top2000 攒下 1800 条，然后又跑一次默认的 season——
@@ -37,6 +40,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  fetchAnimePopularityByIds,
   fetchPopularAnime,
   fetchSeasonAnime,
   getCurrentSeason,
@@ -214,6 +218,51 @@ async function saveIndex(index: BangumiIndex): Promise<void> {
   await writeFile(OUTPUT_PATH, `${JSON.stringify(sorted, null, 2)}\n`, "utf8");
 }
 
+/** 一次查多少个 id 的人气值。50 是 AniList 单页上限 */
+const POPULARITY_BATCH_SIZE = 50;
+
+/**
+ * 给表里**还没有人气值**的条目补上。人气值是搜索排序用的（规则见 lib/local-match-rank.ts），
+ * 以后跑完 `--scope=season` 不用再单独跑 `npm run fetch-popularity`。
+ *
+ * 为什么不放在配对循环里逐条查：那样每部番要多发一次请求，2000 部就是 2000 次，白跑一倍时间。
+ * 这里改成攒起来按批查，50 个 id 一次请求。
+ *
+ * 失败只记一笔、**不中断整轮** —— 人气值只影响排序，缺了不影响中文名本身。
+ */
+async function fillMissingPopularity(index: BangumiIndex): Promise<void> {
+  const missing = Object.keys(index).filter((key) => typeof index[key].popularity !== "number");
+  if (missing.length === 0) {
+    return;
+  }
+
+  let filled = 0;
+  let failed = 0;
+
+  for (let i = 0; i < missing.length; i += POPULARITY_BATCH_SIZE) {
+    const batch = missing.slice(i, i + POPULARITY_BATCH_SIZE);
+    try {
+      const popularity = await fetchAnimePopularityByIds(batch.map(Number));
+      for (const key of batch) {
+        const value = popularity.get(Number(key));
+        if (typeof value === "number") {
+          // 只覆盖 popularity 这一个键，bangumi_id / title_zh / summary 原样带过去
+          index[key] = { ...index[key], popularity: value };
+          filled++;
+        }
+      }
+    } catch {
+      failed += batch.length;
+    }
+    if (i + POPULARITY_BATCH_SIZE < missing.length) {
+      await sleep(ANILIST_PAGE_DELAY_MS);
+    }
+  }
+
+  const tail = failed > 0 ? `，${failed} 条没取到（可稍后单独跑 npm run fetch-popularity）` : "";
+  console.log(`   └ 顺带补了 ${filled} 条人气值（排序用）${tail}`);
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // 主流程
 // ═══════════════════════════════════════════════════════════════════════
@@ -280,7 +329,13 @@ async function main(): Promise<void> {
         // summary 一并落盘：详情页的简介优先用这个中文的，拿不到才退回 AniList 的英文。
         // 空串统一写成 null，和项目里「缺数据就是 null」的习惯保持一致
         const summary = hit.summary?.trim() || null;
-        index[String(item.id)] = { bangumi_id: hit.id, title_zh: hit.name_cn, summary };
+        // popularity 先写 null，稍后由 fillMissingPopularity() 按批补齐（换批查省请求）
+        index[String(item.id)] = {
+          bangumi_id: hit.id,
+          title_zh: hit.name_cn,
+          summary,
+          popularity: null,
+        };
         matched++;
         line += `${hit.name_cn}   [bgm ${hit.id} / ${hit.date || "无日期"} / 简介 ${summary ? summary.length + " 字" : "无"}]`;
       } else {
@@ -297,6 +352,7 @@ async function main(): Promise<void> {
     sinceCheckpoint++;
     if (sinceCheckpoint >= CHECKPOINT_EVERY) {
       sinceCheckpoint = 0;
+      await fillMissingPopularity(index);
       await saveIndex(index);
       const elapsed = Date.now() - startedAt;
       const done = i + 1;
@@ -314,6 +370,7 @@ async function main(): Promise<void> {
 
   console.log("\n" + rows.join("\n"));
 
+  await fillMissingPopularity(index);
   await saveIndex(index);
 
   const finalCount = Object.keys(index).length;

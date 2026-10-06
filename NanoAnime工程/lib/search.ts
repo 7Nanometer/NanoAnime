@@ -24,11 +24,12 @@ export const SEARCH_RESULT_LIMIT = 24;
  * 排序理由：AniList 对中文的命中率是 0，用户输中文时命中的**只可能**来自本地表，
  * 所以中文命中优先不会跟 AniList 的相关度排序打架。
  *
- * ⚠️ 表已经从「本季 18 部」扩到「AniList 人气前 2000 部」（M5-0）。
- * 表小的时候这个排序没问题；表大之后，一个宽泛的中文词会命中很多条，
- * 而下面 `findLocalMatches` 是按 id 升序返回的、又只取前 24 条——
- * **拿到的是"id 最小的 24 部"而不是最相关的 24 部**。
- * 这一轮按约束没动搜索逻辑，记在这里免得将来当成新 bug 查。
+ * 本地命中之间的先后由 `findLocalMatches` 决定（规则在 lib/local-match-rank.ts）：
+ * 先看匹配质量（完全相等 > 开头匹配 > 中间包含），同档位内按 AniList 人气值从高到低。
+ *
+ * ⚠️ 这里以前是「文件里的顺序」（= id 升序 = 越老越靠前）。表只有 18 条时看不出来；
+ * M5-0 扩到 1536 条后，搜「之」会命中 155 部、只取前 24，等于专挑最老的 24 部。
+ * 已按上面的规则修掉——**修的是排序，匹配方式（转小写 includes）和返回条数都没动**。
  */
 export async function searchAnime(keyword: string): Promise<SearchResult> {
   const trimmed = keyword.trim();
@@ -52,7 +53,7 @@ export async function searchAnime(keyword: string): Promise<SearchResult> {
     }
   }
 
-  // 本地中文命中的排前面（按 id 升序），AniList 的结果接在后
+  // 本地中文命中的排前面（本地那一段已按相关度排好），AniList 的结果接在后
   const ordered: Anime[] = [];
   const seen = new Set<number>();
 

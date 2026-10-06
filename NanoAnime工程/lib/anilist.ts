@@ -113,6 +113,27 @@ const ANIME_BY_IDS_QUERY = `
 `;
 
 /**
+ * 只取「id + 人气值」。
+ *
+ * 用途：给本地中文对照表补 `popularity`（`scripts/fetch-popularity.ts`），
+ * 供搜索排序用（规则见 lib/local-match-rank.ts）。
+ *
+ * ⚠️ 特意**不**复用 ANIME_LIST_FIELDS：那是列表类查询共用的字段块，
+ * 往里加 `popularity` 会让 `Anime` 类型和所有页面都得跟着改，
+ * 而我们这里只要一个数字。字段越少，这个查询越不容易受 AniList 改接口影响。
+ */
+const POPULARITY_BY_IDS_QUERY = `
+  query PopularityByIds($ids: [Int]) {
+    Page(page: 1, perPage: 50) {
+      media(id_in: $ids, type: ANIME) {
+        id
+        popularity
+      }
+    }
+  }
+`;
+
+/**
  * 按 id 批量取番剧**并带上剧集排期**——`/my` 追番列表打钩用。
  *
  * 和上面那个 ANIME_BY_IDS_QUERY 的区别就是多了 `airingSchedule`：
@@ -250,6 +271,20 @@ interface AniListWithScheduleResponse {
       media?: (Anime & {
         airingSchedule: { nodes: { episode: number; airingAt: number }[] } | null;
       })[];
+    };
+  };
+  errors?: { message: string }[];
+}
+
+/** 只查人气值时的返回外形。比 Anime 窄得多——只有 id 和人气值两个字段 */
+interface AniListPopularityResponse {
+  data?: {
+    Page?: {
+      media?: {
+        id: number;
+        /** 多少人看过 / 想看。AniList 上冷门作品可能很小，但不会是 null */
+        popularity: number;
+      }[];
     };
   };
   errors?: { message: string }[];
@@ -441,6 +476,46 @@ export async function fetchAnimeByIds(ids: number[]): Promise<Anime[]> {
   }
 
   return withEmptyZh(json.data?.Page?.media ?? []);
+}
+
+/**
+ * 按 id 批量取**人气值**，返回「id → 人气值」的对照表。
+ *
+ * 用途：给本地中文对照表补排序用的 `popularity` 字段（`scripts/fetch-popularity.ts`）。
+ * 这个函数是给**离线批量脚本**用的，应用运行时不用它，所以和 `fetchPopularAnime` 一样
+ * 刻意不加 `cache` / `next.revalidate`（那两个是给 Next 运行时用的）。
+ *
+ * ⚠️ 一次最多 50 个 id —— AniList 的单页上限，超了会静默截断。
+ * 查不到的 id 不会出现在返回的 Map 里（调用方据此判断"没取到"，不要当成 0）。
+ *
+ * @param ids 一批作品 id
+ */
+export async function fetchAnimePopularityByIds(ids: number[]): Promise<Map<number, number>> {
+  if (ids.length === 0) {
+    return new Map();
+  }
+
+  const response = await fetch(ANILIST_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ query: POPULARITY_BY_IDS_QUERY, variables: { ids } }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`AniList 取人气值失败：HTTP ${response.status}`);
+  }
+
+  const json = (await response.json()) as AniListPopularityResponse;
+
+  if (json.errors?.length) {
+    throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
+  }
+
+  const result = new Map<number, number>();
+  for (const item of json.data?.Page?.media ?? []) {
+    result.set(item.id, item.popularity);
+  }
+  return result;
 }
 
 /**
