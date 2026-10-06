@@ -1,6 +1,7 @@
 // 展示层：把 AniList 的数据整理成卡片上要显示的文字。
 // 所有「字段可能缺失」的判断都集中在这里，页面组件里就不用到处写 ?? 兜底了。
 
+import type { SeriesRelationType } from "@/lib/series-graph";
 import type { Anime, AnimeDetail, DateParts, MediaFormat, MediaSeason, MediaStatus } from "@/types/anime";
 
 /**
@@ -145,6 +146,53 @@ export function getMetaLine(anime: Anime): string {
 /** 作品类型的中文名，例如「TV 动画」 */
 export function getFormatLabel(format: MediaFormat): string {
   return FORMAT_LABELS[format];
+}
+
+/**
+ * 年表里用的**短**形式标签。
+ *
+ * 和 getFormatLabel() 的区别：那个是详情页信息栏用的（「TV 动画」），
+ * 在年表这种一行一条的窄列表里太长，会把标题挤没。
+ *
+ * AniList 将来加了新形式就**原样显示**，不硬翻。
+ */
+const SHORT_FORMAT_LABELS: Record<string, string> = {
+  TV: "TV",
+  TV_SHORT: "泡面番",
+  MOVIE: "剧场版",
+  SPECIAL: "特别篇",
+  OVA: "OVA",
+  ONA: "网络",
+  MUSIC: "音乐",
+};
+
+/** 年表里的形式标签。取不到时给破折号，绝不留空 */
+export function getShortFormatLabel(format: string | null): string {
+  if (!format) {
+    return DASH;
+  }
+  return SHORT_FORMAT_LABELS[format] ?? format;
+}
+
+/**
+ * 年表里给**非正片**打的标签。
+ *
+ * 续作/前作不打标——它们就是正片本身，打上去每行都是标签反而看不清。
+ * 只有「总集篇 / 外传 / 番外 / 另一版本」这类才需要提醒用户「这不是新的一季」。
+ */
+export function getSeriesTag(type: SeriesRelationType | null): string | null {
+  switch (type) {
+    case "ALTERNATIVE":
+      return "另一版本";
+    case "SUMMARY":
+      return "总集篇";
+    case "SIDE_STORY":
+      return "外传";
+    case "SPIN_OFF":
+      return "番外";
+    default:
+      return null;
+  }
 }
 
 /** 评分的显示值。AniList 是 0~100 的整数，没有评分时给破折号 */

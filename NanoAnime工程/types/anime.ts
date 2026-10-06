@@ -1,5 +1,7 @@
 // 番剧相关的类型定义。字段名与 AniList 返回的保持一致，避免来回转换时出错。
 
+import type { SeriesEdgeInfo } from "@/lib/series-graph";
+
 /**
  * 季度。AniList 的划分是写死的，与月份一一对应：
  * WINTER = 1~3 月，SPRING = 4~6 月，SUMMER = 7~9 月，FALL = 10~12 月。
@@ -128,6 +130,51 @@ export interface ExternalLink {
 }
 
 /**
+ * 制作人员名单里的一位。
+ *
+ * ⚠️ **已经按 AniList 的人物 id 去过重**（实测 20/20 部都有同一人因多个职位被反复登记，
+ * 青之芦苇第二季第 1 页 25 条里只有 20 个不重复的人）。
+ * 去重只能按 id，不能按姓名——按姓名会把同名的不同人合并掉。
+ */
+export interface StaffMember {
+  /** AniList 的 Staff id。人物页要用它（本轮还不链） */
+  id: number;
+  /** 日文写法（AniList 的 native）。中文读者大部分能认，但复制去搜搜不到 */
+  nameNative: string | null;
+  /** 罗马音。要搜人时用这个 */
+  nameFull: string | null;
+  /**
+   * 职位（AniList 的原文，**可能带集数后缀**，如 `Director (eps 1-479)`）。
+   * 同一人身兼多职时按首次出现的顺序全部收在这里，界面用「 / 」连起来显示。
+   *
+   * ⚠️ 这里存的是**原文**，不是中文——转中文（去括号 + 查映射表）在展示层做，
+   * 见 `lib/staff-roles.ts` 的 `getRoleLabel()`。这样 `lib/anilist.ts` 不必引入
+   * 新依赖（它要被 `node scripts/xxx.ts` 按相对路径 import，多一个别名导入就当场跑不起来）。
+   * 取不到职位时是空数组——界面**不显示空串、不显示空分隔符**。
+   */
+  roles: string[];
+}
+
+/**
+ * 声优名单里的一行。**以声优为主体**，角色名只是挂靠。
+ *
+ * 为什么不以角色为主体：实测角色名 **47.9% 连一个汉字都没有**（主角名常写成片假名，
+ * 比如「エレン・イェーガー」），中文读者认不出；而声优名 91% 是汉字，能认。
+ */
+export interface CastMember {
+  /** AniList 的 Staff id（声优和制作人员共用一套 id）。人物页要用它（本轮还不链） */
+  id: number;
+  /** 声优名的日文写法 */
+  nameNative: string | null;
+  /** 声优名的罗马音 */
+  nameFull: string | null;
+  /** 他配的角色。角色名可能是 null（实测有），也可能全是假名——所以只作小字附注 */
+  characterName: string | null;
+  /** 这个角色在片中的分量：MAIN（主角）/ SUPPORTING / BACKGROUND。用于排序 */
+  characterRole: string;
+}
+
+/**
  * 番剧详情（详情页用）。
  * 继承 Anime，这样 lib/anime-display.ts 里现成的 getPrimaryTitle / getAiringStatus
  * 等函数能直接复用，不必为详情页再写一套。
@@ -148,7 +195,34 @@ export interface AnimeDetail extends Anime {
    * 要显示「哪里能看」请走 `lib/watch.ts` 的 `buildWatchLinks()`，那里会筛掉空壳链接和播放地址。
    */
   externalLinks: ExternalLink[];
+  /**
+   * 这部作品的关系边，**原样存着（含白名单外那些）**。
+   * 要显示系列年表请走 `lib/series.ts` 的 `fetchSeriesTimeline()`——
+   * 白名单过滤和串图都在那边（规则本体在 lib/series-graph.ts）。
+   */
+  relations: SeriesEdgeInfo[];
+  /**
+   * 制作人员，**前 50 条（2 页）去重后**的结果。
+   * 取 2 页是实测定的：四个核心职位（音乐/系列构成/人设/美术监督）最靠后落在第 27 位，
+   * 1 页（25 条）拿不到，2 页正好。
+   * ⚠️ 这不等于「全部」——实测进击的巨人在 150 条时仍未到底，界面上必须如实标注。
+   */
+  staff: StaffMember[];
+  /**
+   * 声优名单，**只含「有日语声优」的角色**（实测配齐率 96.7%、主角档 100%）。
+   * 没有声优的角色不进这个名单——名单是以声优为主体的，没有声优就没有主体。
+   */
+  cast: CastMember[];
+  /** 被 `cast` 排除掉的角色数（没有声优的）。界面底部要如实说出这个数字，不能让它们无声消失 */
+  castMissingCount: number;
 }
+
+/**
+ * 系列年表里的一行。
+ * 类型本体定义在 `lib/series-graph.ts`（那里是规则的唯一出处），这里转出去，
+ * 好让客户端组件用一句 `import type { SeriesEntry } from "@/types/anime"` 拿到。
+ */
+export type { SeriesEntry } from "@/lib/series-graph";
 
 /**
  * 排期里的一条：某部番的某一集，在某个时刻播出。

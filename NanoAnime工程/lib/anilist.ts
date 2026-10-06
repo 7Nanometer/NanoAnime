@@ -1,10 +1,12 @@
 // AniList 数据访问层。
 // 铁律（CLAUDE.md 第五条）：第三方请求只能走这里，页面组件里不许裸写 fetch。
 
+import type { SeriesEdgeInfo, SeriesRecord } from "@/lib/series-graph";
 import type {
   Anime,
   AnimeDetail,
   AnimeWithSchedule,
+  CastMember,
   DateParts,
   Episode,
   ExternalLink,
@@ -12,12 +14,23 @@ import type {
   SeasonAnimeResult,
   SeasonRef,
   ScheduleEntry,
+  StaffMember,
 } from "@/types/anime";
 
 const ANILIST_ENDPOINT = "https://graphql.anilist.co";
 
 /** 服务端缓存时长：1 小时。AniList 限流 30~90 次/分钟，靠缓存把外部请求压到最低 */
 const CACHE_SECONDS = 60 * 60;
+
+/**
+ * 系列关系（年表补抓）的缓存时长：24 小时。
+ *
+ * 比详情长得多，理由是**这块数据几乎不变**——一个系列一年才多一部续作。
+ * 而它偏偏是最贵的：补抓一个系列最坏要 4 次请求，撞上 AniList 的 30 次/分钟限额就降级了。
+ * 缓存给长一点，等于把「同一个人反复看同一个系列」的成本压到接近 0。
+ * （铁律是「缓存 ≥ 1 小时」，这里给 24 小时不违反。）
+ */
+const SERIES_CACHE_SECONDS = 24 * 60 * 60;
 
 /** 距下一季开播不足这么多天时，就提前显示下一季（季末大家已经在看新番表了） */
 const SEASON_LEAD_DAYS = 21;
@@ -224,6 +237,53 @@ const ANIME_DETAIL_QUERY = `
       airingSchedule(perPage: 50) { nodes { episode airingAt } }
       streamingEpisodes { title }
       externalLinks { url site type }
+
+      relations {
+        edges {
+          relationType(version: 2)
+          node { id type title { native } format startDate { year } }
+        }
+      }
+
+      staffPage1: staff(page: 1, perPage: 25, sort: [RELEVANCE]) {
+        edges { role node { id name { native full } } }
+      }
+      staffPage2: staff(page: 2, perPage: 25, sort: [RELEVANCE]) {
+        edges { role node { id name { native full } } }
+      }
+
+      characters(page: 1, perPage: 25, sort: [ROLE, RELEVANCE, ID]) {
+        edges {
+          role
+          node { name { native full } }
+          voiceActors(language: JAPANESE) { id name { native full } }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * 按 id 批量取「关系 + 基本信息」，给系列年表**补抓**用（第一层已经由详情查询带回来了）。
+ *
+ * ⚠️ 只取 id / type 之外**不带** staff、characters —— 补抓是为了把图走完，
+ * 每多带一块字段，响应就大一截，而 30 次/分钟的限额下我们可能要走好几轮。
+ */
+const MEDIA_RELATIONS_QUERY = `
+  query MediaRelations($ids: [Int]) {
+    Page(page: 1, perPage: 50) {
+      media(id_in: $ids, type: ANIME) {
+        id
+        title { native }
+        format
+        startDate { year }
+        relations {
+          edges {
+            relationType(version: 2)
+            node { id type title { native } format startDate { year } }
+          }
+        }
+      }
     }
   }
 `;
@@ -253,6 +313,113 @@ interface AnimeDetailResponse {
       airingSchedule: { nodes: { episode: number; airingAt: number }[] } | null;
       streamingEpisodes: { title: string | null }[] | null;
       externalLinks: ExternalLink[] | null;
+      relations: {
+        edges: {
+          relationType: string;
+          node: {
+            id: number;
+            type: string;
+            title: { native: string | null };
+            format: string | null;
+            startDate: { year: number | null } | null;
+          };
+        }[];
+      } | null;
+      staffPage1: { edges: AniListStaffEdge[] } | null;
+      staffPage2: { edges: AniListStaffEdge[] } | null;
+      characters: { edges: AniListCharacterEdge[] } | null;
+    };
+  };
+  errors?: { message: string }[];
+}
+
+/** 制作人员的一条边。同一个人的多条边（不同职位）要去重合并，见 buildStaff() */
+interface AniListStaffEdge {
+  role: string;
+  node: { id: number; name: { native: string | null; full: string | null } };
+}
+
+/** 角色的一条边。带该角色的日语声优（可能为空数组——实测有角色在 AniList 上没配音优） */
+interface AniListCharacterEdge {
+  role: string;
+  node: { name: { native: string | null; full: string | null } };
+  voiceActors: { id: number; name: { native: string | null; full: string | null } }[];
+}
+
+/**
+ * 按 id 批量取「关系边 + 基本信息」，给系列年表补抓用。
+ *
+ * ⚠️ `pageInfo.total` / `hasNextPage` 实测都是坏的（同一部番不同页报出不同的总数），
+ * 所以这个函数**不做翻页**——它只按传进来的 id 取一轮，翻页的循环在 lib/series.ts 里。
+ *
+ * ⚠️ 顶层 `Page.perPage` 上限是 50（实测可用）。注意这跟**嵌套连接**不一样：
+ * `Media.staff` / `Media.characters` 的 perPage 被静默截断成 25（传 100 也只回 25）。
+ *
+ * @param ids 一批作品 id。**调用方应先把 id 排序**——相同的一组 id 生成相同的请求，
+ *            Next 的服务端缓存才命得中
+ */
+export async function fetchMediaRelations(ids: number[]): Promise<SeriesRecord[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const response = await fetch(ANILIST_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ query: MEDIA_RELATIONS_QUERY, variables: { ids } }),
+    cache: "force-cache",
+    // 系列结构几乎不变（一年才多一部续作），所以这块缓存给得比详情长
+    next: { revalidate: SERIES_CACHE_SECONDS },
+  });
+
+  if (!response.ok) {
+    throw new Error(`AniList 系列关系请求失败：HTTP ${response.status}`);
+  }
+
+  const json = (await response.json()) as AniListRelationsResponse;
+
+  if (json.errors?.length) {
+    throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
+  }
+
+  return (json.data?.Page?.media ?? []).map((media) => ({
+    id: media.id,
+    titleNative: media.title.native,
+    format: media.format,
+    year: media.startDate?.year ?? null,
+    relations: (media.relations?.edges ?? []).map((edge) => ({
+      type: edge.relationType,
+      id: edge.node.id,
+      nodeType: edge.node.type,
+      titleNative: edge.node.title.native,
+      format: edge.node.format,
+      year: edge.node.startDate?.year ?? null,
+    })),
+  }));
+}
+
+/** 系列关系查询的返回外形。只要年表画得出来所需的最小字段 */
+interface AniListRelationsResponse {
+  data?: {
+    Page?: {
+      media?: {
+        id: number;
+        title: { native: string | null };
+        format: string | null;
+        startDate: { year: number | null } | null;
+        relations: {
+          edges: {
+            relationType: string;
+            node: {
+              id: number;
+              type: string;
+              title: { native: string | null };
+              format: string | null;
+              startDate: { year: number | null } | null;
+            };
+          }[];
+        } | null;
+      }[];
     };
   };
   errors?: { message: string }[];
@@ -681,7 +848,99 @@ export async function fetchAnimeDetail(id: number): Promise<AnimeDetail | null> 
     // 原样存着，**筛不筛是展示层的事**（见 lib/watch.ts）。这里不做任何取舍，
     // 免得以后想放宽规则还得回头改查询
     externalLinks: media.externalLinks ?? [],
+    // 关系边也**原样存着**（含白名单外的）。白名单和串图在 lib/series.ts，
+    // 规则本体在 lib/series-graph.ts —— 这里不做筛选，免得以后放宽规则又要回头改查询
+    relations: (media.relations?.edges ?? []).map(
+      (edge): SeriesEdgeInfo => ({
+        type: edge.relationType,
+        id: edge.node.id,
+        // 对面是动画还是漫画/小说 —— 年表只跟动画（见 lib/series-graph.ts 的 isFollowable）
+        nodeType: edge.node.type,
+        titleNative: edge.node.title.native,
+        format: edge.node.format,
+        year: edge.node.startDate?.year ?? null,
+      }),
+    ),
+    staff: buildStaff(media.staffPage1?.edges ?? [], media.staffPage2?.edges ?? []),
+    ...buildCast(media.characters?.edges ?? []),
   };
+}
+
+/**
+ * 把两页 staff 合成一份**去重**的名单。
+ *
+ * ⚠️ 去重是硬约束，实测撞出来的：20/20 部都有同一人因多个职位被反复登记
+ * （青之芦苇第二季第 1 页 25 条里只有 20 个不重复的人；进击的巨人的制片人一人占 3 条）。
+ *
+ * ⚠️ **只能按 AniList 的人物 id 去重，不能按姓名**——按姓名会把同名的不同人合并掉。
+ * 反例：钢炼 FA 的 50 条里一个重复都没有，按姓名去重仍然能过；
+ * 但换个有同名者的番就会静默丢人，且查不出来。
+ *
+ * 合并后的位置取**这个人第一次出现的位置**（AniList 按相关度排序，先出现 = 更要紧）。
+ */
+function buildStaff(...pages: AniListStaffEdge[][]): StaffMember[] {
+  const order: number[] = [];
+  const byId = new Map<number, StaffMember>();
+
+  for (const edges of pages) {
+    for (const edge of edges) {
+      const existing = byId.get(edge.node.id);
+      if (existing) {
+        // 同一个人的第二个职位：合进同一行，不另起一行
+        if (!existing.roles.includes(edge.role)) {
+          existing.roles.push(edge.role);
+        }
+        continue;
+      }
+      byId.set(edge.node.id, {
+        id: edge.node.id,
+        nameNative: edge.node.name.native,
+        nameFull: edge.node.name.full,
+        roles: edge.role ? [edge.role] : [],
+      });
+      order.push(edge.node.id);
+    }
+  }
+
+  return order.map((id) => byId.get(id)!);
+}
+
+/**
+ * 把角色边转成**以声优为主体**的名单。
+ *
+ * - 没有日语声优的角色**不进名单**，只把数量数出来（界面要如实说出这个数字，
+ *   不能让它们无声消失）。实测：千与千寻 16 个角色里 4 个没有声优。
+ * - 同一个声优配了多个角色时只留第一条（名单是「声优名单」，一个人占一行）。
+ */
+function buildCast(edges: AniListCharacterEdge[]): {
+  cast: CastMember[];
+  castMissingCount: number;
+} {
+  const seenVoiceActors = new Set<number>();
+  const cast: CastMember[] = [];
+  let castMissingCount = 0;
+
+  for (const edge of edges) {
+    const voiceActor = edge.voiceActors[0];
+    if (!voiceActor) {
+      castMissingCount++;
+      continue;
+    }
+    if (seenVoiceActors.has(voiceActor.id)) {
+      continue;
+    }
+    seenVoiceActors.add(voiceActor.id);
+    cast.push({
+      id: voiceActor.id,
+      nameNative: voiceActor.name.native,
+      nameFull: voiceActor.name.full,
+      // 角色名实测可能是 null，也可能整串是假名——所以只作小字附注，读不出也不影响主体
+      characterName: edge.node.name.native ?? edge.node.name.full,
+      characterRole: edge.role,
+    });
+  }
+
+  return { cast, castMissingCount };
 }
 
 /**

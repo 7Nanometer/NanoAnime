@@ -2,10 +2,14 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
+import { CastList } from "@/components/CastList";
 import { EpisodeList } from "@/components/EpisodeList";
 import { FollowButton } from "@/components/FollowButton";
+import { SeriesTimeline } from "@/components/SeriesTimeline";
+import { StaffList } from "@/components/StaffList";
 import { WatchLinks } from "@/components/WatchLinks";
 import { fetchAnimeDetail } from "@/lib/anilist";
+import { fetchSeriesTimeline } from "@/lib/series";
 import {
   buildEpisodeRows,
   formatDateRange,
@@ -72,6 +76,16 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
   // 简介也是 M1-0 那张离线表里带的（scripts/fetch-title-zh.ts 抓的 summary），
   // 读本地文件，**不请求 Bangumi**。没配对上就是 null，退回 AniList 的英文简介
   const summary = getBangumiSummary(detail.id);
+
+  // 系列年表。第一层（自己 + 直接关系）已经在详情查询里带回来了，
+  // 这里只负责把图走完——最多再发 4 次请求，失败就降级（不抛异常）
+  const timeline = await fetchSeriesTimeline({
+    id: detail.id,
+    titleNative: detail.title.native,
+    format: detail.format,
+    year: detail.startDate?.year ?? null,
+    relations: detail.relations,
+  });
 
   // 信息栏。**每一项都必须有值**，缺数据的显示「—」，不留空
   const infoRows: { label: string; value: string }[] = [
@@ -179,6 +193,35 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
       <section className="mt-10">
         <h2 className="mb-3 text-lg font-medium">哪里能看</h2>
         <WatchLinks detail={detail} />
+      </section>
+
+      {/*
+        系列年表。
+        ⚠️ 只有一部作品时**整块不显示**——一行的「年表」是噪音。
+        实测触发这个状态的有：千与千寻（只有 1 条 CHARACTER 关系）、
+        魔法使いの夜（7 条关系但过滤后 0 条）、赛博朋克 边缘行者 2（只有 1 条 OTHER）。
+      */}
+      {timeline.entries.length > 1 ? (
+        <section className="mt-10">
+          <h2 className="mb-3 text-lg font-medium">系列年表</h2>
+          <SeriesTimeline
+            entries={timeline.entries}
+            currentId={detail.id}
+            partial={timeline.partial}
+          />
+        </section>
+      ) : null}
+
+      {/* 制作人员 */}
+      <section className="mt-10">
+        <h2 className="mb-3 text-lg font-medium">制作人员</h2>
+        <StaffList staff={detail.staff} />
+      </section>
+
+      {/* 声优。以声优为主体，角色只作挂靠 */}
+      <section className="mt-10">
+        <h2 className="mb-3 text-lg font-medium">声优</h2>
+        <CastList cast={detail.cast} missingCount={detail.castMissingCount} />
       </section>
     </main>
   );
