@@ -24,24 +24,75 @@ export function getTitleZh(anilistId: number): string | null {
 }
 
 /**
- * 判断一段文字是不是日文。
+ * Bangumi 简介里「原文分界」的标记。Bangumi 的简介常是这个结构：
  *
- * 用假名判定：简体中文正文里基本不会出现平假名/片假名，而日文必然有。
- * 实测印证过这条判据——本季新番 17 条简介**全部**命中假名（都是日文原文），
- * 而老番（葬送的芙莉莲、进击的巨人、鬼灭之刃…）6 条全是 0 个假名（都是中文）。
+ *   中文译文……
+ *   [简介原文]
+ *   日文原文……
+ *
+ * 实测 1560 条有简介的条目里 **195 条**带这个标记（2026-10-06 核过全表）。
+ * 语言判定和展示都只看**标记前的那半段**（译文位）——整段一起判会把
+ * 中文简介误标成日文（见下面 isJapaneseParagraph 的注释）。
  */
-function hasKana(text: string): boolean {
-  return /[぀-ゟ゠-ヿ]/.test(text);
+const ORIGINAL_MARKER = "[简介原文]";
+
+/**
+ * 平假名占比阈值：平假名 ÷ (平假名 + 汉字) ≥ 0.2 才算日文。
+ *
+ * ⚠️ 这个 0.2 是拿全部 1560 条量出来的空档：中文译文段最高 **0.188**（辉夜姬物语，
+ * 正文里引了日文原名），真日文段最低 **0.225**，阈值正好落在中间。
+ *
+ * 为什么**不能**用旧的「出现任何假名就算日文」：中文译文里夹片假名/平假名很常见
+ * （人名、术语、日文原名，如「灵能百分百」的「モブ」、「银魂」的「あまんと」），
+ * 旧规则把其中 **272 条中文（或中文+日文混排）简介误标成了日文**——
+ * 后果是详情页在一段中文上面写「暂无中文」，说假话。
+ *
+ * 也不能只看片假名——恰恰是片假名最容易出现在中文译文里（人名/招式名/术语），
+ * 平假名才是日文句子真正的信号（助词、词尾）。
+ */
+const JAPANESE_HIRAGANA_RATIO = 0.2;
+
+/** 数一段文字里某类字符的个数 */
+function countChars(text: string, pattern: RegExp): number {
+  return text.match(pattern)?.length ?? 0;
+}
+
+/** 按平假名占比判断这一段是不是日文（判定规则见 JAPANESE_HIRAGANA_RATIO 的注释） */
+function isJapaneseParagraph(text: string): boolean {
+  const hiragana = countChars(text, /[぀-ゟ]/g);
+  const han = countChars(text, /[一-鿿㐀-䶿]/g);
+  if (hiragana + han === 0) {
+    return false;
+  }
+  return hiragana / (hiragana + han) >= JAPANESE_HIRAGANA_RATIO;
+}
+
+/**
+ * 把 Bangumi 的原始简介拆成「正文 + 是不是日文」。
+ * 正文取 `[简介原文]` 标记前的那半段；标记前为空时退回标记后（整篇都是原文）。
+ */
+function splitSummary(raw: string): BangumiSummary {
+  const markerAt = raw.indexOf(ORIGINAL_MARKER);
+  const primary = (markerAt >= 0 ? raw.slice(0, markerAt) : raw).trim();
+
+  if (primary === "") {
+    return {
+      text: raw.slice(markerAt + ORIGINAL_MARKER.length).trim(),
+      isJapanese: true,
+    };
+  }
+
+  return { text: primary, isJapanese: isJapaneseParagraph(primary) };
 }
 
 /** 简介 + 它的语言 */
 export interface BangumiSummary {
   text: string;
   /**
-   * true = 这条是**日文原文**。
+   * true = 这段正文是**日文原文**。
    *
    * ⚠️ 为什么会有日文：Bangumi 的新条目刚建立时，简介里填的是官方日文原文，
-   * 要等志愿者后来翻译成中文。**本季 17 条全是日文**（老番才是中文）。
+   * 要等志愿者后来翻译成中文。实测全表 1560 条里有 255 条如此。
    * 界面必须如实标注这一点，不能让用户以为中文简介加载错了。
    */
   isJapanese: boolean;
@@ -52,13 +103,17 @@ export interface BangumiSummary {
  *
  * 详情页的简介优先用这个，拿不到才退回 AniList 的英文简介。
  * 注意旧版的 title-zh.json 里没有 summary 这个键，所以这里用 `?.` 兜着。
+ *
+ * 返回的 text 只含**标记前的主段**——`[简介原文]` 后面的日文原文不再细给
+ * （2026-10-06 M7 定的：详情页此前会把两段连在一起显示，还会在中文上面
+ * 挂「只有日文简介」的标注，是同一批文案失效问题）。
  */
 export function getBangumiSummary(anilistId: number): BangumiSummary | null {
-  const text = INDEX[String(anilistId)]?.summary?.trim();
-  if (!text) {
+  const raw = INDEX[String(anilistId)]?.summary?.trim();
+  if (!raw) {
     return null;
   }
-  return { text, isJapanese: hasKana(text) };
+  return splitSummary(raw);
 }
 
 /**

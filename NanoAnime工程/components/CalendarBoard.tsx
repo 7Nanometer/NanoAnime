@@ -166,6 +166,9 @@ export function CalendarBoard() {
 
   const first = data.days[0];
   const last = data.days[data.days.length - 1];
+  // 今天更新的集数。参考站副标题是「11 部番剧今日更新」，我们按"集"数——
+  // 排期数据本身就是按集给的，说"部"会遇到同一部一天更两集时数字对不上
+  const todayCount = data.days.find((day) => day.isToday)?.entries.length ?? 0;
 
   return (
     <section>
@@ -173,7 +176,8 @@ export function CalendarBoard() {
         {/* 挂首页后标题降一级（h2）——页面级的 h1 留给下面的新番墙 */}
         <h2 className="section-mark text-2xl font-bold tracking-tight">追番周表</h2>
         <p className="mt-2 text-sm tabular-nums text-muted-foreground">
-          {first.dateLabel} ~ {last.dateLabel} · 本周共 {data.totalCount} 集
+          {first.dateLabel} ~ {last.dateLabel} · 本周共 {data.totalCount} 集 ·{" "}
+          {todayCount > 0 ? `今天 ${todayCount} 集更新` : "今天暂无更新"}
         </p>
       </header>
 

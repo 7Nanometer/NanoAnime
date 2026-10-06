@@ -244,8 +244,9 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
         <EpisodeList list={episodes} />
       </section>
 
-      {/* 哪里能看。数据在 lib/watch.ts 里组装，红线都收在那个文件里——这里只显示，只跳转不播放 */}
-      <section className="mt-12">
+      {/* 哪里能看。数据在 lib/watch.ts 里组装，红线都收在那个文件里——这里只显示，只跳转不播放。
+          ⚠️ id="watch" 是首页焦点位「去哪看」按钮的锚点（/anime/[id]#watch），改名要一起改 */}
+      <section id="watch" className="mt-12">
         <h2 className="section-mark mb-4 text-lg font-semibold">哪里能看</h2>
         <WatchLinks detail={detail} />
       </section>

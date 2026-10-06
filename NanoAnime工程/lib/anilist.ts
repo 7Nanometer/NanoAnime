@@ -54,11 +54,17 @@ const SEASONS: MediaSeason[] = ["WINTER", "SPRING", "SUMMER", "FALL"];
  * 列表类查询共用的字段（本季、搜索、按 id 批量取都用这一份）。
  * 抽出来是为了防止三处字段慢慢长歪——尤其 `title` 里少了哪个名字，
  * 展示层的兜底顺序就会出偏差。
+ *
+ * `bannerImage` 与 `genres` 是 M7 首页焦点位加的（2026-10-06）：横幅当背景、
+ * 题材当标签。两个字段都只是一小段文本，加进共享字段块不会让列表响应明显变大
+ * （对比：`description` 那种长简介就不进这里，焦点位的简介走本地 Bangumi 表）。
  */
 const ANIME_LIST_FIELDS = `
   id
   title { native english romaji }
   coverImage { extraLarge large color }
+  bannerImage
+  genres
   episodes
   averageScore
   status

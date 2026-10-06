@@ -65,6 +65,19 @@ export interface Anime {
     large: string | null;
     color: string | null; // 封面主色，可当加载占位背景
   };
+  /**
+   * 作品题材（AniList 的英文分类，如 Action / Sci-Fi）。首页焦点位取前几个当标签，
+   * 中文名由 lib/anime-display.ts 的 getGenreLabel() 翻，没收录的原样显示英文。
+   *
+   * ⚠️ 可选：追番记录在 localStorage 里的「快照」是旧版应用写的（那时还没有这个字段），
+   * 读回来时这里是 undefined——展示层用 `?? []` 兜住。
+   */
+  genres?: string[];
+  /**
+   * 横版横幅图，首页焦点位当背景用。AniList 上不少作品没填（null）；
+   * 同样可能是 undefined（老的本地快照）。
+   */
+  bannerImage?: string | null;
   episodes: number | null; // 总集数
   averageScore: number | null; // 评分，0~100
   /**
@@ -79,6 +92,12 @@ export interface Anime {
     episode: number; // 下一集是第几集
     airingAt: number; // 播出时间，Unix 时间戳（单位：秒）
   } | null;
+  /**
+   * 中文简介。**只有首页焦点位那几部会带**——服务端在 season 接口里只给人气前 5 部补
+   * （95 部全带会把列表接口吹大好几倍），其余场景一律 undefined。
+   * 只放**中文**简介：Bangumi 上还是日文原文的条目不进这个字段（焦点位不挂日文段落）。
+   */
+  summary?: string | null;
 }
 
 /** 一季的番剧列表，附带这是哪一季 */

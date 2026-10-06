@@ -39,6 +39,36 @@ const FORMAT_LABELS: Record<MediaFormat, string> = {
   MUSIC: "音乐",
 };
 
+/**
+ * AniList 题材（genres）的中文名。首页焦点位把前几个显示成药丸标签。
+ * 没收录的一律**原样显示英文**（AniList 将来加了新题材，不硬翻、不猜）。
+ */
+const GENRE_LABELS: Record<string, string> = {
+  Action: "动作",
+  Adventure: "冒险",
+  Comedy: "喜剧",
+  Drama: "剧情",
+  Ecchi: "福利",
+  Fantasy: "奇幻",
+  Horror: "恐怖",
+  "Mahou Shoujo": "魔法少女",
+  Mecha: "机甲",
+  Music: "音乐",
+  Mystery: "悬疑",
+  Psychological: "心理",
+  Romance: "恋爱",
+  "Sci-Fi": "科幻",
+  "Slice of Life": "日常",
+  Sports: "运动",
+  Supernatural: "超自然",
+  Thriller: "惊悚",
+};
+
+/** 题材的中文名。取不到映射时原样返回英文 */
+export function getGenreLabel(genre: string): string {
+  return GENRE_LABELS[genre] ?? genre;
+}
+
 /** 播出状态的中文名（不带排期信息的那种，详情页用） */
 const STATUS_LABELS: Record<MediaStatus, string> = {
   RELEASING: "在播",
@@ -109,6 +139,23 @@ export function getAiringStatus(anime: Anime): string {
   return anime.status === "RELEASING" ? "在播 · 排期待定" : getStatusLabel(anime.status);
 }
 
+/**
+ * 卡片封面底部「时间条」的文案：在播 → 「周二 23:30」（下一集的播出时刻，北京时间）；
+ * 其余状态 → 状态中文（已完结 / 待开播 / 停更中 / 已取消）。
+ *
+ * ⚠️ 只报「下一集**什么时候播**」，**不写「更新至第 N 集」**这类句式——
+ * 后者会被读成"站内能看到第 N 集"，踩「不提供在线播放」的红线。
+ */
+export function getCardScheduleLabel(anime: Anime): string {
+  const next = anime.nextAiringEpisode;
+  if (next) {
+    const weekday = WEEKDAYS[toBeijingTime(next.airingAt).getUTCDay()];
+    return `${weekday} ${getBeijingClock(next.airingAt)}`;
+  }
+
+  return anime.status === "RELEASING" ? "在播 · 排期待定" : getStatusLabel(anime.status);
+}
+
 /** 播出状态的中文名，例如「已完结」。不带排期信息，详情页的信息栏用 */
 export function getStatusLabel(status: MediaStatus): string {
   return STATUS_LABELS[status];
@@ -124,9 +171,9 @@ export function getYearLabel(anime: Anime): string {
 }
 
 /**
- * 集数与评分的附加信息。
+ * 集数与评分的附加信息（如「全 12 集 · 评分 89」）。
  * 未开播的作品这两项常为空——只拼出存在的那部分；
- * 两个都没有时返回空字符串，调用方据此整行不渲染（而不是渲染一个空行）。
+ * 两个都没有时返回空字符串，调用方据此整段不渲染（而不是渲染一个空行）。
  */
 export function getMetaLine(anime: Anime): string {
   const parts: string[] = [];

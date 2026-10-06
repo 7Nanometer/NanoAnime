@@ -1,32 +1,18 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-
 import { AnimeCard } from "@/components/AnimeCard";
 import { AnimeGridSkeleton } from "@/components/AnimeGridSkeleton";
+import { useSeasonAnime } from "@/components/useSeasonAnime";
 import { getSeasonLabel } from "@/lib/anime-display";
-import type { SeasonAnimeResult } from "@/types/anime";
-
-/** 前端只请求自家接口，不直连 AniList（CLAUDE.md 第五条铁律） */
-async function fetchSeasonAnime(): Promise<SeasonAnimeResult> {
-  const response = await fetch("/api/anime/season");
-  if (!response.ok) {
-    throw new Error(`接口返回 HTTP ${response.status}`);
-  }
-  return (await response.json()) as SeasonAnimeResult;
-}
 
 /**
- * 本季新番封面墙。数据用 TanStack Query 取，缓存策略在 app/providers.tsx 里统一设。
+ * 本季新番封面墙。数据走 useSeasonAnime（与首页焦点位共用同一份请求与缓存）。
  *
  * 加载态用骨架屏（见 AnimeGridSkeleton 的注释）——
  * 原来那行灰字会在数据到达时把页面高度从 28px 撑到 2000px，是实打实的布局偏移。
  */
 export function AnimeGrid() {
-  const { data, isPending, error, refetch } = useQuery({
-    queryKey: ["season-anime"],
-    queryFn: fetchSeasonAnime,
-  });
+  const { data, isPending, error, refetch } = useSeasonAnime();
 
   if (isPending) {
     return <AnimeGridSkeleton />;

@@ -75,8 +75,8 @@ export function AnimeSearch() {
         </p>
         <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {data.anime.map((anime, index) => (
-            // 搜索结果跨年份，所以显示年份而不是更新状态——续作靠它区分
-            <AnimeCard key={anime.id} anime={anime} showYear priority={index < 5} />
+            // 卡片固定带年份行（M7 起），搜索结果里的续作正好靠它区分
+            <AnimeCard key={anime.id} anime={anime} priority={index < 5} />
           ))}
         </div>
         {data.truncated ? (
