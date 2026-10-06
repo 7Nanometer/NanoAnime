@@ -48,7 +48,7 @@ export default async function LoginPage() {
           <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
             登录后，追番记录就能跟着账号走，换手机、换浏览器都不会丢。
             <br />
-            （云端同步还在做，这一步先把账号打通。）
+            （已开通：未登录时记录只在本机，登录后自动同步。本地已有的会合并上去，不会覆盖。）
           </p>
           <AuthForm />
         </div>
