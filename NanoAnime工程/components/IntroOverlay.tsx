@@ -8,7 +8,7 @@ import { deviceTier, sampleGlyph, waitGlyphFont, type Particle } from "@/lib/int
  * 入场动画「星尘聚字」（2026-10-07）。
  *
  * 打开网站时的开场：黑场 → 星尘从四面八方汇聚成「番鉴」→ 星芒一闪 →
- * 星尘如萤火散开 → 覆盖层化开、网站浮现。总长约 2.85 秒。
+ * 星尘如萤火散开 → 覆盖层化开、网站浮现。总长约 5.6 秒，点击可跳过。
  * 样式在 globals.css 的「入场动画」一节；采样的数据层在 lib/intro.ts。
  *
  * ─────────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ import { deviceTier, sampleGlyph, waitGlyphFont, type Particle } from "@/lib/int
  * 3. **减弱动态效果直接跳过**（内联脚本已判过一道，组件里再判一道）。
  * 4. **任意输入即跳过**（点击 / 按键）：给着急的人留门，也是慢设备用户的逃生口。
  * 5. **一切资源都在卸载时清干净**：取消 rAF、画布背板归零、摘掉两个类——
- *    动画只活 3 秒，不留任何常驻开销。
+ *    动画只活 5.6 秒，不留任何常驻开销。
  * 6. **StrictMode 安全**：dev 下 effect 会"跑-清-再跑"，所以启动闸门必须在
  *    清理时复位；任何一次清理漏取消 rAF 都会让两轮动画叠着跑。
  * ─────────────────────────────────────────────────────────────
@@ -36,24 +36,37 @@ import { deviceTier, sampleGlyph, waitGlyphFont, type Particle } from "@/lib/int
  * 采样到什么字形（含后备字体），聚出来就是什么字形。
  */
 
-/** 时间线（秒，以 __introT0 为 0）。总长 2.85 ≤ 用户要求的 3 秒 */
+/**
+ * 时间线（秒，以 __introT0 为 0）。总长 5.6 秒。
+ *
+ * ⚠️ 2026-10-07 二次调整（用户反馈"太快了、字停留太短"）：首版把整段压进
+ * 2.85 秒，结果是字 1.5 秒才成型、1.98 秒就散——「番鉴」只停 0.48 秒，
+ * 根本来不及看。现按观赏节奏重排（用户已解除时长限制）：
+ *   沉淀 0.6s → 汇聚 1.65s → 成型 → 停留 2.1s（字好好立住）→ 散开 → 化开。
+ * 时长换来三样东西：汇聚有仪式感、字停留够看清、闪光是点睛而非催场；
+ * 赶时间的人有「点击跳过」兜底（见 JSX 处注释）。
+ */
 const TL = {
-  /** 星尘开始汇聚（前面 0.45 秒是"黑场 + 底星浮现"） */
-  converge: 0.45,
-  /** 字形成型 */
-  formed: 1.5,
-  /** 星芒一闪 */
-  flash: 1.72,
-  /** 开始散开 */
-  scatter: 1.98,
-  /** 覆盖层开始化开 */
-  leave: 2.42,
-  /** 彻底结束（卸载） */
-  end: 2.9,
+  /** 星尘开始汇聚（前面 0.6 秒是"黑场 + 底星浮现"的沉淀） */
+  converge: 0.6,
+  /** 字形成型（汇聚历时 1.65 秒——这段"飞行"本身就是看点，值得从容） */
+  formed: 2.25,
+  /** 星芒一闪（成型后先停 0.55 秒让字"立住"，闪光才是点睛） */
+  flash: 2.8,
+  /** 开始散开（字共停留 2.1 秒——这是看清「番鉴」二字的窗口） */
+  scatter: 4.35,
+  /** 覆盖层开始化开（可见散开 0.65 秒后，画面在淡出中继续散） */
+  leave: 5.0,
+  /** 彻底结束（帧循环的自然终点） */
+  end: 5.6,
 } as const;
 
-/** 超过这个时刻组件才挂载（说明 JS 来晚了）就不再播，直接跳收尾 */
-const LATE_LIMIT = 2.3;
+/**
+ * 「JS 来晚了就不播」的阈值：组件挂载时已过此时刻，就直接收尾进网站。
+ * 定在 3.0（字形成型 2.25 之后不久）：迟到的用户若连"字形完全成型"都
+ * 赶不上，只看一眼散场不如直接进站；能赶上就还有 1 秒多把字看清。
+ */
+const LATE_LIMIT = 3.0;
 
 /** 光点的四个颜色档：白为主，淡紫、紫、淡蓝点缀（星辉 + 动漫霓虹） */
 const COLORS = [
@@ -82,6 +95,16 @@ export function IntroOverlay() {
   return (
     <div className="intro-overlay" aria-hidden>
       <IntroScene />
+      {/*
+        「点击跳过」提示。两个理由缺一不可：
+        · 无障碍：动画 5.6 秒，超过 WCAG 2.2.2 规定的 5 秒线——自动播放的
+          动效必须给出"停止"的可感知入口。光有"点了能跳"不够，得让用户
+          知道能跳（跳跃逻辑挂在整个 window 的 pointerdown 上，点它和点
+          任意处等效，见 IntroScene）。
+        · 体验：再好看的动画也有人赶时间，给条明路。
+        样式极低调（12px 小字、1.4 秒后才淡入），是"逃生门"不是"按钮"。
+      */}
+      <p className="intro-skip">点击跳过</p>
     </div>
   );
 }
@@ -111,7 +134,8 @@ function IntroScene() {
     const ac = new AbortController();
     const timers: number[] = [];
     let raf = 0;
-    let finished = false;
+    /** 已进入收场（自然结束或用户跳过）。此后一切"启动"动作都先看它 */
+    let leaving = false;
 
     const clearTimers = () => {
       timers.forEach((id) => window.clearTimeout(id));
@@ -124,27 +148,39 @@ function IntroScene() {
       timers.push(window.setTimeout(fn, delay));
     };
 
-    /** 收尾：停循环、化开覆盖层，稍后复位类名并释放画布 */
-    const finish = () => {
-      if (finished) {
+    /**
+     * 收场，两种走法：
+     * · fast=false（自然结束，leave 时刻触发）：**不打断帧循环**——散开的
+     *   星尘继续飞，与覆盖层的淡出叠着完成，收尾是"正在散场的画面渐渐化掉"，
+     *   而不是一张冻住的帧。
+     * · fast=true（用户跳过 / JS 来晚了）：立刻停循环停调度，0.5 秒化开——
+     *   跳过的意思就是"别演了"，一寸都不多留。
+     * 两条路共用 .intro-leaving 的 0.5s 退场动画（globals.css）。
+     */
+    const finish = (fast: boolean) => {
+      if (leaving) {
         return;
       }
-      finished = true;
-      clearTimers();
-      cancelAnimationFrame(raf);
+      leaving = true;
       root.classList.add("intro-leaving");
+      if (fast) {
+        clearTimers();
+        cancelAnimationFrame(raf);
+      }
+      // 清理排 700ms：0.5s 淡出走完 + 0.2s 余量（自然路径下帧循环在 5.6s
+      // 自行结束、早于这里的 5.7s，不存在"把还在画的画布抽走"）
       timers.push(
         window.setTimeout(() => {
           root.classList.remove("intro-playing", "intro-leaving");
           // 释放画布背板。放在淡出结束之后——提前清会让画面"啪"地消失
           canvas.width = 0;
           canvas.height = 0;
-        }, 420),
+        }, 700),
       );
     };
 
     const skip = () => {
-      finish();
+      finish(true);
     };
     // 任意输入即跳过：点击、触摸、按键都算
     window.addEventListener("pointerdown", skip, { signal: ac.signal });
@@ -153,12 +189,12 @@ function IntroScene() {
     const boot = async () => {
       // JS 来晚了（组件挂载太迟）就不再播了，直接收尾
       if (nowSec() > LATE_LIMIT) {
-        finish();
+        finish(true);
         return;
       }
 
       await waitGlyphFont(); // 等「番鉴」字形就绪（带超时，超时用系统字体照常播）
-      if (finished) {
+      if (leaving) {
         return;
       }
 
@@ -172,7 +208,7 @@ function IntroScene() {
       // alpha:false：覆盖层是不透明的黑场，省掉整层透明合成
       const ctx = canvas.getContext("2d", { alpha: false });
       if (!ctx) {
-        finish();
+        finish(true);
         return;
       }
       // ⚠️ 设过 canvas.width 之后上下文状态会重置——transform 必须在这之后设。
@@ -184,7 +220,7 @@ function IntroScene() {
       const ccy = h * 0.45; // 与 lib/intro.ts 里的绘制中心一致
       const targets = sampleGlyph(w, h, tier.count);
       if (targets.length === 0) {
-        finish();
+        finish(true);
         return;
       }
 
@@ -233,7 +269,7 @@ function IntroScene() {
       schedule(TL.flash, () => {
         flash.classList.add("intro-flash--on");
       });
-      schedule(TL.leave, finish);
+      schedule(TL.leave, () => finish(false));
 
       // ── 帧循环 ──────────────────────────────────────────
       const TAU = Math.PI * 2;
@@ -243,9 +279,9 @@ function IntroScene() {
       const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
       const frame = () => {
-        if (finished) {
-          return;
-        }
+        // ⚠️ 这里**不**检查 leaving：自然收尾（leave 时刻）正是"覆盖层一边
+        // 淡出、星尘一边继续散开"的叠画阶段，帧循环得一直画到 TL.end 自己停。
+        // 用户跳过那条路径由 cancelAnimationFrame 负责，不需要这里再拦。
         const t = nowSec();
 
         // 清屏（alpha:false 下用背景色填，与覆盖层底色一致）
@@ -316,7 +352,14 @@ function IntroScene() {
         // ⚠️ 成型后光点放大到 1.45 倍：散开的细点只能"暗示"笔画，放大后
         // 相邻点互相贴住、笔画才连成线——这是"星尘凝成字"的关键一步。
         // 用 0.25 秒过渡（不突跳），散开时回到原尺寸。
-        const grow = scattering ? 1 : 1 + 0.45 * easeOut(clamp01((t - TL.formed) / 0.25));
+        // ⚠️ 停留期叠加"呼吸"（±4%、周期约 2.9 秒）：字若 2.1 秒一动不动
+        // 就像一张贴图，轻轻起伏才配得上"活的星尘"。呼吸用 settle 渐入
+        // 0.3 秒，避免和放大过渡打架；散开时随 grow 一起归位。
+        const settle = clamp01((t - TL.formed) / 0.3);
+        const breath = 1 + 0.04 * Math.sin((t - TL.formed) * 2.2) * settle;
+        const grow = scattering
+          ? 1
+          : (1 + 0.45 * easeOut(clamp01((t - TL.formed) / 0.25))) * breath;
         for (const g of groups) {
           ctx.fillStyle = g.color;
           ctx.beginPath();
@@ -338,7 +381,7 @@ function IntroScene() {
 
     return () => {
       running = false;
-      finished = true;
+      leaving = true;
       ac.abort();
       cancelAnimationFrame(raf);
       clearTimers();

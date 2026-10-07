@@ -706,7 +706,7 @@
 
   /* ══ 入场动画「星尘聚字」（2026-10-07）══════════════════════════════════
      打开网站时的开场：黑场 → 星尘汇聚成「番鉴」→ 星芒一闪 → 星尘散开 →
-     网站浮现。约 2.6 秒。动画逻辑在 components/IntroOverlay.tsx。
+     网站浮现。约 5.6 秒，可点击跳过。动画逻辑在 components/IntroOverlay.tsx。
 
      ⚠️ 四条不可拆的约束：
      1. **覆盖层默认 `display: none`**——是否显示由 `.intro-playing` 类决定，
@@ -727,16 +727,19 @@
     }
   .intro-playing .intro-overlay {
     display: block;
-    /* 保险丝（纯 CSS、不依赖 JS）：万一脚本出错、没人来收尾，4.2 秒后
-       覆盖层自己淡出——用户最多多看一眼黑场，绝不被永久挡在门外。
-       正常路径走不到这一步（JS 在 2.85 秒时加 .intro-leaving 并卸载）。 */
-    animation: intro-dismiss 0.4s var(--ease-out-soft) 4.2s both;
+    /* 保险丝（纯 CSS、不依赖 JS）：万一脚本出错、没人来收尾，覆盖层自己
+       淡出——用户最多多看一眼黑场，绝不被永久挡在门外。
+       ⚠️ 保险丝的延时必须**晚于** JS 自然收尾的摘类时刻（5.0s 起淡出、
+       5.7s 摘类），否则它会在字还停在屏幕上时把覆盖层"抢"着淡掉——
+       兜底就成了抢戏。6.5s 留着近 1 秒的余量。 */
+    animation: intro-dismiss 0.4s var(--ease-out-soft) 6.5s both;
     }
-  /* 正常收尾：JS 在动画尾部给 html 加 .intro-leaving。
+  /* 正常收尾：JS 在动画尾部（5.0s）给 html 加 .intro-leaving。
      选择器多一个类、特异性更高，会覆盖上面的保险丝动画——
-     这是让"准时收尾"与"异常兜底"同时成立的最简结构。 */
+     这是让"准时收尾"与"异常兜底"同时成立的最简结构。
+     0.5s 与 JS 侧"清理排 700ms"（留 0.2s 余量）是配套的两个数字。 */
   .intro-playing.intro-leaving .intro-overlay {
-    animation: intro-dismiss 0.4s var(--ease-out-soft) both;
+    animation: intro-dismiss 0.5s var(--ease-out-soft) both;
     }
   /* 覆盖层里的画布：星尘全画在这上面 */
   .intro-canvas {
@@ -785,6 +788,25 @@
   .intro-flash--on::after {
     animation: intro-flash 0.75s var(--ease-out-soft) forwards;
     }
+  /* 「点击跳过」提示（JSX 在 IntroOverlay.tsx，那里写了为什么必须有它）。
+     ⚠️ transform 里的 translateX(-50%) 是水平居中用的，keyframes 里也要
+     带着写，否则动画一开始居中就丢。字距拉开 + 低透明度，把气场压到
+     最低：它是"逃生门"，不是"按钮"。 */
+  .intro-skip {
+    position: absolute;
+    left: 50%;
+    bottom: max(7%, 2.5rem);
+    margin: 0;
+    transform: translateX(-50%);
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: 0.42em;
+    /* 字距会给最后一个字右侧也加 0.42em，用 text-indent 把整行推回去，
+       视觉中心才对得上屏幕中线 */
+    text-indent: 0.42em;
+    color: oklch(0.8 0.02 285 / 0.5);
+    animation: intro-skip-in 0.9s var(--ease-out-soft) 1.4s both;
+    }
 
   /* 减弱动态效果：覆盖层绝不显示（JS 层已拦截，这是双保险） */
   @media (prefers-reduced-motion: reduce) {
@@ -804,6 +826,12 @@
 /* 入场覆盖层的退场（正常收尾与"保险丝"共用一条关键帧，见 .intro-playing 处注释） */
 @keyframes intro-dismiss {
   to { opacity: 0; visibility: hidden; }
+  }
+
+/* 「点击跳过」提示的淡入：1.4s 延迟后从下方轻轻浮上来（见 .intro-skip） */
+@keyframes intro-skip-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
   }
 
 /* ═══════════════════════════════════════════════════════════════════════════
