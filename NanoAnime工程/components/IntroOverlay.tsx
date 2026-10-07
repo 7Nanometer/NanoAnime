@@ -55,7 +55,8 @@ const TL = {
   flash: 2.8,
   /** 开始散开（字共停留 2.1 秒——这是看清「番鉴」二字的窗口） */
   scatter: 4.35,
-  /** 覆盖层开始化开（可见散开 0.65 秒后，画面在淡出中继续散） */
+  /** 覆盖层开始化开（此时星尘已自行淡到约 24%——先淡星尘、再揭黑幕，
+      两段错开而不是叠着来，"动画消失 → 主页显现"才干净） */
   leave: 5.0,
   /** 彻底结束（帧循环的自然终点） */
   end: 5.6,
@@ -153,9 +154,9 @@ function IntroScene() {
      * · fast=false（自然结束，leave 时刻触发）：**不打断帧循环**——散开的
      *   星尘继续飞，与覆盖层的淡出叠着完成，收尾是"正在散场的画面渐渐化掉"，
      *   而不是一张冻住的帧。
-     * · fast=true（用户跳过 / JS 来晚了）：立刻停循环停调度，0.5 秒化开——
+     * · fast=true（用户跳过 / JS 来晚了）：立刻停循环停调度，快速化开——
      *   跳过的意思就是"别演了"，一寸都不多留。
-     * 两条路共用 .intro-leaving 的 0.5s 退场动画（globals.css）。
+     * 两条路共用 .intro-leaving 的 0.65s 退场动画（globals.css）。
      */
     const finish = (fast: boolean) => {
       if (leaving) {
@@ -167,15 +168,15 @@ function IntroScene() {
         clearTimers();
         cancelAnimationFrame(raf);
       }
-      // 清理排 700ms：0.5s 淡出走完 + 0.2s 余量（自然路径下帧循环在 5.6s
-      // 自行结束、早于这里的 5.7s，不存在"把还在画的画布抽走"）
+      // 清理排 850ms：0.65s 淡出走完 + 0.2s 余量（自然路径下帧循环在 5.6s
+      // 自行结束、早于这里的 5.85s，不存在"把还在画的画布抽走"）
       timers.push(
         window.setTimeout(() => {
           root.classList.remove("intro-playing", "intro-leaving");
           // 释放画布背板。放在淡出结束之后——提前清会让画面"啪"地消失
           canvas.width = 0;
           canvas.height = 0;
-        }, 700),
+        }, 850),
       );
     };
 
@@ -304,6 +305,13 @@ function IntroScene() {
 
         // 更新粒子位置（拖尾需要"上一帧位置"，所以先记 px/py 再算新坐标）
         const scattering = t >= TL.scatter;
+        // 散开期整体渐隐（1 → 0，0.85 秒）：这是"动画消失 → 主页显现"衔接的
+        // 关键一步——星尘必须先自己淡去，黑幕揭开时画面才是干净的纯黑。
+        // 若粒子带着全亮度叠在半透明黑幕上，它会和底下的网站内容叠印
+        // （文字上飘着星点残影）——那正是"衔接不流畅"的观感来源。
+        const fadeOut = scattering
+          ? 1 - clamp01((t - TL.scatter) / 0.85)
+          : 1;
         for (const p of particles) {
           p.px = p.x;
           p.py = p.y;
@@ -332,7 +340,7 @@ function IntroScene() {
         // ⚠️ 成型后拖尾要淡出（0.3 秒内到 0）：笔画就位后粒子只剩 0.8px 的
         // 微抖动，拖尾会在笔画边缘糊出一圈"毛"——字形立刻认不出。
         const trail = scattering
-          ? 0.32
+          ? 0.32 * fadeOut
           : t < TL.formed
             ? 0.32
             : Math.max(0, 0.32 * (1 - (t - TL.formed) / 0.3));
@@ -351,15 +359,24 @@ function IntroScene() {
         // 光点：按颜色分组、每组一次 fill（rect 比 arc 快，1~2px 下观感相同）。
         // ⚠️ 成型后光点放大到 1.45 倍：散开的细点只能"暗示"笔画，放大后
         // 相邻点互相贴住、笔画才连成线——这是"星尘凝成字"的关键一步。
-        // 用 0.25 秒过渡（不突跳），散开时回到原尺寸。
-        // ⚠️ 停留期叠加"呼吸"（±4%、周期约 2.9 秒）：字若 2.1 秒一动不动
-        // 就像一张贴图，轻轻起伏才配得上"活的星尘"。呼吸用 settle 渐入
-        // 0.3 秒，避免和放大过渡打架；散开时随 grow 一起归位。
-        const settle = clamp01((t - TL.formed) / 0.3);
-        const breath = 1 + 0.04 * Math.sin((t - TL.formed) * 2.2) * settle;
-        const grow = scattering
-          ? 1
-          : (1 + 0.45 * easeOut(clamp01((t - TL.formed) / 0.25))) * breath;
+        // ⚠️ 放大系数与呼吸都用"包络"进出，两端都不许突跳：
+        //   · 放大：成型后 0.25s 放大到 1.45、散开后再 0.25s 收回 1；
+        //   · 呼吸（±4%、周期约 2.9s）：成型 0.3s 渐入、散开 0.3s 渐出。
+        //   旧版散开瞬间是"1.45×呼吸 → 1"的零帧突缩（约 −28%）：在 2 秒
+        //   静止之后给眼睛一记"啪"，是"动画消失不流畅"的另一半原因。
+        //   包络让散开第一瞬与停留期严丝合缝——粒子是"松开"的，不是"弹掉"的。
+        const breathEnv =
+          clamp01((t - TL.formed) / 0.3) *
+          (scattering ? 1 - clamp01((t - TL.scatter) / 0.3) : 1);
+        const breath = 1 + 0.04 * Math.sin((t - TL.formed) * 2.2) * breathEnv;
+        const growEnv = scattering
+          ? 1 - clamp01((t - TL.scatter) / 0.25)
+          : clamp01((t - TL.formed) / 0.25);
+        const grow = (1 + 0.45 * easeOut(growEnv)) * breath;
+
+        // 光点整体渐隐（散开期 fadeOut，globalAlpha 与 fillStyle 自带的
+        // alpha 相乘）；画完立刻复位，底星绘制不受影响
+        ctx.globalAlpha = fadeOut;
         for (const g of groups) {
           ctx.fillStyle = g.color;
           ctx.beginPath();
@@ -369,6 +386,7 @@ function IntroScene() {
           }
           ctx.fill();
         }
+        ctx.globalAlpha = 1;
 
         if (t < TL.end) {
           raf = requestAnimationFrame(frame);
