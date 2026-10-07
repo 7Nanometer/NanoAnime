@@ -199,16 +199,16 @@
        星云是叠在页面底上的大面积光斑，过亮会把底下正文的对比度拉下来。
        ⚠️ 一条实测教训：**亮色星云吃对比度远比深色星云狠**——
        亮品牌紫（L≈0.73）开到 16% 就把 muted-soft 压到 4.24（破 AA 线），
-       而深靛（L≈0.28）开到 22% 仍有 5.06。所以：
+       而深靛（L≈0.28）开到 34% 仍有 4.91。所以：
          · "显眼的大团" 一律用**深色 + 大透明度**；
-         · 亮色只做**小透明度的点缀**（≤8%）。
+         · 亮色只做**小透明度的点缀**（≤10%）。
        改任何一个透明度之前，先重跑对比度实测（方法见 docs/进度.md）。
        ⚠️ 星点（贴片里的星星）不在这里——它们是 SVG 里写死的颜色，
        见「星空层」注释：data URI 里的 SVG 用不了 CSS 变量。 */
-    --nebula-violet: oklch(0.734 0.152 287 / 8%);    /* 星云·星辉紫（左上） */
-    --nebula-blue: oklch(0.62 0.15 250 / 7%);        /* 星云·深空蓝（右上） */
-    --nebula-indigo: oklch(0.28 0.10 268 / 22%);     /* 星云·深靛（右下） */
-    --nebula-deepviolet: oklch(0.30 0.09 285 / 18%); /* 星云·深紫（左下） */
+    --nebula-violet: oklch(0.734 0.152 287 / 10%);   /* 星云·星辉紫（左上）——亮色上限 10%（12% 压到 4.55） */
+    --nebula-blue: oklch(0.62 0.15 250 / 11%);       /* 星云·深空蓝（右上） */
+    --nebula-indigo: oklch(0.28 0.10 268 / 34%);     /* 星云·深靛（右下）——深色可以给大透明度 */
+    --nebula-deepviolet: oklch(0.30 0.09 285 / 30%); /* 星云·深紫（左下） */
     --meteor: oklch(0.96 0.02 285);                  /* 流星：亮白紫 */
 
     --radius: 0.75rem;
@@ -387,11 +387,14 @@
         动画压成"只播一次"，首尾同值才会停在原始状态，不卡半亮怪状态。
      4. 星云是叠在页面底上的大面积光斑，**透明度上调前必须重跑对比度实测**。
         当前配色的实测（muted-soft 11px，AA 线 4.5:1）：
-          纯背景 5.28 ｜ 品牌紫 8% 4.83 ｜ 深空蓝 7% 4.99
-          深靛 22% 5.06 ｜ 深紫 18% 5.07 ｜ 两团极端叠加 4.66
+          纯背景 5.28 ｜ 品牌紫 10% 4.70 ｜ 深空蓝 11% 4.79
+          深靛 34% 4.91 ｜ 深紫 30% 4.91 ｜ 银河带 13% 4.75
         ⚠️ 教训：**亮色星云吃对比度远比深色星云狠**——品牌紫（L≈0.73）
-        开到 16% 就会压破 4.5；深靛（L≈0.28）开到 22% 都还富余。
-        所以"显眼的大团"一律用深色 + 大透明度，"亮色"只做小透明度的点缀。 */
+        开到 16% 就会压破 4.5（12% 只剩 4.55）；深靛（L≈0.28）开到 34%
+        都还有 4.91。所以"显眼的大团"一律用深色 + 大透明度，
+        "亮色"只做小透明度的点缀（≤10%）。
+        ⚠️ 2026-10-07 收工前按用户反馈整体加强了约一档（更深/更亮），
+        四团中心分居四角、两两不重叠，所以上表按"单团"值验收即可。 */
 
   /* 星空容器：钉在视口上不随滚动（"望远镜里的星空"），负 z 在内容之下。
      容器自己的背景 = **银河带**：一条 118° 的斜雾，让整片底色不匀、
@@ -404,10 +407,10 @@
     pointer-events: none;
     background-image: linear-gradient(
       118deg,
-      transparent 34%,
-      oklch(0.55 0.07 285 / 5%) 46%,
-      oklch(0.58 0.09 300 / 7%) 52%,
-      transparent 64%
+      transparent 26%,
+      oklch(0.55 0.07 285 / 9%) 42%,
+      oklch(0.58 0.09 300 / 13%) 52%,
+      transparent 72%
     );
     }
 
@@ -425,23 +428,23 @@
      复制成好几个，一眼就能看出图案在重复（实测：421px 的贴片在 1440 宽的
      屏上会重复 3~4 次）。星星只用圆点，圆点的重复人眼记不住。 */
   .starfield-stars-1 {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='421' height='421'%3E%3Ccircle cx='37' cy='89' r='1.17' fill='white' fill-opacity='0.75'/%3E%3Ccircle cx='311' cy='127' r='1.34' fill='white' fill-opacity='0.89'/%3E%3Ccircle cx='172' cy='43' r='1.29' fill='white' fill-opacity='0.97'/%3E%3Ccircle cx='283' cy='251' r='1.35' fill='white' fill-opacity='0.72'/%3E%3Ccircle cx='58' cy='233' r='1.35' fill='white' fill-opacity='0.67'/%3E%3Ccircle cx='396' cy='61' r='0.91' fill='lavender' fill-opacity='0.68'/%3E%3Ccircle cx='205' cy='340' r='1.32' fill='lavender' fill-opacity='0.93'/%3E%3Ccircle cx='129' cy='302' r='0.93' fill='white' fill-opacity='0.87'/%3E%3Ccircle cx='19' cy='371' r='0.99' fill='white' fill-opacity='0.96'/%3E%3Ccircle cx='245' cy='178' r='1.26' fill='white' fill-opacity='0.70'/%3E%3Ccircle cx='357' cy='295' r='1.22' fill='aliceblue' fill-opacity='0.91'/%3E%3Ccircle cx='94' cy='152' r='1.27' fill='lavender' fill-opacity='0.94'/%3E%3Ccircle cx='262' cy='389' r='0.92' fill='white' fill-opacity='0.77'/%3E%3Ccircle cx='388' cy='218' r='1.20' fill='white' fill-opacity='0.78'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='421' height='421'%3E%3Ccircle cx='37' cy='89' r='1.17' fill='white' fill-opacity='0.89'/%3E%3Ccircle cx='311' cy='127' r='1.34' fill='white' fill-opacity='0.95'/%3E%3Ccircle cx='172' cy='43' r='1.29' fill='white' fill-opacity='0.99'/%3E%3Ccircle cx='283' cy='251' r='1.35' fill='white' fill-opacity='0.88'/%3E%3Ccircle cx='58' cy='233' r='1.35' fill='white' fill-opacity='0.86'/%3E%3Ccircle cx='396' cy='61' r='0.91' fill='lavender' fill-opacity='0.86'/%3E%3Ccircle cx='205' cy='340' r='1.32' fill='lavender' fill-opacity='0.97'/%3E%3Ccircle cx='129' cy='302' r='0.93' fill='white' fill-opacity='0.94'/%3E%3Ccircle cx='19' cy='371' r='0.99' fill='white' fill-opacity='0.98'/%3E%3Ccircle cx='245' cy='178' r='1.26' fill='white' fill-opacity='0.87'/%3E%3Ccircle cx='357' cy='295' r='1.22' fill='aliceblue' fill-opacity='0.96'/%3E%3Ccircle cx='94' cy='152' r='1.27' fill='lavender' fill-opacity='0.98'/%3E%3Ccircle cx='262' cy='389' r='0.92' fill='white' fill-opacity='0.90'/%3E%3Ccircle cx='388' cy='218' r='1.20' fill='white' fill-opacity='0.91'/%3E%3C/svg%3E");
     background-size: 421px 421px;
-    animation: star-breathe 7s var(--ease-in-out-soft) infinite;
+    animation: star-breathe 5s var(--ease-in-out-soft) infinite;
     }
 
   /* 星点·第 2 层：中等（20 颗，亮暗相间） */
   .starfield-stars-2 {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='647' height='647'%3E%3Ccircle cx='223' cy='58' r='0.89' fill='white' fill-opacity='0.64'/%3E%3Ccircle cx='567' cy='92' r='0.62' fill='lavender' fill-opacity='0.58'/%3E%3Ccircle cx='44' cy='111' r='0.86' fill='aliceblue' fill-opacity='0.55'/%3E%3Ccircle cx='402' cy='188' r='0.86' fill='white' fill-opacity='0.60'/%3E%3Ccircle cx='118' cy='287' r='0.64' fill='white' fill-opacity='0.48'/%3E%3Ccircle cx='498' cy='341' r='0.93' fill='white' fill-opacity='0.57'/%3E%3Ccircle cx='341' cy='245' r='0.77' fill='aliceblue' fill-opacity='0.68'/%3E%3Ccircle cx='601' cy='430' r='0.74' fill='ghostwhite' fill-opacity='0.67'/%3E%3Ccircle cx='76' cy='449' r='0.62' fill='ghostwhite' fill-opacity='0.71'/%3E%3Ccircle cx='285' cy='512' r='0.92' fill='white' fill-opacity='0.75'/%3E%3Ccircle cx='438' cy='601' r='0.86' fill='ghostwhite' fill-opacity='0.69'/%3E%3Ccircle cx='162' cy='618' r='0.82' fill='lavender' fill-opacity='0.66'/%3E%3Ccircle cx='520' cy='226' r='0.74' fill='ghostwhite' fill-opacity='0.55'/%3E%3Ccircle cx='243' cy='375' r='0.92' fill='ghostwhite' fill-opacity='0.49'/%3E%3Ccircle cx='390' cy='89' r='0.95' fill='lavender' fill-opacity='0.71'/%3E%3Ccircle cx='88' cy='555' r='0.82' fill='white' fill-opacity='0.65'/%3E%3Ccircle cx='455' cy='462' r='0.92' fill='lavender' fill-opacity='0.62'/%3E%3Ccircle cx='318' cy='141' r='0.62' fill='ghostwhite' fill-opacity='0.58'/%3E%3Ccircle cx='573' cy='556' r='0.69' fill='ghostwhite' fill-opacity='0.70'/%3E%3Ccircle cx='196' cy='208' r='0.61' fill='lavender' fill-opacity='0.55'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='647' height='647'%3E%3Ccircle cx='223' cy='58' r='0.89' fill='white' fill-opacity='0.84'/%3E%3Ccircle cx='567' cy='92' r='0.62' fill='lavender' fill-opacity='0.79'/%3E%3Ccircle cx='44' cy='111' r='0.86' fill='aliceblue' fill-opacity='0.75'/%3E%3Ccircle cx='402' cy='188' r='0.86' fill='white' fill-opacity='0.80'/%3E%3Ccircle cx='118' cy='287' r='0.64' fill='white' fill-opacity='0.69'/%3E%3Ccircle cx='498' cy='341' r='0.93' fill='white' fill-opacity='0.78'/%3E%3Ccircle cx='341' cy='245' r='0.77' fill='aliceblue' fill-opacity='0.88'/%3E%3Ccircle cx='601' cy='430' r='0.74' fill='ghostwhite' fill-opacity='0.87'/%3E%3Ccircle cx='76' cy='449' r='0.62' fill='ghostwhite' fill-opacity='0.91'/%3E%3Ccircle cx='285' cy='512' r='0.92' fill='white' fill-opacity='0.95'/%3E%3Ccircle cx='438' cy='601' r='0.86' fill='ghostwhite' fill-opacity='0.89'/%3E%3Ccircle cx='162' cy='618' r='0.82' fill='lavender' fill-opacity='0.86'/%3E%3Ccircle cx='520' cy='226' r='0.74' fill='ghostwhite' fill-opacity='0.76'/%3E%3Ccircle cx='243' cy='375' r='0.92' fill='ghostwhite' fill-opacity='0.69'/%3E%3Ccircle cx='390' cy='89' r='0.95' fill='lavender' fill-opacity='0.91'/%3E%3Ccircle cx='88' cy='555' r='0.82' fill='white' fill-opacity='0.86'/%3E%3Ccircle cx='455' cy='462' r='0.92' fill='lavender' fill-opacity='0.82'/%3E%3Ccircle cx='318' cy='141' r='0.62' fill='ghostwhite' fill-opacity='0.78'/%3E%3Ccircle cx='573' cy='556' r='0.69' fill='ghostwhite' fill-opacity='0.90'/%3E%3Ccircle cx='196' cy='208' r='0.61' fill='lavender' fill-opacity='0.76'/%3E%3C/svg%3E");
     background-size: 647px 647px;
-    animation: star-breathe 11s var(--ease-in-out-soft) -3s infinite;
+    animation: star-breathe 8s var(--ease-in-out-soft) -2.5s infinite;
     }
 
   /* 星点·第 3 层：暗星（28 颗，最小最密，像远端的星尘） */
   .starfield-stars-3 {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='787' height='787'%3E%3Ccircle cx='421' cy='78' r='0.47' fill='ghostwhite' fill-opacity='0.55'/%3E%3Ccircle cx='52' cy='87' r='0.68' fill='aliceblue' fill-opacity='0.36'/%3E%3Ccircle cx='667' cy='118' r='0.61' fill='aliceblue' fill-opacity='0.38'/%3E%3Ccircle cx='298' cy='152' r='0.59' fill='white' fill-opacity='0.53'/%3E%3Ccircle cx='543' cy='201' r='0.53' fill='white' fill-opacity='0.35'/%3E%3Ccircle cx='176' cy='41' r='0.64' fill='ghostwhite' fill-opacity='0.31'/%3E%3Ccircle cx='89' cy='331' r='0.52' fill='aliceblue' fill-opacity='0.31'/%3E%3Ccircle cx='732' cy='289' r='0.65' fill='lavender' fill-opacity='0.40'/%3E%3Ccircle cx='215' cy='267' r='0.60' fill='white' fill-opacity='0.52'/%3E%3Ccircle cx='489' cy='298' r='0.59' fill='ghostwhite' fill-opacity='0.34'/%3E%3Ccircle cx='367' cy='356' r='0.62' fill='white' fill-opacity='0.39'/%3E%3Ccircle cx='611' cy='388' r='0.58' fill='ghostwhite' fill-opacity='0.46'/%3E%3Ccircle cx='140' cy='468' r='0.61' fill='lavender' fill-opacity='0.39'/%3E%3Ccircle cx='521' cy='449' r='0.46' fill='ghostwhite' fill-opacity='0.49'/%3E%3Ccircle cx='263' cy='421' r='0.53' fill='white' fill-opacity='0.48'/%3E%3Ccircle cx='757' cy='465' r='0.51' fill='white' fill-opacity='0.40'/%3E%3Ccircle cx='398' cy='512' r='0.55' fill='lavender' fill-opacity='0.36'/%3E%3Ccircle cx='644' cy='527' r='0.53' fill='aliceblue' fill-opacity='0.41'/%3E%3Ccircle cx='73' cy='601' r='0.55' fill='lavender' fill-opacity='0.35'/%3E%3Ccircle cx='447' cy='588' r='0.61' fill='lavender' fill-opacity='0.44'/%3E%3Ccircle cx='198' cy='567' r='0.46' fill='lavender' fill-opacity='0.36'/%3E%3Ccircle cx='694' cy='612' r='0.69' fill='aliceblue' fill-opacity='0.47'/%3E%3Ccircle cx='324' cy='632' r='0.49' fill='lavender' fill-opacity='0.41'/%3E%3Ccircle cx='571' cy='661' r='0.70' fill='lavender' fill-opacity='0.46'/%3E%3Ccircle cx='118' cy='721' r='0.51' fill='lavender' fill-opacity='0.31'/%3E%3Ccircle cx='489' cy='705' r='0.50' fill='white' fill-opacity='0.55'/%3E%3Ccircle cx='241' cy='688' r='0.54' fill='ghostwhite' fill-opacity='0.36'/%3E%3Ccircle cx='365' cy='742' r='0.68' fill='lavender' fill-opacity='0.40'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='787' height='787'%3E%3Ccircle cx='421' cy='78' r='0.47' fill='ghostwhite' fill-opacity='0.82'/%3E%3Ccircle cx='52' cy='87' r='0.68' fill='aliceblue' fill-opacity='0.57'/%3E%3Ccircle cx='667' cy='118' r='0.61' fill='aliceblue' fill-opacity='0.60'/%3E%3Ccircle cx='298' cy='152' r='0.59' fill='white' fill-opacity='0.79'/%3E%3Ccircle cx='543' cy='201' r='0.53' fill='white' fill-opacity='0.56'/%3E%3Ccircle cx='176' cy='41' r='0.64' fill='ghostwhite' fill-opacity='0.52'/%3E%3Ccircle cx='89' cy='331' r='0.52' fill='aliceblue' fill-opacity='0.51'/%3E%3Ccircle cx='732' cy='289' r='0.65' fill='lavender' fill-opacity='0.63'/%3E%3Ccircle cx='215' cy='267' r='0.60' fill='white' fill-opacity='0.79'/%3E%3Ccircle cx='489' cy='298' r='0.59' fill='ghostwhite' fill-opacity='0.55'/%3E%3Ccircle cx='367' cy='356' r='0.62' fill='white' fill-opacity='0.62'/%3E%3Ccircle cx='611' cy='388' r='0.58' fill='ghostwhite' fill-opacity='0.70'/%3E%3Ccircle cx='140' cy='468' r='0.61' fill='lavender' fill-opacity='0.62'/%3E%3Ccircle cx='521' cy='449' r='0.46' fill='ghostwhite' fill-opacity='0.74'/%3E%3Ccircle cx='263' cy='421' r='0.53' fill='white' fill-opacity='0.73'/%3E%3Ccircle cx='757' cy='465' r='0.51' fill='white' fill-opacity='0.63'/%3E%3Ccircle cx='398' cy='512' r='0.55' fill='lavender' fill-opacity='0.58'/%3E%3Ccircle cx='644' cy='527' r='0.53' fill='aliceblue' fill-opacity='0.65'/%3E%3Ccircle cx='73' cy='601' r='0.55' fill='lavender' fill-opacity='0.56'/%3E%3Ccircle cx='447' cy='588' r='0.61' fill='lavender' fill-opacity='0.67'/%3E%3Ccircle cx='198' cy='567' r='0.46' fill='lavender' fill-opacity='0.58'/%3E%3Ccircle cx='694' cy='612' r='0.69' fill='aliceblue' fill-opacity='0.72'/%3E%3Ccircle cx='324' cy='632' r='0.49' fill='lavender' fill-opacity='0.64'/%3E%3Ccircle cx='571' cy='661' r='0.70' fill='lavender' fill-opacity='0.70'/%3E%3Ccircle cx='118' cy='721' r='0.51' fill='lavender' fill-opacity='0.52'/%3E%3Ccircle cx='489' cy='705' r='0.50' fill='white' fill-opacity='0.82'/%3E%3Ccircle cx='241' cy='688' r='0.54' fill='ghostwhite' fill-opacity='0.58'/%3E%3Ccircle cx='365' cy='742' r='0.68' fill='lavender' fill-opacity='0.63'/%3E%3C/svg%3E");
     background-size: 787px 787px;
-    animation: star-breathe 17s var(--ease-in-out-soft) -8s infinite;
+    animation: star-breathe 13s var(--ease-in-out-soft) -6s infinite;
     }
 
   /* 星云：四团大光斑分居四角，各自极慢漂移/缩放。周期 63/79/91/113 秒
@@ -457,9 +460,9 @@
     pointer-events: none;
     }
   .starfield-nebula-1 {
-    /* 左上 · 星辉紫（品牌色的淡光，亮色只给 8%） */
-    top: -21%;
-    left: -14%;
+    /* 左上 · 星辉紫 */
+    top: -14%;
+    left: -8%;
     width: 78vw;
     height: 72vh;
     background: radial-gradient(closest-side, var(--nebula-violet), transparent);
@@ -467,17 +470,17 @@
     }
   .starfield-nebula-2 {
     /* 右上 · 深空蓝 */
-    top: -12%;
-    right: -16%;
+    top: -8%;
+    right: -10%;
     width: 58vw;
     height: 52vh;
     background: radial-gradient(closest-side, var(--nebula-blue), transparent);
     animation: nebula-drift-2 79s var(--ease-in-out-soft) infinite;
     }
   .starfield-nebula-3 {
-    /* 右下 · 深靛（最显眼的一团：深色可以给到 22%） */
-    bottom: -18%;
-    right: 4%;
+    /* 右下 · 深靛（最显眼的一团） */
+    bottom: -10%;
+    right: 2%;
     width: 62vw;
     height: 58vh;
     background: radial-gradient(closest-side, var(--nebula-indigo), transparent);
@@ -485,8 +488,8 @@
     }
   .starfield-nebula-4 {
     /* 左下 · 深紫 */
-    bottom: -14%;
-    left: -10%;
+    bottom: -8%;
+    left: -6%;
     width: 56vw;
     height: 54vh;
     background: radial-gradient(closest-side, var(--nebula-deepviolet), transparent);
@@ -563,14 +566,28 @@
         animation-timing-function: var(--ease-out-soft);
         animation-fill-mode: both;
         animation-timeline: view();
-        animation-range: entry 0% entry 35%;
+        /* ⚠️ 2026-10-07 按用户反馈放宽：35% 时动画在卡片"刚露头"就播完了，
+           滚动快一点就看不到过程。放宽到 55% + 位移加到 18px 之后，
+           "依次浮现"的过程在滚动中清晰可见。 */
+        animation-range: entry 0% entry 55%;
         }
       }
     }
 
-  /* 顶栏站名的星标：一明一暗地脉动 */
+  /* 顶栏站名的星标：光点呼吸 + 一圈向外扩散的光环（"信号在发射"）。
+     光环用一个 ::after 小圆做成——从光点大小扩到 3.2 倍、同时淡出，
+     比只调明暗明显得多（2026-10-07 按用户反馈加强）。 */
   .star-logo {
+    position: relative;
     animation: star-pulse 3.2s var(--ease-in-out-soft) infinite;
+    }
+  .star-logo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: var(--brand-strong);
+    animation: star-ripple 3.2s var(--ease-out-soft) infinite;
     }
 }
 
@@ -586,7 +603,7 @@
    相位错开后，三层重叠处的星与单层处的星明灭节奏不同，看起来像"各自眨眼" */
 @keyframes star-breathe {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
+  50% { opacity: 0.3; }
   }
 
 /* 星云漂移：极慢的位移 + 缩放。0% = 100%，停了就回到原位 */
@@ -626,14 +643,21 @@
    那一行卡片会停在动画中段——从 0 起步的话它会看起来像"坏了"（几乎隐形），
    从 0.35 起步最坏也只是"比终态淡一点"，像设计如此。 */
 @keyframes reveal-up {
-  from { opacity: 0.35; transform: translateY(10px); }
+  from { opacity: 0.3; transform: translateY(18px); }
   to { opacity: 1; transform: none; }
   }
 
-/* 顶栏站名星标脉动 */
+/* 顶栏站名星标脉动（光点本身：明暗 + 光晕一起呼吸） */
 @keyframes star-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--brand-soft); }
-  50% { opacity: 0.72; box-shadow: 0 0 16px 2px var(--brand-soft); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--brand-soft); }
+  50% { opacity: 0.55; box-shadow: 0 0 24px 5px var(--brand-soft); }
+  }
+
+/* 扩散光环：从光点大小扩到 3.2 倍、同时淡出（0% 与 100% 都不可见，reduce 停下无残留） */
+@keyframes star-ripple {
+  0% { transform: scale(1); opacity: 0; }
+  12% { opacity: 0.6; }
+  55%, 100% { opacity: 0; transform: scale(3.2); }
   }
 
 /*
@@ -663,7 +687,8 @@
      · 星点与星云显式关掉动画——它们的关键帧首尾同值、被兜底压停本身无害，
        但彻底去掉可以避免那 0.01ms 的一次跳变；
      · 站名星标同理，停下来回到它静态的柔光。 */
-  .starfield-meteor {
+  .starfield-meteor,
+  .star-logo::after {
     display: none;
     }
   .starfield-stars-1,
