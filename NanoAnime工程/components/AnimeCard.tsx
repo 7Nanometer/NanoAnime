@@ -89,6 +89,11 @@ export function AnimeCard({
       <div
         className={cn(
           "relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-surface",
+          // 玻璃掠射光（顶部发丝亮线）+ 跟随鼠标的柔光斑（2026-10-07 顶级打磨）。
+          // ⚠️ 这两个类的样式在 globals.css——卡片本身**不含任何 JS**：
+          //    光斑位置由全局唯一的 CursorSpotlight 用事件委托统一写入
+          //    （每个卡片自己挂 mousemove 会让一屏 21 张卡 = 21 个监听器）。
+          "cover-gloss cover-spot",
           // 细描边让封面图在深底上有明确的边界；纯图片边缘贴在深底上会"融化"
           "ring-1 ring-border transition-all duration-200",
           "group-hover:ring-2 group-hover:ring-brand/60",
@@ -130,7 +135,8 @@ export function AnimeCard({
         {score !== "—" ? (
           <span
             className={cn(
-              "absolute top-2 right-2 inline-flex items-center gap-1 rounded-full",
+              // z-[2]：压在"跟随光斑"（伪元素 z-1）之上——光斑扫过时文字依旧清晰
+              "absolute top-2 right-2 z-[2] inline-flex items-center gap-1 rounded-full",
               "bg-black/60 px-2 py-0.5 backdrop-blur-sm",
               "text-[11px] leading-none font-semibold text-white tabular-nums",
             )}
@@ -153,7 +159,7 @@ export function AnimeCard({
         {cover ? (
           collection ? (
             collection.count >= 2 ? (
-              <span className="absolute inset-x-0 bottom-0 block bg-black/55 px-2 py-1 text-center text-[11px] leading-none font-medium text-white backdrop-blur-sm">
+              <span className="absolute inset-x-0 bottom-0 z-[2] block bg-black/55 px-2 py-1 text-center text-[11px] leading-none font-medium text-white backdrop-blur-sm">
                 <span className="inline-flex items-center gap-1">
                   {/* 「合集」图标：上下两层的堆叠图形。内联 SVG，理由同五角星 */}
                   <svg
@@ -172,7 +178,7 @@ export function AnimeCard({
               </span>
             ) : null
           ) : (
-            <span className="absolute inset-x-0 bottom-0 block bg-black/55 px-2 py-1 text-center text-[11px] leading-none font-medium text-white backdrop-blur-sm">
+            <span className="absolute inset-x-0 bottom-0 z-[2] block bg-black/55 px-2 py-1 text-center text-[11px] leading-none font-medium text-white backdrop-blur-sm">
               <span className="block truncate">{getCardScheduleLabel(anime)}</span>
             </span>
           )

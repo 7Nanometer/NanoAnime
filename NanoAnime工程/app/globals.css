@@ -281,10 +281,36 @@
     color-scheme: dark;
     }
 
-  /* 标题默认收紧字距。中文标题不收紧的话，字与字之间会显得松垮 */
+  /* 标题默认收紧字距。中文标题不收紧的话，字与字之间会显得松垮。
+     （2026-10-07 顶级打磨）从"一刀切 -0.011em"改成**分档收**：字号越大、
+     字距越紧——这是光学排版的常识（同一字距，在大字上看起来更松）。
+     h4 及更小保持原值。 */
   h1, h2, h3, h4 {
     letter-spacing: -0.011em;
     text-wrap: balance;
+    }
+  h1 {
+    letter-spacing: -0.022em;
+    }
+  h2 {
+    letter-spacing: -0.018em;
+    }
+  h3 {
+    letter-spacing: -0.014em;
+    }
+
+  /* ── 中文排版的两条细节（2026-10-07 顶级打磨）────────────────────────
+     都是**渐进增强**：较新的 Chrome / Edge 自动生效；不支持的浏览器
+     直接忽略、不报错，观感与之前完全一致。
+
+     1. text-spacing-trim —— 行首/行尾的中文标点自动收缩半个字身：
+        不收缩时，「"」和「、」顶在行首会撑出半个字的空档，段落左边缘参差。
+        （取值 space-first：段首行保留，其余行压缩——中文出版物的惯例。）
+     2. text-autospace —— 中文与英文/数字之间自动留出细间隙：
+        "评分87" 会渲染出 "评分 87" 的呼吸感，不用手工到处敲空格。 */
+  body {
+    text-spacing-trim: space-first;
+    text-autospace: normal;
     }
 
   /* 长段落避免出现"最后一行只有一个字"（孤字） */
@@ -364,6 +390,8 @@
       var(--brand) 60%,
       transparent 100%
     );
+    /* （2026-10-07 打磨）竖线带一层柔光——像灯管而不是色块 */
+    box-shadow: 0 0 10px oklch(0.745 0.155 285 / 0.5);
     }
 
   /* ══ 星空层（2026-10-07 深空星夜）══════════════════════════════════════
@@ -589,7 +617,194 @@
     background: var(--brand-strong);
     animation: star-ripple 3.2s var(--ease-out-soft) infinite;
     }
+
+  /* ══ 顶级视觉打磨（2026-10-07）══════════════════════════════════════════
+     四组与"质感"有关的小东西。共同原则：**远看只是"更有味道"，
+     近看才发现做了什么**——看得见的特效是廉价感，看不出但感觉得到才是高级。 */
+
+  /* 质感颗粒：一层极淡的噪点（胶片微粒感），消除大片纯渐变的"塑料感"。
+     ⚠️ 浓度必须低（4%）——再高会变成"图片没加载完的花屏感"，
+     也会压暗文字对比度。上调前先复测全站对比度。 */
+  .starfield-noise {
+    position: absolute;
+    inset: 0;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+    background-repeat: repeat;
+    }
+
+  /* 大字微光：白字带一层极淡的紫晕，像自己在发光。
+     ⚠️ 只给"焦点位主标题"这类大标题用——光晕会糊掉笔画边缘，小字用会显脏。 */
+  .text-glow-brand {
+    text-shadow:
+      0 0 24px oklch(0.745 0.155 285 / 0.45),
+      0 0 60px oklch(0.745 0.155 285 / 0.22);
+    }
+
+  /* 按钮扫光：悬停时一道光从左到右扫过按钮表面。
+     离开时 transition 为 0s（光瞬间归位、不可见）——避免"反向再扫一遍"的怪动作。 */
+  .sheen {
+    position: relative;
+    overflow: hidden;
+    }
+  .sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      105deg,
+      transparent 38%,
+      oklch(1 0 0 / 0.28) 50%,
+      transparent 62%
+    );
+    transform: translateX(-130%);
+    transition: transform 0s;
+    }
+  .sheen:hover::after {
+    transform: translateX(130%);
+    transition: transform 0.65s var(--ease-out-soft);
+    }
+
+  /* 卡片封面·玻璃掠射光：顶部一条发丝般的亮线（常驻，不依赖悬停），
+     模拟光从上方掠过的玻璃质感。z-index 提到封面图之上 */
+  .cover-gloss::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      oklch(1 0 0 / 0.07) 0%,
+      oklch(1 0 0 / 0.02) 6%,
+      transparent 12%
+    );
+    }
+
+  /* 卡片封面·跟随鼠标的柔光斑（鼠标微交互）。
+     位置由 CSS 变量 --spot-x / --spot-y 驱动——值由 CursorSpotlight 组件
+     用**全站唯一的一个监听器**（事件委托）写入，卡片本身不含任何 JS。 */
+  .cover-spot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(
+      240px circle at var(--spot-x, 50%) var(--spot-y, 35%),
+      oklch(1 0 0 / 0.16),
+      transparent 72%
+    );
+    transition: opacity 0.35s var(--ease-out-soft);
+    }
+  .group:hover .cover-spot::after {
+    opacity: 1;
+    }
+
+  /* ══ 入场动画「星尘聚字」（2026-10-07）══════════════════════════════════
+     打开网站时的开场：黑场 → 星尘汇聚成「番鉴」→ 星芒一闪 → 星尘散开 →
+     网站浮现。约 2.6 秒。动画逻辑在 components/IntroOverlay.tsx。
+
+     ⚠️ 四条不可拆的约束：
+     1. **覆盖层默认 `display: none`**——是否显示由 `.intro-playing` 类决定，
+        而这个类由 layout.tsx 里一段**先于页面首帧执行**的内联脚本添加。
+        好处：没打开动画的用户（已播过 / 无 JS / 减弱动效）**根本不会渲染
+        这一层**；打开动画的用户也不会闪（黑场在首帧就在，不存在"先看到
+        网页、再被盖住"）。
+     2. **无 JavaScript 时永远不显示**（内联脚本不跑 → 没有类 → display:none），
+        页面直接可用——这是项目的硬验收。
+     3. **减弱动态效果时直接跳过**（JS 不启动 + 这里的双保险）。
+     4. z-index 100：压在顶栏（z-50）和一切内容之上。 */
+  .intro-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    background: var(--background);
+    }
+  .intro-playing .intro-overlay {
+    display: block;
+    /* 保险丝（纯 CSS、不依赖 JS）：万一脚本出错、没人来收尾，4.2 秒后
+       覆盖层自己淡出——用户最多多看一眼黑场，绝不被永久挡在门外。
+       正常路径走不到这一步（JS 在 2.85 秒时加 .intro-leaving 并卸载）。 */
+    animation: intro-dismiss 0.4s var(--ease-out-soft) 4.2s both;
+    }
+  /* 正常收尾：JS 在动画尾部给 html 加 .intro-leaving。
+     选择器多一个类、特异性更高，会覆盖上面的保险丝动画——
+     这是让"准时收尾"与"异常兜底"同时成立的最简结构。 */
+  .intro-playing.intro-leaving .intro-overlay {
+    animation: intro-dismiss 0.4s var(--ease-out-soft) both;
+    }
+  /* 覆盖层里的画布：星尘全画在这上面 */
+  .intro-canvas {
+    position: absolute;
+    inset: 0;
+    }
+  /* 星芒：一横一竖两条渐隐光带，交汇于字形中心。
+     平时不可见，JS 在字形成型时加 --on 触发一次闪烁。 */
+  .intro-flash {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    }
+  .intro-flash::before,
+  .intro-flash::after {
+    content: "";
+    position: absolute;
+    border-radius: 999px;
+    opacity: 0;
+    }
+  .intro-flash::before {
+    left: -240px;
+    top: -1px;
+    width: 480px;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      oklch(0.97 0.03 287 / 0.95) 50%,
+      transparent
+    );
+    }
+  .intro-flash::after {
+    left: -1px;
+    top: -240px;
+    width: 2px;
+    height: 480px;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      oklch(0.97 0.03 287 / 0.95) 50%,
+      transparent
+    );
+    }
+  .intro-flash--on::before,
+  .intro-flash--on::after {
+    animation: intro-flash 0.75s var(--ease-out-soft) forwards;
+    }
+
+  /* 减弱动态效果：覆盖层绝不显示（JS 层已拦截，这是双保险） */
+  @media (prefers-reduced-motion: reduce) {
+    .intro-playing .intro-overlay {
+      display: none;
+      }
+    }
 }
+
+/* 星芒闪烁（放 layer 外：它是一次性动画，不参与层叠竞争） */
+@keyframes intro-flash {
+  0% { opacity: 0; transform: scale(0.3); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.7); }
+  }
+
+/* 入场覆盖层的退场（正常收尾与"保险丝"共用一条关键帧，见 .intro-playing 处注释） */
+@keyframes intro-dismiss {
+  to { opacity: 0; visibility: hidden; }
+  }
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * 深空星夜 · 关键帧（2026-10-07）

@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Noto_Sans_SC, Outfit } from "next/font/google";
+import { CursorSpotlight } from "@/components/CursorSpotlight";
+import { IntroOverlay } from "@/components/IntroOverlay";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -45,6 +47,36 @@ const outfit = Outfit({
 });
 
 const DESCRIPTION = "中国动漫爱好者的追番与考据社区。不提供在线播放，只跳转正版平台。";
+
+/**
+ * 入场动画的「开场哨」（2026-10-07）。
+ *
+ * ⚠️ 必须是**同步内联**、**放在 `<body>` 的第一个子节点**：
+ * 只有解析期同步执行的脚本才能保证在**首次绘制之前**把类名加好——
+ * 这样要播动画的访客看到的第第一帧就是黑场，不存在"先闪一下网页、
+ * 再被黑场盖住"。⚠️ **不能用 `next/script` 的 `beforeInteractive`**：
+ * 它是把内容 push 进 `self.__next_s`、由客户端 bundle 稍后执行的
+ * （已从 Next 源码核实），比首次绘制位还晚，防闪意义为零。
+ *
+ * 脚本做四件事（整段 try/catch——这段出错，页面必须照常可用）：
+ *   1. 认 `?intro=1` / `?intro=0` 两个调试开关（标记在首帧就写死，
+ *      dev 想反复看动画只能靠它，或在 DevTools 里清 sessionStorage）；
+ *   2. 「减弱动态效果」的用户直接不播；
+ *   3. 本标签页已播过（sessionStorage）就不播——刷新、站内跳转都不会重播，
+ *      关掉标签页重开才会；
+ *   4. 记录 `__introT0`（动画的时间锚点，让 JS 动画和 HTML 解析时刻对齐）
+ *      并给 `<html>` 加 `intro-playing`。
+ */
+const INTRO_BOOTSTRAP = `!function(){try{
+var q=location.search,force=q.indexOf("intro=1")>-1,off=q.indexOf("intro=0")>-1;
+if(off)return;
+if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+var seen=false;try{seen=sessionStorage.getItem("nanoanime.intro.v1")==="1"}catch(e){}
+if(seen&&!force)return;
+try{sessionStorage.setItem("nanoanime.intro.v1","1")}catch(e){}
+window.__introT0=performance.now();
+document.documentElement.classList.add("intro-playing");
+}catch(e){}}();`;
 
 /**
  * 站点自己的完整网址。
@@ -113,6 +145,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={cn("font-sans", notoSansSC.variable, outfit.variable)}
       // 顶栏是 sticky 的，页面内锚点跳转时若不加这个偏移，被跳到的标题会被顶栏压住
       style={{ scrollPaddingTop: "5rem" }}
+      // ⚠️ 下面那段内联脚本会在 hydration 之前给 <html> 加 intro-playing 类，
+      // React 对比属性时会发现"多了个类"。它不会把类改回去（差异只用于 dev 打印），
+      // 但控制台会报 hydration mismatch——suppressHydrationWarning 正是为
+      // "内联脚本提前改动根元素"这种场景准备的（Next 官方暗色模式指南同款）。
+      suppressHydrationWarning
     >
       {/*
         ⚠️ 这里写死 className="dark" 而不是靠 JS 切换。
@@ -122,6 +159,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         对应的还有 globals.css 里的 color-scheme: dark（滚动条/表单控件）。
       */}
       <body className="dark flex min-h-screen flex-col bg-background">
+        {/*
+          入场动画的「开场哨」——必须是 body 的第一个子节点，且必须是
+          同步内联脚本（原因见 INTRO_BOOTSTRAP 的注释）。
+        */}
+        <script dangerouslySetInnerHTML={{ __html: INTRO_BOOTSTRAP }} />
         {/*
           全站星空背景层（2026-10-07 深空星夜改版）。
           它接替了原来那层"双色径向渐变氛围"的职责：让大片深色底不至于变成
@@ -147,6 +189,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteFooter />
         {/* 离线缓存的开机开关，不显示任何东西 */}
         <ServiceWorkerRegister />
+        {/* 卡片"跟随鼠标的柔光"的位置写入器（2026-10-07 顶级打磨）。
+            同样不显示任何东西——全站只挂一个监听器，见组件头注释 */}
+        <CursorSpotlight />
+        {/* 入场动画「星尘聚字」（2026-10-07）。放最后：它 position:fixed，
+            DOM 位置不影响版式，但放后面能让前面的内容更早被解析到 */}
+        <IntroOverlay />
       </body>
     </html>
   );

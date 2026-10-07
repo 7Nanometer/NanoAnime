@@ -161,7 +161,7 @@ export function HeroSpotlight() {
           )}
         >
           <div className="flex max-w-xl flex-col gap-3.5">
-            <h2 className="line-clamp-2 text-2xl leading-tight font-bold tracking-tight sm:text-4xl">
+            <h2 className="line-clamp-2 text-2xl leading-tight font-bold tracking-tight text-glow-brand sm:text-4xl">
               {title}
             </h2>
 
@@ -196,7 +196,7 @@ export function HeroSpotlight() {
               */}
               <Link
                 href={`/anime/${slide.id}#watch`}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all duration-150 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-[0.98]"
+                className="sheen inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all duration-150 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-[0.98]"
               >
                 去哪看
                 <span aria-hidden>›</span>

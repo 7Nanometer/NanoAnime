@@ -42,6 +42,13 @@ export function StarfieldBackground() {
       {/* 流星两条。reduced-motion 时由 CSS 整体隐藏，不在这里判断 */}
       <div className="starfield-meteor starfield-meteor-1" />
       <div className="starfield-meteor starfield-meteor-2" />
+
+      {/*
+        质感颗粒（2026-10-07 打磨）：一层极淡的噪点，压在最上面。
+        它盖到星星上是有意的——让"星星 + 背景"整体统一成一层"胶片质感"，
+        而不是"干净的背景上贴着锐利的星星"。4% 的浓度不影响任何可读性。
+      */}
+      <div className="starfield-noise" />
     </div>
   );
 }
