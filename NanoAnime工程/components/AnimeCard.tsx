@@ -63,7 +63,7 @@ export function AnimeCard({
    *      ⚠️ **仅 count >= 2 显示**：单部补齐的"合集"没有"共 N 部"这回事；
    *   ③ 名字下方那行从「年份」换成「{年份} · 评分 {合集均分}」。
    *
-   * 传入的 anime 是合集**代表作品**（系列里综合分最高的那部，脚本选好的）。
+   * 传入的 anime 是合集**代表作品**（系列里 Bangumi 分最高的那部，脚本选好的）。
    */
   collection?: { count: number; score: number };
 }) {

@@ -95,6 +95,12 @@ export interface SeriesRecord {
   titleNative: string | null;
   format: string | null;
   year: number | null;
+  /**
+   * 原产国（AniList 的 countryOfOrigin）。高分合集只收日本动画用它过滤
+   * （2026-10-07 口径）；判不了（null / undefined）的一律排除。
+   * 可选：老的补抓数据里没有这个字段。
+   */
+  countryOfOrigin?: string | null;
   relations: SeriesEdgeInfo[];
 }
 

@@ -109,6 +109,76 @@
     "bangumi": 78,
     "anitrendz": null
   },
+  "81": {
+    "anilist": null,
+    "bangumi": 79,
+    "anitrendz": null
+  },
+  "82": {
+    "anilist": null,
+    "bangumi": 86,
+    "anitrendz": null
+  },
+  "83": {
+    "anilist": null,
+    "bangumi": 66,
+    "anitrendz": null
+  },
+  "84": {
+    "anilist": null,
+    "bangumi": 66,
+    "anitrendz": null
+  },
+  "87": {
+    "anilist": null,
+    "bangumi": 85,
+    "anitrendz": null
+  },
+  "88": {
+    "anilist": null,
+    "bangumi": 68,
+    "anitrendz": null
+  },
+  "89": {
+    "anilist": null,
+    "bangumi": 72,
+    "anitrendz": null
+  },
+  "90": {
+    "anilist": null,
+    "bangumi": 71,
+    "anitrendz": null
+  },
+  "91": {
+    "anilist": null,
+    "bangumi": 73,
+    "anitrendz": null
+  },
+  "92": {
+    "anilist": null,
+    "bangumi": 68,
+    "anitrendz": null
+  },
+  "93": {
+    "anilist": null,
+    "bangumi": 74,
+    "anitrendz": null
+  },
+  "94": {
+    "anilist": null,
+    "bangumi": 62,
+    "anitrendz": null
+  },
+  "95": {
+    "anilist": null,
+    "bangumi": 84,
+    "anitrendz": null
+  },
+  "96": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
   "114": {
     "anilist": null,
     "bangumi": 74,
@@ -249,6 +319,11 @@
     "bangumi": 77,
     "anitrendz": null
   },
+  "265": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
   "267": {
     "anilist": null,
     "bangumi": 77,
@@ -284,6 +359,11 @@
     "bangumi": 81,
     "anitrendz": null
   },
+  "338": {
+    "anilist": null,
+    "bangumi": 78,
+    "anitrendz": null
+  },
   "339": {
     "anilist": null,
     "bangumi": 78,
@@ -307,6 +387,16 @@
   "369": {
     "anilist": null,
     "bangumi": 73,
+    "anitrendz": null
+  },
+  "371": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
+  "372": {
+    "anilist": null,
+    "bangumi": 79,
     "anitrendz": null
   },
   "387": {
@@ -354,9 +444,69 @@
     "bangumi": 84,
     "anitrendz": null
   },
+  "441": {
+    "anilist": null,
+    "bangumi": 82,
+    "anitrendz": null
+  },
+  "449": {
+    "anilist": null,
+    "bangumi": 70,
+    "anitrendz": null
+  },
+  "450": {
+    "anilist": null,
+    "bangumi": 71,
+    "anitrendz": null
+  },
+  "451": {
+    "anilist": null,
+    "bangumi": 72,
+    "anitrendz": null
+  },
+  "452": {
+    "anilist": null,
+    "bangumi": 74,
+    "anitrendz": null
+  },
   "457": {
     "anilist": null,
     "bangumi": 87,
+    "anitrendz": null
+  },
+  "460": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
+  "461": {
+    "anilist": null,
+    "bangumi": 66,
+    "anitrendz": null
+  },
+  "462": {
+    "anilist": null,
+    "bangumi": 69,
+    "anitrendz": null
+  },
+  "463": {
+    "anilist": null,
+    "bangumi": 66,
+    "anitrendz": null
+  },
+  "464": {
+    "anilist": null,
+    "bangumi": 70,
+    "anitrendz": null
+  },
+  "465": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
+  "466": {
+    "anilist": null,
+    "bangumi": 66,
     "anitrendz": null
   },
   "467": {
@@ -387,6 +537,11 @@
   "488": {
     "anilist": null,
     "bangumi": 78,
+    "anitrendz": null
+  },
+  "502": {
+    "anilist": null,
+    "bangumi": 65,
     "anitrendz": null
   },
   "512": {
@@ -459,6 +614,11 @@
     "bangumi": 74,
     "anitrendz": null
   },
+  "711": {
+    "anilist": null,
+    "bangumi": 66,
+    "anitrendz": null
+  },
   "721": {
     "anilist": null,
     "bangumi": 80,
@@ -477,6 +637,21 @@
   "777": {
     "anilist": null,
     "bangumi": 82,
+    "anitrendz": null
+  },
+  "779": {
+    "anilist": null,
+    "bangumi": 72,
+    "anitrendz": null
+  },
+  "780": {
+    "anilist": null,
+    "bangumi": 68,
+    "anitrendz": null
+  },
+  "781": {
+    "anilist": null,
+    "bangumi": 72,
     "anitrendz": null
   },
   "790": {
@@ -514,9 +689,19 @@
     "bangumi": 66,
     "anitrendz": null
   },
+  "864": {
+    "anilist": null,
+    "bangumi": 60,
+    "anitrendz": null
+  },
   "874": {
     "anilist": null,
     "bangumi": 80,
+    "anitrendz": null
+  },
+  "883": {
+    "anilist": null,
+    "bangumi": 65,
     "anitrendz": null
   },
   "885": {
@@ -529,9 +714,34 @@
     "bangumi": 78,
     "anitrendz": null
   },
+  "891": {
+    "anilist": null,
+    "bangumi": 64,
+    "anitrendz": null
+  },
+  "892": {
+    "anilist": null,
+    "bangumi": 65,
+    "anitrendz": null
+  },
+  "893": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
+  "894": {
+    "anilist": null,
+    "bangumi": 63,
+    "anitrendz": null
+  },
   "898": {
     "anilist": null,
     "bangumi": 66,
+    "anitrendz": null
+  },
+  "899": {
+    "anilist": null,
+    "bangumi": 67,
     "anitrendz": null
   },
   "901": {
@@ -539,9 +749,24 @@
     "bangumi": 67,
     "anitrendz": null
   },
+  "902": {
+    "anilist": null,
+    "bangumi": 66,
+    "anitrendz": null
+  },
+  "903": {
+    "anilist": null,
+    "bangumi": 68,
+    "anitrendz": null
+  },
   "905": {
     "anilist": null,
     "bangumi": 71,
+    "anitrendz": null
+  },
+  "908": {
+    "anilist": null,
+    "bangumi": 73,
     "anitrendz": null
   },
   "918": {
@@ -549,9 +774,24 @@
     "bangumi": 87,
     "anitrendz": null
   },
+  "930": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
   "934": {
     "anilist": null,
     "bangumi": 80,
+    "anitrendz": null
+  },
+  "962": {
+    "anilist": null,
+    "bangumi": 83,
+    "anitrendz": null
+  },
+  "986": {
+    "anilist": null,
+    "bangumi": 71,
     "anitrendz": null
   },
   "1029": {
@@ -562,6 +802,21 @@
   "1033": {
     "anilist": null,
     "bangumi": 87,
+    "anitrendz": null
+  },
+  "1091": {
+    "anilist": null,
+    "bangumi": 74,
+    "anitrendz": null
+  },
+  "1092": {
+    "anilist": null,
+    "bangumi": 77,
+    "anitrendz": null
+  },
+  "1096": {
+    "anilist": null,
+    "bangumi": 88,
     "anitrendz": null
   },
   "1117": {
@@ -589,6 +844,11 @@
     "bangumi": 71,
     "anitrendz": null
   },
+  "1238": {
+    "anilist": null,
+    "bangumi": 64,
+    "anitrendz": null
+  },
   "1254": {
     "anilist": null,
     "bangumi": 75,
@@ -597,6 +857,16 @@
   "1281": {
     "anilist": null,
     "bangumi": 66,
+    "anitrendz": null
+  },
+  "1289": {
+    "anilist": null,
+    "bangumi": 82,
+    "anitrendz": null
+  },
+  "1290": {
+    "anilist": null,
+    "bangumi": 72,
     "anitrendz": null
   },
   "1292": {
@@ -609,9 +879,29 @@
     "bangumi": 68,
     "anitrendz": null
   },
+  "1363": {
+    "anilist": null,
+    "bangumi": 71,
+    "anitrendz": null
+  },
+  "1364": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
+  "1368": {
+    "anilist": null,
+    "bangumi": 63,
+    "anitrendz": null
+  },
   "1462": {
     "anilist": null,
     "bangumi": 80,
+    "anitrendz": null
+  },
+  "1505": {
+    "anilist": null,
+    "bangumi": 66,
     "anitrendz": null
   },
   "1519": {
@@ -639,6 +929,11 @@
     "bangumi": 77,
     "anitrendz": null
   },
+  "1566": {
+    "anilist": null,
+    "bangumi": 84,
+    "anitrendz": null
+  },
   "1571": {
     "anilist": null,
     "bangumi": 71,
@@ -652,6 +947,21 @@
   "1604": {
     "anilist": null,
     "bangumi": 76,
+    "anitrendz": null
+  },
+  "1650": {
+    "anilist": null,
+    "bangumi": 72,
+    "anitrendz": null
+  },
+  "1651": {
+    "anilist": null,
+    "bangumi": 71,
+    "anitrendz": null
+  },
+  "1652": {
+    "anilist": null,
+    "bangumi": 70,
     "anitrendz": null
   },
   "1689": {
@@ -694,6 +1004,11 @@
     "bangumi": 54,
     "anitrendz": null
   },
+  "1852": {
+    "anilist": null,
+    "bangumi": 76,
+    "anitrendz": null
+  },
   "1887": {
     "anilist": null,
     "bangumi": 83,
@@ -702,6 +1017,16 @@
   "1889": {
     "anilist": null,
     "bangumi": 81,
+    "anitrendz": null
+  },
+  "1913": {
+    "anilist": null,
+    "bangumi": 64,
+    "anitrendz": null
+  },
+  "1939": {
+    "anilist": null,
+    "bangumi": 51,
     "anitrendz": null
   },
   "1943": {
@@ -724,6 +1049,11 @@
     "bangumi": 74,
     "anitrendz": null
   },
+  "2107": {
+    "anilist": null,
+    "bangumi": 71,
+    "anitrendz": null
+  },
   "2129": {
     "anilist": null,
     "bangumi": 74,
@@ -744,9 +1074,54 @@
     "bangumi": 82,
     "anitrendz": null
   },
+  "2273": {
+    "anilist": null,
+    "bangumi": 74,
+    "anitrendz": null
+  },
+  "2302": {
+    "anilist": null,
+    "bangumi": 58,
+    "anitrendz": null
+  },
+  "2386": {
+    "anilist": null,
+    "bangumi": 59,
+    "anitrendz": null
+  },
+  "2391": {
+    "anilist": null,
+    "bangumi": 59,
+    "anitrendz": null
+  },
   "2402": {
     "anilist": null,
     "bangumi": 82,
+    "anitrendz": null
+  },
+  "2448": {
+    "anilist": null,
+    "bangumi": 81,
+    "anitrendz": null
+  },
+  "2488": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
+  "2490": {
+    "anilist": null,
+    "bangumi": 57,
+    "anitrendz": null
+  },
+  "2512": {
+    "anilist": null,
+    "bangumi": 64,
+    "anitrendz": null
+  },
+  "2515": {
+    "anilist": null,
+    "bangumi": 63,
     "anitrendz": null
   },
   "2581": {
@@ -754,9 +1129,19 @@
     "bangumi": 76,
     "anitrendz": null
   },
+  "2597": {
+    "anilist": null,
+    "bangumi": 62,
+    "anitrendz": null
+  },
   "2605": {
     "anilist": null,
     "bangumi": 78,
+    "anitrendz": null
+  },
+  "2665": {
+    "anilist": null,
+    "bangumi": 76,
     "anitrendz": null
   },
   "2759": {
@@ -772,6 +1157,16 @@
   "2904": {
     "anilist": null,
     "bangumi": 83,
+    "anitrendz": null
+  },
+  "2921": {
+    "anilist": null,
+    "bangumi": 87,
+    "anitrendz": null
+  },
+  "2922": {
+    "anilist": null,
+    "bangumi": 75,
     "anitrendz": null
   },
   "2924": {
@@ -799,9 +1194,34 @@
     "bangumi": 79,
     "anitrendz": null
   },
+  "3067": {
+    "anilist": null,
+    "bangumi": 70,
+    "anitrendz": null
+  },
+  "3069": {
+    "anilist": null,
+    "bangumi": 69,
+    "anitrendz": null
+  },
+  "3071": {
+    "anilist": null,
+    "bangumi": 65,
+    "anitrendz": null
+  },
   "3092": {
     "anilist": null,
     "bangumi": 72,
+    "anitrendz": null
+  },
+  "3165": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
+  "3288": {
+    "anilist": null,
+    "bangumi": 64,
     "anitrendz": null
   },
   "3297": {
@@ -824,9 +1244,24 @@
     "bangumi": 74,
     "anitrendz": null
   },
+  "3603": {
+    "anilist": null,
+    "bangumi": 76,
+    "anitrendz": null
+  },
+  "3604": {
+    "anilist": null,
+    "bangumi": 77,
+    "anitrendz": null
+  },
   "3652": {
     "anilist": null,
     "bangumi": 72,
+    "anitrendz": null
+  },
+  "3665": {
+    "anilist": null,
+    "bangumi": 78,
     "anitrendz": null
   },
   "3667": {
@@ -859,9 +1294,24 @@
     "bangumi": 74,
     "anitrendz": null
   },
+  "3927": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
   "3958": {
     "anilist": null,
     "bangumi": 71,
+    "anitrendz": null
+  },
+  "3963": {
+    "anilist": null,
+    "bangumi": 71,
+    "anitrendz": null
+  },
+  "3964": {
+    "anilist": null,
+    "bangumi": 73,
     "anitrendz": null
   },
   "4063": {
@@ -877,6 +1327,11 @@
   "4087": {
     "anilist": null,
     "bangumi": 75,
+    "anitrendz": null
+  },
+  "4130": {
+    "anilist": null,
+    "bangumi": 66,
     "anitrendz": null
   },
   "4155": {
@@ -909,6 +1364,11 @@
     "bangumi": 67,
     "anitrendz": null
   },
+  "4672": {
+    "anilist": null,
+    "bangumi": 84,
+    "anitrendz": null
+  },
   "4725": {
     "anilist": null,
     "bangumi": 76,
@@ -917,6 +1377,11 @@
   "4752": {
     "anilist": null,
     "bangumi": 63,
+    "anitrendz": null
+  },
+  "4886": {
+    "anilist": null,
+    "bangumi": 68,
     "anitrendz": null
   },
   "4896": {
@@ -952,6 +1417,11 @@
   "5114": {
     "anilist": null,
     "bangumi": 88,
+    "anitrendz": null
+  },
+  "5118": {
+    "anilist": null,
+    "bangumi": 74,
     "anitrendz": null
   },
   "5177": {
@@ -1009,6 +1479,11 @@
     "bangumi": 74,
     "anitrendz": null
   },
+  "5941": {
+    "anilist": null,
+    "bangumi": 81,
+    "anitrendz": null
+  },
   "5958": {
     "anilist": null,
     "bangumi": 73,
@@ -1022,6 +1497,16 @@
   "6045": {
     "anilist": null,
     "bangumi": 76,
+    "anitrendz": null
+  },
+  "6115": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
+  "6198": {
+    "anilist": null,
+    "bangumi": 63,
     "anitrendz": null
   },
   "6201": {
@@ -1049,9 +1534,19 @@
     "bangumi": 62,
     "anitrendz": null
   },
+  "6336": {
+    "anilist": null,
+    "bangumi": 74,
+    "anitrendz": null
+  },
   "6347": {
     "anilist": null,
     "bangumi": 74,
+    "anitrendz": null
+  },
+  "6467": {
+    "anilist": null,
+    "bangumi": 63,
     "anitrendz": null
   },
   "6500": {
@@ -1104,6 +1599,16 @@
     "bangumi": 75,
     "anitrendz": null
   },
+  "6984": {
+    "anilist": null,
+    "bangumi": 77,
+    "anitrendz": null
+  },
+  "7017": {
+    "anilist": null,
+    "bangumi": 62,
+    "anitrendz": null
+  },
   "7054": {
     "anilist": null,
     "bangumi": 70,
@@ -1114,9 +1619,19 @@
     "bangumi": 59,
     "anitrendz": null
   },
+  "7144": {
+    "anilist": null,
+    "bangumi": 57,
+    "anitrendz": null
+  },
   "7193": {
     "anilist": null,
     "bangumi": 75,
+    "anitrendz": null
+  },
+  "7270": {
+    "anilist": null,
+    "bangumi": 67,
     "anitrendz": null
   },
   "7311": {
@@ -1179,9 +1694,29 @@
     "bangumi": 74,
     "anitrendz": null
   },
+  "8132": {
+    "anilist": null,
+    "bangumi": 57,
+    "anitrendz": null
+  },
   "8142": {
     "anilist": null,
     "bangumi": 73,
+    "anitrendz": null
+  },
+  "8287": {
+    "anilist": null,
+    "bangumi": 60,
+    "anitrendz": null
+  },
+  "8310": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
+  "8348": {
+    "anilist": null,
+    "bangumi": 71,
     "anitrendz": null
   },
   "8426": {
@@ -1214,6 +1749,11 @@
     "bangumi": 73,
     "anitrendz": null
   },
+  "8740": {
+    "anilist": null,
+    "bangumi": 73,
+    "anitrendz": null
+  },
   "8769": {
     "anilist": null,
     "bangumi": 71,
@@ -1229,14 +1769,34 @@
     "bangumi": 68,
     "anitrendz": null
   },
+  "9040": {
+    "anilist": null,
+    "bangumi": 59,
+    "anitrendz": null
+  },
   "9041": {
     "anilist": null,
     "bangumi": 61,
     "anitrendz": null
   },
+  "9055": {
+    "anilist": null,
+    "bangumi": 73,
+    "anitrendz": null
+  },
+  "9098": {
+    "anilist": null,
+    "bangumi": 50,
+    "anitrendz": null
+  },
   "9135": {
     "anilist": null,
     "bangumi": 69,
+    "anitrendz": null
+  },
+  "9203": {
+    "anilist": null,
+    "bangumi": 62,
     "anitrendz": null
   },
   "9253": {
@@ -1294,9 +1854,19 @@
     "bangumi": 69,
     "anitrendz": null
   },
+  "9890": {
+    "anilist": null,
+    "bangumi": 73,
+    "anitrendz": null
+  },
   "9919": {
     "anilist": null,
     "bangumi": 71,
+    "anitrendz": null
+  },
+  "9963": {
+    "anilist": null,
+    "bangumi": 61,
     "anitrendz": null
   },
   "9989": {
@@ -1304,9 +1874,19 @@
     "bangumi": 75,
     "anitrendz": null
   },
+  "9999": {
+    "anilist": null,
+    "bangumi": 62,
+    "anitrendz": null
+  },
   "10012": {
     "anilist": null,
     "bangumi": 76,
+    "anitrendz": null
+  },
+  "10017": {
+    "anilist": null,
+    "bangumi": 61,
     "anitrendz": null
   },
   "10029": {
@@ -1337,6 +1917,16 @@
   "10165": {
     "anilist": null,
     "bangumi": 85,
+    "anitrendz": null
+  },
+  "10189": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
+  "10232": {
+    "anilist": null,
+    "bangumi": 74,
     "anitrendz": null
   },
   "10271": {
@@ -1414,6 +2004,16 @@
     "bangumi": 80,
     "anitrendz": null
   },
+  "10808": {
+    "anilist": null,
+    "bangumi": 55,
+    "anitrendz": null
+  },
+  "10937": {
+    "anilist": null,
+    "bangumi": 79,
+    "anitrendz": null
+  },
   "11013": {
     "anilist": null,
     "bangumi": 67,
@@ -1427,6 +2027,16 @@
   "11235": {
     "anilist": null,
     "bangumi": 73,
+    "anitrendz": null
+  },
+  "11237": {
+    "anilist": null,
+    "bangumi": 76,
+    "anitrendz": null
+  },
+  "11239": {
+    "anilist": null,
+    "bangumi": 78,
     "anitrendz": null
   },
   "11319": {
@@ -1499,9 +2109,19 @@
     "bangumi": 74,
     "anitrendz": null
   },
+  "11917": {
+    "anilist": null,
+    "bangumi": 72,
+    "anitrendz": null
+  },
   "11933": {
     "anilist": null,
     "bangumi": 67,
+    "anitrendz": null
+  },
+  "12001": {
+    "anilist": null,
+    "bangumi": 51,
     "anitrendz": null
   },
   "12031": {
@@ -1584,6 +2204,11 @@
     "bangumi": 57,
     "anitrendz": null
   },
+  "12565": {
+    "anilist": null,
+    "bangumi": 68,
+    "anitrendz": null
+  },
   "12679": {
     "anilist": null,
     "bangumi": 74,
@@ -1627,6 +2252,16 @@
   "13759": {
     "anilist": null,
     "bangumi": 74,
+    "anitrendz": null
+  },
+  "13837": {
+    "anilist": null,
+    "bangumi": 62,
+    "anitrendz": null
+  },
+  "13839": {
+    "anilist": null,
+    "bangumi": 61,
     "anitrendz": null
   },
   "14075": {
@@ -1739,6 +2374,11 @@
     "bangumi": 65,
     "anitrendz": null
   },
+  "15323": {
+    "anilist": null,
+    "bangumi": 72,
+    "anitrendz": null
+  },
   "15335": {
     "anilist": null,
     "bangumi": 79,
@@ -1762,6 +2402,16 @@
   "15689": {
     "anilist": null,
     "bangumi": 77,
+    "anitrendz": null
+  },
+  "15731": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
+  "15793": {
+    "anilist": null,
+    "bangumi": 70,
     "anitrendz": null
   },
   "15809": {
@@ -1797,6 +2447,11 @@
   "16201": {
     "anilist": null,
     "bangumi": 65,
+    "anitrendz": null
+  },
+  "16239": {
+    "anilist": null,
+    "bangumi": 66,
     "anitrendz": null
   },
   "16353": {
@@ -1884,6 +2539,11 @@
     "bangumi": 74,
     "anitrendz": null
   },
+  "17389": {
+    "anilist": null,
+    "bangumi": 72,
+    "anitrendz": null
+  },
   "17513": {
     "anilist": null,
     "bangumi": 57,
@@ -1892,6 +2552,16 @@
   "17549": {
     "anilist": null,
     "bangumi": 80,
+    "anitrendz": null
+  },
+  "17655": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
+  "17717": {
+    "anilist": null,
+    "bangumi": 69,
     "anitrendz": null
   },
   "17729": {
@@ -1964,6 +2634,11 @@
     "bangumi": 66,
     "anitrendz": null
   },
+  "18449": {
+    "anilist": null,
+    "bangumi": 65,
+    "anitrendz": null
+  },
   "18671": {
     "anilist": null,
     "bangumi": 70,
@@ -1989,6 +2664,11 @@
     "bangumi": 71,
     "anitrendz": null
   },
+  "19123": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
   "19221": {
     "anilist": null,
     "bangumi": 66,
@@ -1997,6 +2677,11 @@
   "19291": {
     "anilist": null,
     "bangumi": 74,
+    "anitrendz": null
+  },
+  "19319": {
+    "anilist": null,
+    "bangumi": 75,
     "anitrendz": null
   },
   "19369": {
@@ -2022,6 +2707,11 @@
   "19647": {
     "anilist": null,
     "bangumi": 77,
+    "anitrendz": null
+  },
+  "19669": {
+    "anilist": null,
+    "bangumi": 65,
     "anitrendz": null
   },
   "19685": {
@@ -2104,6 +2794,11 @@
     "bangumi": 68,
     "anitrendz": null
   },
+  "20478": {
+    "anilist": null,
+    "bangumi": 76,
+    "anitrendz": null
+  },
   "20483": {
     "anilist": null,
     "bangumi": 69,
@@ -2122,6 +2817,11 @@
   "20496": {
     "anilist": null,
     "bangumi": 65,
+    "anitrendz": null
+  },
+  "20497": {
+    "anilist": null,
+    "bangumi": 77,
     "anitrendz": null
   },
   "20503": {
@@ -2179,9 +2879,24 @@
     "bangumi": 64,
     "anitrendz": null
   },
+  "20559": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
+  "20560": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
   "20565": {
     "anilist": null,
     "bangumi": 58,
+    "anitrendz": null
+  },
+  "20566": {
+    "anilist": null,
+    "bangumi": 65,
     "anitrendz": null
   },
   "20574": {
@@ -2294,6 +3009,11 @@
     "bangumi": 72,
     "anitrendz": null
   },
+  "20658": {
+    "anilist": null,
+    "bangumi": 69,
+    "anitrendz": null
+  },
   "20661": {
     "anilist": null,
     "bangumi": 71,
@@ -2312,6 +3032,11 @@
   "20678": {
     "anilist": null,
     "bangumi": 59,
+    "anitrendz": null
+  },
+  "20690": {
+    "anilist": null,
+    "bangumi": 72,
     "anitrendz": null
   },
   "20694": {
@@ -2374,6 +3099,11 @@
     "bangumi": 69,
     "anitrendz": null
   },
+  "20739": {
+    "anilist": null,
+    "bangumi": 63,
+    "anitrendz": null
+  },
   "20741": {
     "anilist": null,
     "bangumi": 62,
@@ -2399,6 +3129,11 @@
     "bangumi": 47,
     "anitrendz": null
   },
+  "20782": {
+    "anilist": null,
+    "bangumi": 61,
+    "anitrendz": null
+  },
   "20785": {
     "anilist": null,
     "bangumi": 53,
@@ -2407,6 +3142,11 @@
   "20789": {
     "anilist": null,
     "bangumi": 71,
+    "anitrendz": null
+  },
+  "20790": {
+    "anilist": null,
+    "bangumi": 66,
     "anitrendz": null
   },
   "20792": {
@@ -2454,6 +3194,11 @@
     "bangumi": 69,
     "anitrendz": null
   },
+  "20835": {
+    "anilist": null,
+    "bangumi": 69,
+    "anitrendz": null
+  },
   "20839": {
     "anilist": null,
     "bangumi": 57,
@@ -2462,6 +3207,11 @@
   "20849": {
     "anilist": null,
     "bangumi": 63,
+    "anitrendz": null
+  },
+  "20859": {
+    "anilist": null,
+    "bangumi": 61,
     "anitrendz": null
   },
   "20879": {
@@ -2477,6 +3227,11 @@
   "20881": {
     "anilist": null,
     "bangumi": 62,
+    "anitrendz": null
+  },
+  "20907": {
+    "anilist": null,
+    "bangumi": 70,
     "anitrendz": null
   },
   "20910": {
@@ -2604,6 +3359,11 @@
     "bangumi": 73,
     "anitrendz": null
   },
+  "21008": {
+    "anilist": null,
+    "bangumi": 82,
+    "anitrendz": null
+  },
   "21031": {
     "anilist": null,
     "bangumi": 45,
@@ -2619,9 +3379,24 @@
     "bangumi": 75,
     "anitrendz": null
   },
+  "21043": {
+    "anilist": null,
+    "bangumi": 83,
+    "anitrendz": null
+  },
   "21051": {
     "anilist": null,
     "bangumi": 58,
+    "anitrendz": null
+  },
+  "21056": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
+  "21057": {
+    "anilist": null,
+    "bangumi": 68,
     "anitrendz": null
   },
   "21058": {
@@ -2924,6 +3699,11 @@
     "bangumi": 78,
     "anitrendz": null
   },
+  "21458": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
   "21459": {
     "anilist": null,
     "bangumi": 64,
@@ -2932,6 +3712,11 @@
   "21460": {
     "anilist": null,
     "bangumi": 85,
+    "anitrendz": null
+  },
+  "21485": {
+    "anilist": null,
+    "bangumi": 62,
     "anitrendz": null
   },
   "21495": {
@@ -2994,6 +3779,11 @@
     "bangumi": 36,
     "anitrendz": null
   },
+  "21588": {
+    "anilist": null,
+    "bangumi": 73,
+    "anitrendz": null
+  },
   "21610": {
     "anilist": null,
     "bangumi": 60,
@@ -3014,6 +3804,11 @@
     "bangumi": 74,
     "anitrendz": null
   },
+  "21638": {
+    "anilist": null,
+    "bangumi": 77,
+    "anitrendz": null
+  },
   "21639": {
     "anilist": null,
     "bangumi": 64,
@@ -3024,6 +3819,11 @@
     "bangumi": 63,
     "anitrendz": null
   },
+  "21658": {
+    "anilist": null,
+    "bangumi": 69,
+    "anitrendz": null
+  },
   "21659": {
     "anilist": null,
     "bangumi": 69,
@@ -3032,6 +3832,16 @@
   "21665": {
     "anilist": null,
     "bangumi": 66,
+    "anitrendz": null
+  },
+  "21672": {
+    "anilist": null,
+    "bangumi": 68,
+    "anitrendz": null
+  },
+  "21673": {
+    "anilist": null,
+    "bangumi": 73,
     "anitrendz": null
   },
   "21676": {
@@ -3144,6 +3954,11 @@
     "bangumi": 77,
     "anitrendz": null
   },
+  "21814": {
+    "anilist": null,
+    "bangumi": 61,
+    "anitrendz": null
+  },
   "21815": {
     "anilist": null,
     "bangumi": 66,
@@ -3179,6 +3994,11 @@
     "bangumi": 65,
     "anitrendz": null
   },
+  "21864": {
+    "anilist": null,
+    "bangumi": 65,
+    "anitrendz": null
+  },
   "21875": {
     "anilist": null,
     "bangumi": 82,
@@ -3194,9 +4014,29 @@
     "bangumi": 54,
     "anitrendz": null
   },
+  "21891": {
+    "anilist": null,
+    "bangumi": 64,
+    "anitrendz": null
+  },
+  "21893": {
+    "anilist": null,
+    "bangumi": 73,
+    "anitrendz": null
+  },
+  "87487": {
+    "anilist": null,
+    "bangumi": 66,
+    "anitrendz": null
+  },
   "87494": {
     "anilist": null,
     "bangumi": 63,
+    "anitrendz": null
+  },
+  "87495": {
+    "anilist": null,
+    "bangumi": 72,
     "anitrendz": null
   },
   "97592": {
@@ -3274,6 +4114,11 @@
     "bangumi": 74,
     "anitrendz": null
   },
+  "97881": {
+    "anilist": null,
+    "bangumi": 71,
+    "anitrendz": null
+  },
   "97886": {
     "anilist": null,
     "bangumi": 75,
@@ -3349,14 +4194,29 @@
     "bangumi": 73,
     "anitrendz": null
   },
+  "98033": {
+    "anilist": null,
+    "bangumi": 73,
+    "anitrendz": null
+  },
   "98035": {
     "anilist": null,
     "bangumi": 47,
     "anitrendz": null
   },
+  "98186": {
+    "anilist": null,
+    "bangumi": 63,
+    "anitrendz": null
+  },
   "98202": {
     "anilist": null,
     "bangumi": 79,
+    "anitrendz": null
+  },
+  "98222": {
+    "anilist": null,
+    "bangumi": 60,
     "anitrendz": null
   },
   "98251": {
@@ -3377,6 +4237,11 @@
   "98320": {
     "anilist": null,
     "bangumi": 55,
+    "anitrendz": null
+  },
+  "98338": {
+    "anilist": null,
+    "bangumi": 85,
     "anitrendz": null
   },
   "98384": {
@@ -3439,6 +4304,11 @@
     "bangumi": 67,
     "anitrendz": null
   },
+  "98504": {
+    "anilist": null,
+    "bangumi": 52,
+    "anitrendz": null
+  },
   "98505": {
     "anilist": null,
     "bangumi": 74,
@@ -3457,6 +4327,11 @@
   "98549": {
     "anilist": null,
     "bangumi": 57,
+    "anitrendz": null
+  },
+  "98554": {
+    "anilist": null,
+    "bangumi": 71,
     "anitrendz": null
   },
   "98572": {
@@ -3489,9 +4364,29 @@
     "bangumi": 76,
     "anitrendz": null
   },
+  "98779": {
+    "anilist": null,
+    "bangumi": 80,
+    "anitrendz": null
+  },
   "98861": {
     "anilist": null,
     "bangumi": 63,
+    "anitrendz": null
+  },
+  "98876": {
+    "anilist": null,
+    "bangumi": 81,
+    "anitrendz": null
+  },
+  "98884": {
+    "anilist": null,
+    "bangumi": 74,
+    "anitrendz": null
+  },
+  "98885": {
+    "anilist": null,
+    "bangumi": 74,
     "anitrendz": null
   },
   "98977": {
@@ -3634,6 +4529,11 @@
     "bangumi": 65,
     "anitrendz": null
   },
+  "99732": {
+    "anilist": null,
+    "bangumi": 66,
+    "anitrendz": null
+  },
   "99734": {
     "anilist": null,
     "bangumi": 63,
@@ -3642,6 +4542,11 @@
   "99750": {
     "anilist": null,
     "bangumi": 69,
+    "anitrendz": null
+  },
+  "99900": {
+    "anilist": null,
+    "bangumi": 74,
     "anitrendz": null
   },
   "99916": {
@@ -3684,6 +4589,11 @@
     "bangumi": 63,
     "anitrendz": null
   },
+  "100180": {
+    "anilist": null,
+    "bangumi": 64,
+    "anitrendz": null
+  },
   "100182": {
     "anilist": null,
     "bangumi": 62,
@@ -3697,6 +4607,11 @@
   "100245": {
     "anilist": null,
     "bangumi": 63,
+    "anitrendz": null
+  },
+  "100268": {
+    "anilist": null,
+    "bangumi": 73,
     "anitrendz": null
   },
   "100298": {
@@ -3762,6 +4677,11 @@
   "100645": {
     "anilist": null,
     "bangumi": 62,
+    "anitrendz": null
+  },
+  "100653": {
+    "anilist": null,
+    "bangumi": 57,
     "anitrendz": null
   },
   "100668": {
@@ -3834,9 +4754,19 @@
     "bangumi": 54,
     "anitrendz": null
   },
+  "101036": {
+    "anilist": null,
+    "bangumi": 44,
+    "anitrendz": null
+  },
   "101102": {
     "anilist": null,
     "bangumi": 67,
+    "anitrendz": null
+  },
+  "101161": {
+    "anilist": null,
+    "bangumi": 72,
     "anitrendz": null
   },
   "101165": {
@@ -3852,6 +4782,11 @@
   "101168": {
     "anilist": null,
     "bangumi": 44,
+    "anitrendz": null
+  },
+  "101169": {
+    "anilist": null,
+    "bangumi": 71,
     "anitrendz": null
   },
   "101215": {
@@ -3979,6 +4914,11 @@
     "bangumi": 41,
     "anitrendz": null
   },
+  "101554": {
+    "anilist": null,
+    "bangumi": 50,
+    "anitrendz": null
+  },
   "101571": {
     "anilist": null,
     "bangumi": 72,
@@ -3989,9 +4929,29 @@
     "bangumi": 78,
     "anitrendz": null
   },
+  "101574": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
   "101597": {
     "anilist": null,
     "bangumi": 39,
+    "anitrendz": null
+  },
+  "101632": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
+  "101633": {
+    "anilist": null,
+    "bangumi": 73,
+    "anitrendz": null
+  },
+  "101634": {
+    "anilist": null,
+    "bangumi": 74,
     "anitrendz": null
   },
   "101759": {
@@ -4009,6 +4969,11 @@
     "bangumi": 84,
     "anitrendz": null
   },
+  "101918": {
+    "anilist": null,
+    "bangumi": 66,
+    "anitrendz": null
+  },
   "101921": {
     "anilist": null,
     "bangumi": 79,
@@ -4024,9 +4989,39 @@
     "bangumi": 68,
     "anitrendz": null
   },
+  "101992": {
+    "anilist": null,
+    "bangumi": 81,
+    "anitrendz": null
+  },
+  "102093": {
+    "anilist": null,
+    "bangumi": 61,
+    "anitrendz": null
+  },
+  "102352": {
+    "anilist": null,
+    "bangumi": 46,
+    "anitrendz": null
+  },
+  "102431": {
+    "anilist": null,
+    "bangumi": 60,
+    "anitrendz": null
+  },
+  "102525": {
+    "anilist": null,
+    "bangumi": 58,
+    "anitrendz": null
+  },
   "102680": {
     "anilist": null,
     "bangumi": 73,
+    "anitrendz": null
+  },
+  "102839": {
+    "anilist": null,
+    "bangumi": 60,
     "anitrendz": null
   },
   "102883": {
@@ -4042,6 +5037,11 @@
   "103047": {
     "anilist": null,
     "bangumi": 75,
+    "anitrendz": null
+  },
+  "103110": {
+    "anilist": null,
+    "bangumi": 74,
     "anitrendz": null
   },
   "103139": {
@@ -4119,6 +5119,11 @@
     "bangumi": 72,
     "anitrendz": null
   },
+  "104461": {
+    "anilist": null,
+    "bangumi": 72,
+    "anitrendz": null
+  },
   "104462": {
     "anilist": null,
     "bangumi": 76,
@@ -4127,6 +5132,11 @@
   "104464": {
     "anilist": null,
     "bangumi": 61,
+    "anitrendz": null
+  },
+  "104557": {
+    "anilist": null,
+    "bangumi": 51,
     "anitrendz": null
   },
   "104578": {
@@ -4209,6 +5219,16 @@
     "bangumi": 70,
     "anitrendz": null
   },
+  "105595": {
+    "anilist": null,
+    "bangumi": 79,
+    "anitrendz": null
+  },
+  "105749": {
+    "anilist": null,
+    "bangumi": 74,
+    "anitrendz": null
+  },
   "105807": {
     "anilist": null,
     "bangumi": 56,
@@ -4232,6 +5252,11 @@
   "106051": {
     "anilist": null,
     "bangumi": 65,
+    "anitrendz": null
+  },
+  "106154": {
+    "anilist": null,
+    "bangumi": 72,
     "anitrendz": null
   },
   "106240": {
@@ -4294,6 +5319,11 @@
     "bangumi": 62,
     "anitrendz": null
   },
+  "107351": {
+    "anilist": null,
+    "bangumi": 65,
+    "anitrendz": null
+  },
   "107420": {
     "anilist": null,
     "bangumi": 49,
@@ -4352,6 +5382,16 @@
   "107961": {
     "anilist": null,
     "bangumi": 61,
+    "anitrendz": null
+  },
+  "108039": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
+  "108041": {
+    "anilist": null,
+    "bangumi": 49,
     "anitrendz": null
   },
   "108111": {
@@ -4434,6 +5474,11 @@
     "bangumi": 47,
     "anitrendz": null
   },
+  "108941": {
+    "anilist": null,
+    "bangumi": 65,
+    "anitrendz": null
+  },
   "109020": {
     "anilist": null,
     "bangumi": 72,
@@ -4452,6 +5497,11 @@
   "109298": {
     "anilist": null,
     "bangumi": 81,
+    "anitrendz": null
+  },
+  "109352": {
+    "anilist": null,
+    "bangumi": 62,
     "anitrendz": null
   },
   "109403": {
@@ -4494,6 +5544,11 @@
     "bangumi": 77,
     "anitrendz": null
   },
+  "110318": {
+    "anilist": null,
+    "bangumi": 61,
+    "anitrendz": null
+  },
   "110349": {
     "anilist": null,
     "bangumi": 72,
@@ -4517,6 +5572,11 @@
   "110733": {
     "anilist": null,
     "bangumi": 78,
+    "anitrendz": null
+  },
+  "110786": {
+    "anilist": null,
+    "bangumi": 70,
     "anitrendz": null
   },
   "111314": {
@@ -4567,6 +5627,11 @@
   "112124": {
     "anilist": null,
     "bangumi": 66,
+    "anitrendz": null
+  },
+  "112135": {
+    "anilist": null,
+    "bangumi": 77,
     "anitrendz": null
   },
   "112293": {
@@ -4644,6 +5709,21 @@
     "bangumi": 57,
     "anitrendz": null
   },
+  "113023": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
+  "113024": {
+    "anilist": null,
+    "bangumi": 85,
+    "anitrendz": null
+  },
+  "113108": {
+    "anilist": null,
+    "bangumi": 77,
+    "anitrendz": null
+  },
   "113231": {
     "anilist": null,
     "bangumi": 57,
@@ -4684,9 +5764,19 @@
     "bangumi": 69,
     "anitrendz": null
   },
+  "113555": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
   "113596": {
     "anilist": null,
     "bangumi": 67,
+    "anitrendz": null
+  },
+  "113653": {
+    "anilist": null,
+    "bangumi": 53,
     "anitrendz": null
   },
   "113717": {
@@ -4699,6 +5789,11 @@
     "bangumi": 56,
     "anitrendz": null
   },
+  "113917": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
   "113936": {
     "anilist": null,
     "bangumi": 71,
@@ -4707,6 +5802,11 @@
   "113950": {
     "anilist": null,
     "bangumi": 75,
+    "anitrendz": null
+  },
+  "113971": {
+    "anilist": null,
+    "bangumi": 74,
     "anitrendz": null
   },
   "114043": {
@@ -4759,6 +5859,11 @@
     "bangumi": 53,
     "anitrendz": null
   },
+  "114233": {
+    "anilist": null,
+    "bangumi": 76,
+    "anitrendz": null
+  },
   "114236": {
     "anilist": null,
     "bangumi": 66,
@@ -4784,6 +5889,11 @@
     "bangumi": 66,
     "anitrendz": null
   },
+  "114744": {
+    "anilist": null,
+    "bangumi": 69,
+    "anitrendz": null
+  },
   "114745": {
     "anilist": null,
     "bangumi": 83,
@@ -4792,6 +5902,11 @@
   "114840": {
     "anilist": null,
     "bangumi": 60,
+    "anitrendz": null
+  },
+  "114841": {
+    "anilist": null,
+    "bangumi": 53,
     "anitrendz": null
   },
   "114862": {
@@ -4874,6 +5989,11 @@
     "bangumi": 58,
     "anitrendz": null
   },
+  "117002": {
+    "anilist": null,
+    "bangumi": 59,
+    "anitrendz": null
+  },
   "117343": {
     "anilist": null,
     "bangumi": 70,
@@ -4889,9 +6009,19 @@
     "bangumi": 71,
     "anitrendz": null
   },
+  "117556": {
+    "anilist": null,
+    "bangumi": 77,
+    "anitrendz": null
+  },
   "117612": {
     "anilist": null,
     "bangumi": 57,
+    "anitrendz": null
+  },
+  "117756": {
+    "anilist": null,
+    "bangumi": 68,
     "anitrendz": null
   },
   "117989": {
@@ -4902,6 +6032,11 @@
   "118375": {
     "anilist": null,
     "bangumi": 48,
+    "anitrendz": null
+  },
+  "118399": {
+    "anilist": null,
+    "bangumi": 44,
     "anitrendz": null
   },
   "118419": {
@@ -5004,6 +6139,11 @@
     "bangumi": 68,
     "anitrendz": null
   },
+  "124115": {
+    "anilist": null,
+    "bangumi": 76,
+    "anitrendz": null
+  },
   "124140": {
     "anilist": null,
     "bangumi": 70,
@@ -5089,6 +6229,11 @@
     "bangumi": 57,
     "anitrendz": null
   },
+  "126275": {
+    "anilist": null,
+    "bangumi": 61,
+    "anitrendz": null
+  },
   "126288": {
     "anilist": null,
     "bangumi": 64,
@@ -5114,9 +6259,29 @@
     "bangumi": 50,
     "anitrendz": null
   },
+  "126662": {
+    "anilist": null,
+    "bangumi": 59,
+    "anitrendz": null
+  },
+  "126664": {
+    "anilist": null,
+    "bangumi": 51,
+    "anitrendz": null
+  },
   "126791": {
     "anilist": null,
     "bangumi": 52,
+    "anitrendz": null
+  },
+  "126819": {
+    "anilist": null,
+    "bangumi": 72,
+    "anitrendz": null
+  },
+  "126830": {
+    "anilist": null,
+    "bangumi": 50,
     "anitrendz": null
   },
   "127050": {
@@ -5137,6 +6302,11 @@
   "127366": {
     "anilist": null,
     "bangumi": 61,
+    "anitrendz": null
+  },
+  "127368": {
+    "anilist": null,
+    "bangumi": 66,
     "anitrendz": null
   },
   "127371": {
@@ -5174,6 +6344,11 @@
     "bangumi": 83,
     "anitrendz": null
   },
+  "127721": {
+    "anilist": null,
+    "bangumi": 71,
+    "anitrendz": null
+  },
   "127911": {
     "anilist": null,
     "bangumi": 57,
@@ -5184,9 +6359,19 @@
     "bangumi": 45,
     "anitrendz": null
   },
+  "128207": {
+    "anilist": null,
+    "bangumi": 77,
+    "anitrendz": null
+  },
   "128223": {
     "anilist": null,
     "bangumi": 62,
+    "anitrendz": null
+  },
+  "128344": {
+    "anilist": null,
+    "bangumi": 47,
     "anitrendz": null
   },
   "128545": {
@@ -5207,6 +6392,11 @@
   "128712": {
     "anilist": null,
     "bangumi": 50,
+    "anitrendz": null
+  },
+  "128890": {
+    "anilist": null,
+    "bangumi": 73,
     "anitrendz": null
   },
   "128893": {
@@ -5289,6 +6479,11 @@
     "bangumi": 59,
     "anitrendz": null
   },
+  "130558": {
+    "anilist": null,
+    "bangumi": 79,
+    "anitrendz": null
+  },
   "130586": {
     "anilist": null,
     "bangumi": 47,
@@ -5324,6 +6519,11 @@
     "bangumi": 50,
     "anitrendz": null
   },
+  "131264": {
+    "anilist": null,
+    "bangumi": 48,
+    "anitrendz": null
+  },
   "131518": {
     "anilist": null,
     "bangumi": 72,
@@ -5347,6 +6547,11 @@
   "131646": {
     "anilist": null,
     "bangumi": 64,
+    "anitrendz": null
+  },
+  "131770": {
+    "anilist": null,
+    "bangumi": 58,
     "anitrendz": null
   },
   "131773": {
@@ -5429,14 +6634,29 @@
     "bangumi": 65,
     "anitrendz": null
   },
+  "134710": {
+    "anilist": null,
+    "bangumi": 64,
+    "anitrendz": null
+  },
   "134732": {
     "anilist": null,
     "bangumi": 74,
     "anitrendz": null
   },
+  "134761": {
+    "anilist": null,
+    "bangumi": 60,
+    "anitrendz": null
+  },
   "135102": {
     "anilist": null,
     "bangumi": 44,
+    "anitrendz": null
+  },
+  "135171": {
+    "anilist": null,
+    "bangumi": 74,
     "anitrendz": null
   },
   "135778": {
@@ -5452,6 +6672,16 @@
   "135865": {
     "anilist": null,
     "bangumi": 71,
+    "anitrendz": null
+  },
+  "135866": {
+    "anilist": null,
+    "bangumi": 65,
+    "anitrendz": null
+  },
+  "136080": {
+    "anilist": null,
+    "bangumi": 52,
     "anitrendz": null
   },
   "136149": {
@@ -5494,6 +6724,11 @@
     "bangumi": 64,
     "anitrendz": null
   },
+  "137819": {
+    "anilist": null,
+    "bangumi": 77,
+    "anitrendz": null
+  },
   "137822": {
     "anilist": null,
     "bangumi": 63,
@@ -5519,6 +6754,11 @@
     "bangumi": 64,
     "anitrendz": null
   },
+  "138425": {
+    "anilist": null,
+    "bangumi": 77,
+    "anitrendz": null
+  },
   "138565": {
     "anilist": null,
     "bangumi": 64,
@@ -5529,6 +6769,11 @@
     "bangumi": 61,
     "anitrendz": null
   },
+  "138899": {
+    "anilist": null,
+    "bangumi": 64,
+    "anitrendz": null
+  },
   "139092": {
     "anilist": null,
     "bangumi": 66,
@@ -5537,6 +6782,11 @@
   "139093": {
     "anilist": null,
     "bangumi": 71,
+    "anitrendz": null
+  },
+  "139273": {
+    "anilist": null,
+    "bangumi": 63,
     "anitrendz": null
   },
   "139274": {
@@ -5604,6 +6854,21 @@
     "bangumi": 44,
     "anitrendz": null
   },
+  "140005": {
+    "anilist": null,
+    "bangumi": 63,
+    "anitrendz": null
+  },
+  "140337": {
+    "anilist": null,
+    "bangumi": 78,
+    "anitrendz": null
+  },
+  "140350": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
   "140439": {
     "anilist": null,
     "bangumi": 82,
@@ -5612,6 +6877,11 @@
   "140457": {
     "anilist": null,
     "bangumi": 58,
+    "anitrendz": null
+  },
+  "140499": {
+    "anilist": null,
+    "bangumi": 74,
     "anitrendz": null
   },
   "140501": {
@@ -5627,6 +6897,11 @@
   "140754": {
     "anilist": null,
     "bangumi": 42,
+    "anitrendz": null
+  },
+  "140842": {
+    "anilist": null,
+    "bangumi": 72,
     "anitrendz": null
   },
   "140960": {
@@ -5704,6 +6979,11 @@
     "bangumi": 50,
     "anitrendz": null
   },
+  "142219": {
+    "anilist": null,
+    "bangumi": 60,
+    "anitrendz": null
+  },
   "142329": {
     "anilist": null,
     "bangumi": 73,
@@ -5717,6 +6997,11 @@
   "142598": {
     "anilist": null,
     "bangumi": 53,
+    "anitrendz": null
+  },
+  "142684": {
+    "anilist": null,
+    "bangumi": 78,
     "anitrendz": null
   },
   "142701": {
@@ -5754,6 +7039,11 @@
     "bangumi": 59,
     "anitrendz": null
   },
+  "143080": {
+    "anilist": null,
+    "bangumi": 66,
+    "anitrendz": null
+  },
   "143085": {
     "anilist": null,
     "bangumi": 59,
@@ -5777,6 +7067,11 @@
   "143271": {
     "anilist": null,
     "bangumi": 57,
+    "anitrendz": null
+  },
+  "143327": {
+    "anilist": null,
+    "bangumi": 63,
     "anitrendz": null
   },
   "143337": {
@@ -5924,6 +7219,11 @@
     "bangumi": 65,
     "anitrendz": null
   },
+  "146922": {
+    "anilist": null,
+    "bangumi": 70,
+    "anitrendz": null
+  },
   "146953": {
     "anilist": null,
     "bangumi": 53,
@@ -5989,6 +7289,16 @@
     "bangumi": 40,
     "anitrendz": null
   },
+  "148370": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
+  "148401": {
+    "anilist": null,
+    "bangumi": 59,
+    "anitrendz": null
+  },
   "148465": {
     "anilist": null,
     "bangumi": 45,
@@ -6017,6 +7327,11 @@
   "150075": {
     "anilist": null,
     "bangumi": 70,
+    "anitrendz": null
+  },
+  "150429": {
+    "anilist": null,
+    "bangumi": 75,
     "anitrendz": null
   },
   "150672": {
@@ -6164,6 +7479,11 @@
     "bangumi": 64,
     "anitrendz": null
   },
+  "153687": {
+    "anilist": null,
+    "bangumi": 68,
+    "anitrendz": null
+  },
   "153818": {
     "anilist": null,
     "bangumi": 61,
@@ -6177,6 +7497,11 @@
   "153930": {
     "anilist": null,
     "bangumi": 70,
+    "anitrendz": null
+  },
+  "154001": {
+    "anilist": null,
+    "bangumi": 72,
     "anitrendz": null
   },
   "154116": {
@@ -6244,9 +7569,19 @@
     "bangumi": 66,
     "anitrendz": null
   },
+  "154974": {
+    "anilist": null,
+    "bangumi": 49,
+    "anitrendz": null
+  },
   "154982": {
     "anilist": null,
     "bangumi": 64,
+    "anitrendz": null
+  },
+  "155011": {
+    "anilist": null,
+    "bangumi": 72,
     "anitrendz": null
   },
   "155158": {
@@ -6257,6 +7592,11 @@
   "155168": {
     "anilist": null,
     "bangumi": 47,
+    "anitrendz": null
+  },
+  "155227": {
+    "anilist": null,
+    "bangumi": 74,
     "anitrendz": null
   },
   "155418": {
@@ -6304,6 +7644,11 @@
     "bangumi": 55,
     "anitrendz": null
   },
+  "156001": {
+    "anilist": null,
+    "bangumi": 64,
+    "anitrendz": null
+  },
   "156023": {
     "anilist": null,
     "bangumi": 58,
@@ -6339,9 +7684,19 @@
     "bangumi": 64,
     "anitrendz": null
   },
+  "156632": {
+    "anilist": null,
+    "bangumi": 50,
+    "anitrendz": null
+  },
   "156822": {
     "anilist": null,
     "bangumi": 57,
+    "anitrendz": null
+  },
+  "156841": {
+    "anilist": null,
+    "bangumi": 67,
     "anitrendz": null
   },
   "156891": {
@@ -6414,9 +7769,19 @@
     "bangumi": 57,
     "anitrendz": null
   },
+  "158997": {
+    "anilist": null,
+    "bangumi": 60,
+    "anitrendz": null
+  },
   "159042": {
     "anilist": null,
     "bangumi": 66,
+    "anitrendz": null
+  },
+  "159074": {
+    "anilist": null,
+    "bangumi": 62,
     "anitrendz": null
   },
   "159309": {
@@ -6554,6 +7919,11 @@
     "bangumi": 55,
     "anitrendz": null
   },
+  "162890": {
+    "anilist": null,
+    "bangumi": 62,
+    "anitrendz": null
+  },
   "162896": {
     "anilist": null,
     "bangumi": 69,
@@ -6592,6 +7962,11 @@
   "163142": {
     "anilist": null,
     "bangumi": 52,
+    "anitrendz": null
+  },
+  "163143": {
+    "anilist": null,
+    "bangumi": 60,
     "anitrendz": null
   },
   "163146": {
@@ -6699,6 +8074,11 @@
     "bangumi": 65,
     "anitrendz": null
   },
+  "166521": {
+    "anilist": null,
+    "bangumi": 76,
+    "anitrendz": null
+  },
   "166522": {
     "anilist": null,
     "bangumi": 68,
@@ -6714,6 +8094,11 @@
     "bangumi": 61,
     "anitrendz": null
   },
+  "166611": {
+    "anilist": null,
+    "bangumi": 78,
+    "anitrendz": null
+  },
   "166613": {
     "anilist": null,
     "bangumi": 66,
@@ -6722,6 +8107,11 @@
   "166617": {
     "anilist": null,
     "bangumi": 73,
+    "anitrendz": null
+  },
+  "166703": {
+    "anilist": null,
+    "bangumi": 25,
     "anitrendz": null
   },
   "166710": {
@@ -6769,6 +8159,11 @@
     "bangumi": 47,
     "anitrendz": null
   },
+  "167404": {
+    "anilist": null,
+    "bangumi": 57,
+    "anitrendz": null
+  },
   "167419": {
     "anilist": null,
     "bangumi": 46,
@@ -6792,6 +8187,16 @@
   "168872": {
     "anilist": null,
     "bangumi": 73,
+    "anitrendz": null
+  },
+  "169000": {
+    "anilist": null,
+    "bangumi": 69,
+    "anitrendz": null
+  },
+  "169402": {
+    "anilist": null,
+    "bangumi": 48,
     "anitrendz": null
   },
   "169417": {
@@ -6819,14 +8224,29 @@
     "bangumi": 49,
     "anitrendz": null
   },
+  "169754": {
+    "anilist": null,
+    "bangumi": 57,
+    "anitrendz": null
+  },
   "169755": {
     "anilist": null,
     "bangumi": 74,
     "anitrendz": null
   },
+  "169929": {
+    "anilist": null,
+    "bangumi": 65,
+    "anitrendz": null
+  },
   "169935": {
     "anilist": null,
     "bangumi": 46,
+    "anitrendz": null
+  },
+  "170068": {
+    "anilist": null,
+    "bangumi": 68,
     "anitrendz": null
   },
   "170083": {
@@ -6844,9 +8264,19 @@
     "bangumi": 72,
     "anitrendz": null
   },
+  "170221": {
+    "anilist": null,
+    "bangumi": 72,
+    "anitrendz": null
+  },
   "170468": {
     "anilist": null,
     "bangumi": 52,
+    "anitrendz": null
+  },
+  "170508": {
+    "anilist": null,
+    "bangumi": 62,
     "anitrendz": null
   },
   "170577": {
@@ -6867,6 +8297,11 @@
   "170892": {
     "anilist": null,
     "bangumi": 67,
+    "anitrendz": null
+  },
+  "170935": {
+    "anilist": null,
+    "bangumi": 51,
     "anitrendz": null
   },
   "170938": {
@@ -6899,6 +8334,11 @@
     "bangumi": 80,
     "anitrendz": null
   },
+  "171642": {
+    "anilist": null,
+    "bangumi": 64,
+    "anitrendz": null
+  },
   "172019": {
     "anilist": null,
     "bangumi": 73,
@@ -6917,6 +8357,11 @@
   "172258": {
     "anilist": null,
     "bangumi": 74,
+    "anitrendz": null
+  },
+  "172420": {
+    "anilist": null,
+    "bangumi": 75,
     "anitrendz": null
   },
   "172439": {
@@ -7002,6 +8447,11 @@
   "175443": {
     "anilist": null,
     "bangumi": 44,
+    "anitrendz": null
+  },
+  "175573": {
+    "anilist": null,
+    "bangumi": 64,
     "anitrendz": null
   },
   "175872": {
@@ -7139,6 +8589,11 @@
     "bangumi": 52,
     "anitrendz": null
   },
+  "178436": {
+    "anilist": null,
+    "bangumi": 66,
+    "anitrendz": null
+  },
   "178462": {
     "anilist": null,
     "bangumi": 53,
@@ -7204,6 +8659,11 @@
     "bangumi": 61,
     "anitrendz": null
   },
+  "179706": {
+    "anilist": null,
+    "bangumi": 71,
+    "anitrendz": null
+  },
   "179885": {
     "anilist": null,
     "bangumi": 41,
@@ -7224,6 +8684,16 @@
     "bangumi": 66,
     "anitrendz": null
   },
+  "179998": {
+    "anilist": null,
+    "bangumi": 60,
+    "anitrendz": null
+  },
+  "179999": {
+    "anilist": null,
+    "bangumi": 54,
+    "anitrendz": null
+  },
   "180082": {
     "anilist": null,
     "bangumi": 41,
@@ -7232,6 +8702,11 @@
   "180136": {
     "anilist": null,
     "bangumi": 49,
+    "anitrendz": null
+  },
+  "180228": {
+    "anilist": null,
+    "bangumi": 73,
     "anitrendz": null
   },
   "180367": {
@@ -7269,6 +8744,11 @@
     "bangumi": 81,
     "anitrendz": null
   },
+  "181182": {
+    "anilist": null,
+    "bangumi": 73,
+    "anitrendz": null
+  },
   "181244": {
     "anilist": null,
     "bangumi": 75,
@@ -7282,6 +8762,11 @@
   "181447": {
     "anilist": null,
     "bangumi": 60,
+    "anitrendz": null
+  },
+  "181839": {
+    "anilist": null,
+    "bangumi": 66,
     "anitrendz": null
   },
   "181841": {
@@ -7307,6 +8792,11 @@
   "182309": {
     "anilist": null,
     "bangumi": 73,
+    "anitrendz": null
+  },
+  "182317": {
+    "anilist": null,
+    "bangumi": 67,
     "anitrendz": null
   },
   "182469": {
@@ -7354,6 +8844,11 @@
     "bangumi": 68,
     "anitrendz": null
   },
+  "183651": {
+    "anilist": null,
+    "bangumi": 41,
+    "anitrendz": null
+  },
   "184237": {
     "anilist": null,
     "bangumi": 61,
@@ -7379,6 +8874,16 @@
     "bangumi": 77,
     "anitrendz": null
   },
+  "185212": {
+    "anilist": null,
+    "bangumi": 59,
+    "anitrendz": null
+  },
+  "185213": {
+    "anilist": null,
+    "bangumi": 61,
+    "anitrendz": null
+  },
   "185262": {
     "anilist": null,
     "bangumi": 60,
@@ -7397,6 +8902,11 @@
   "185660": {
     "anilist": null,
     "bangumi": 73,
+    "anitrendz": null
+  },
+  "185753": {
+    "anilist": null,
+    "bangumi": 63,
     "anitrendz": null
   },
   "185756": {
@@ -7419,9 +8929,19 @@
     "bangumi": 50,
     "anitrendz": null
   },
+  "186148": {
+    "anilist": null,
+    "bangumi": 62,
+    "anitrendz": null
+  },
   "186333": {
     "anilist": null,
     "bangumi": 58,
+    "anitrendz": null
+  },
+  "186346": {
+    "anilist": null,
+    "bangumi": 65,
     "anitrendz": null
   },
   "186497": {
@@ -7442,6 +8962,11 @@
   "186794": {
     "anilist": null,
     "bangumi": 45,
+    "anitrendz": null
+  },
+  "187166": {
+    "anilist": null,
+    "bangumi": 67,
     "anitrendz": null
   },
   "187260": {
@@ -7489,14 +9014,34 @@
     "bangumi": 63,
     "anitrendz": null
   },
+  "188035": {
+    "anilist": null,
+    "bangumi": 67,
+    "anitrendz": null
+  },
   "188487": {
     "anilist": null,
     "bangumi": 46,
     "anitrendz": null
   },
+  "188525": {
+    "anilist": null,
+    "bangumi": 80,
+    "anitrendz": null
+  },
+  "188668": {
+    "anilist": null,
+    "bangumi": 53,
+    "anitrendz": null
+  },
   "189123": {
     "anilist": null,
     "bangumi": 64,
+    "anitrendz": null
+  },
+  "189275": {
+    "anilist": null,
+    "bangumi": 78,
     "anitrendz": null
   },
   "189987": {
@@ -7519,6 +9064,11 @@
     "bangumi": 64,
     "anitrendz": null
   },
+  "190840": {
+    "anilist": null,
+    "bangumi": 75,
+    "anitrendz": null
+  },
   "191205": {
     "anilist": null,
     "bangumi": 53,
@@ -7529,14 +9079,39 @@
     "bangumi": 74,
     "anitrendz": null
   },
+  "191689": {
+    "anilist": null,
+    "bangumi": 58,
+    "anitrendz": null
+  },
   "191788": {
     "anilist": null,
     "bangumi": 71,
     "anitrendz": null
   },
+  "191893": {
+    "anilist": null,
+    "bangumi": 59,
+    "anitrendz": null
+  },
   "192507": {
     "anilist": null,
     "bangumi": 54,
+    "anitrendz": null
+  },
+  "193413": {
+    "anilist": null,
+    "bangumi": 63,
+    "anitrendz": null
+  },
+  "193414": {
+    "anilist": null,
+    "bangumi": 64,
+    "anitrendz": null
+  },
+  "194116": {
+    "anilist": null,
+    "bangumi": 74,
     "anitrendz": null
   },
   "194207": {
@@ -7557,6 +9132,11 @@
   "195153": {
     "anilist": null,
     "bangumi": 34,
+    "anitrendz": null
+  },
+  "195240": {
+    "anilist": null,
+    "bangumi": 68,
     "anitrendz": null
   },
   "195515": {
@@ -7599,6 +9179,11 @@
     "bangumi": 70,
     "anitrendz": null
   },
+  "197178": {
+    "anilist": null,
+    "bangumi": 62,
+    "anitrendz": null
+  },
   "197715": {
     "anilist": null,
     "bangumi": 46,
@@ -7622,6 +9207,11 @@
   "198188": {
     "anilist": null,
     "bangumi": 73,
+    "anitrendz": null
+  },
+  "198369": {
+    "anilist": null,
+    "bangumi": 54,
     "anitrendz": null
   },
   "198946": {
@@ -7689,6 +9279,11 @@
     "bangumi": 75,
     "anitrendz": null
   },
+  "201667": {
+    "anilist": null,
+    "bangumi": 60,
+    "anitrendz": null
+  },
   "201903": {
     "anilist": null,
     "bangumi": 81,
@@ -7717,6 +9312,11 @@
   "202390": {
     "anilist": null,
     "bangumi": 68,
+    "anitrendz": null
+  },
+  "202717": {
+    "anilist": null,
+    "bangumi": 72,
     "anitrendz": null
   },
   "202955": {
@@ -7757,6 +9357,11 @@
   "206163": {
     "anilist": null,
     "bangumi": null,
+    "anitrendz": null
+  },
+  "206298": {
+    "anilist": null,
+    "bangumi": 70,
     "anitrendz": null
   },
   "206401": {
@@ -7849,6 +9454,11 @@
     "bangumi": 80,
     "anitrendz": null
   },
+  "211711": {
+    "anilist": null,
+    "bangumi": 62,
+    "anitrendz": null
+  },
   "211778": {
     "anilist": null,
     "bangumi": 70,
@@ -7867,6 +9477,16 @@
   "212503": {
     "anilist": null,
     "bangumi": 85,
+    "anitrendz": null
+  },
+  "212652": {
+    "anilist": null,
+    "bangumi": 65,
+    "anitrendz": null
+  },
+  "212653": {
+    "anilist": null,
+    "bangumi": null,
     "anitrendz": null
   },
   "212799": {
@@ -7899,6 +9519,11 @@
     "bangumi": 73,
     "anitrendz": null
   },
+  "213961": {
+    "anilist": null,
+    "bangumi": 56,
+    "anitrendz": null
+  },
   "214536": {
     "anilist": null,
     "bangumi": null,
@@ -7912,6 +9537,11 @@
   "216895": {
     "anilist": null,
     "bangumi": 57,
+    "anitrendz": null
+  },
+  "217126": {
+    "anilist": null,
+    "bangumi": 39,
     "anitrendz": null
   }
 }

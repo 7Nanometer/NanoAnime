@@ -58,6 +58,10 @@ const SEASONS: MediaSeason[] = ["WINTER", "SPRING", "SUMMER", "FALL"];
  * `bannerImage` 与 `genres` 是 M7 首页焦点位加的（2026-10-06）：横幅当背景、
  * 题材当标签。两个字段都只是一小段文本，加进共享字段块不会让列表响应明显变大
  * （对比：`description` 那种长简介就不进这里，焦点位的简介走本地 Bangumi 表）。
+ *
+ * `countryOfOrigin` 是 M7 三期高分合集口径修正加的（2026-10-07）：合集只收
+ * 日本动画（countryOfOrigin === "JP"），离线聚合脚本靠它过滤。同样只是一小段
+ * 文本（两位国家码），进共享字段块不显著增大响应。
  */
 const ANIME_LIST_FIELDS = `
   id
@@ -65,6 +69,7 @@ const ANIME_LIST_FIELDS = `
   coverImage { extraLarge large color }
   bannerImage
   genres
+  countryOfOrigin
   episodes
   averageScore
   status
@@ -322,6 +327,7 @@ const MEDIA_RELATIONS_QUERY = `
         title { native }
         format
         startDate { year }
+        countryOfOrigin
         relations {
           edges {
             relationType(version: 2)
@@ -432,6 +438,8 @@ export async function fetchMediaRelations(ids: number[]): Promise<SeriesRecord[]
     titleNative: media.title.native,
     format: media.format,
     year: media.startDate?.year ?? null,
+    // 高分合集的国家过滤用（缺失时保持 undefined，由调用方当"判不了"排除）
+    countryOfOrigin: media.countryOfOrigin ?? null,
     relations: (media.relations?.edges ?? []).map((edge) => ({
       type: edge.relationType,
       id: edge.node.id,
@@ -452,6 +460,8 @@ interface AniListRelationsResponse {
         title: { native: string | null };
         format: string | null;
         startDate: { year: number | null } | null;
+        /** 原产国，高分合集的国家过滤用。实测可能为 null（判不了的不进合集） */
+        countryOfOrigin: string | null;
         relations: {
           edges: {
             relationType: string;

@@ -231,3 +231,35 @@ function getStartYear(date: string | null): number | null {
   const matched = /^(\d{4})/.exec(date?.trim() ?? "");
   return matched ? Number(matched[1]) : null;
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// 评分（高分合集用）
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * 取一个 Bangumi 条目的评分，归一成 **0~100 整数**（10 分制 ×10 后四舍五入）。
+ * 没有评分（没人打分 / rating 缺失）返回 null。
+ *
+ * ⚠️ v0 API 对没评分的条目 `rating.score` 是 **0**——0 分不是"很差"，
+ * 是"还没人打分"。直接 ×10 会得到一个假的 0 分，所以这里 <= 0 一律当没分。
+ *
+ * 调用方：`scripts/fetch-ratings.ts`（全表补分）与 `scripts/build-collections.ts`
+ * （池内缺分作品的补抓）。放在 lib/ 是因为第三方请求必须走 lib（宪法铁律 2）。
+ */
+export async function fetchBangumiScore(bangumiId: number): Promise<number | null> {
+  const response = await fetch(`https://api.bgm.tv/v0/subjects/${bangumiId}`, {
+    headers: {
+      // v0 API 建议带上 UA 表明身份（不带也能过，但这是它的规矩）
+      "User-Agent": USER_AGENT,
+      Accept: "application/json",
+    },
+    // 挂了代理也偶有卡住，卡死会拖垮整轮脚本（同 searchBangumi 的考虑）
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const json = (await response.json()) as { rating?: { score?: number } };
+  const score = json.rating?.score ?? 0;
+  return score > 0 ? Math.round(score * 10) : null;
+}

@@ -20,12 +20,17 @@
 // 而评分这种东西一天变不了几次。抓一次存下来，运行时零外网依赖（宪法铁律 6）。
 //
 // ─────────────────────────────────────────────────────────────
-// 关于三个评分来源（2026-10-07 三期改版定稿口径 D3）：
+// 关于三个评分来源（2026-10-07 三期口径修正后：
+// **高分合集只看 Bangumi**，anilist / anitrendz 字段保留为历史数据、不再被排序读取）：
 //   · 本脚本负责 **Bangumi**（v0/subjects/{id} 的 rating.score，10 分制 ×10 → 0~100）
 //   · **AniList** 的 averageScore 由 `scripts/build-collections.ts` 在取种子/补数据时
 //     一并带上（那边本来就要出网，省一次全表扫描）——所以这里 anilist 一律写 null
 //   · **AniTrendz** 无稳定接口：实测官网 /charts/ 返回 HTTP 403（反爬），
 //     两个入口路径都是 404——接不上，字段留 null 不硬凑（不拿别处数据顶替）
+//
+// ⚠️ 本脚本只处理**中文名对照表里已有的条目**。高分合集池内「对照表里没有」的作品，
+//    由 `scripts/build-collections.ts --probe` 先按标题配对补进对照表、顺手补上评分
+//    （补抓的条目一样落在本文件维护的 ratings.json 里，bangumi 字段照常填）。
 //
 // ⚠️ 这个脚本**只增不减**：表里已有的条目**永远不会被删掉**（同 fetch-title-zh 的纪律）。
 //    「只增」的含义是跳过已存在的键，除非 --force / --refill-null。
@@ -35,6 +40,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { fetchBangumiScore } from "../lib/bangumi.ts";
 import type { BangumiIndex } from "../types/bangumi.ts";
 
 /** 每条之间停一下。Bangumi 没有明文限额，取比 fetch-title-zh 更小的间隔（这里是纯 GET） */
@@ -135,28 +141,6 @@ async function saveRatings(ratings: RatingsFile): Promise<void> {
   }
   await mkdir(path.dirname(OUTPUT_PATH), { recursive: true });
   await writeFile(OUTPUT_PATH, `${JSON.stringify(sorted, null, 2)}\n`, "utf8");
-}
-
-/**
- * 取一个 Bangumi 条目的评分。没有评分（没人打分 / rating 缺失）返回 null。
- *
- * ⚠️ v0 API 对没评分的条目 rating.score 是 **0**——0 分不是"很差"，
- * 是"还没人打分"。直接 ×10 会得到一个假的 0 分，所以这里 <= 0 一律当没分。
- */
-async function fetchBangumiScore(bangumiId: number): Promise<number | null> {
-  const response = await fetch(`https://api.bgm.tv/v0/subjects/${bangumiId}`, {
-    headers: {
-      // v0 API 建议带上 UA 表明身份（不带也能过，但这是它的规矩）
-      "User-Agent": "NanoAnime/0.1 (https://nanoanime.vercel.app)",
-      Accept: "application/json",
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-  }
-  const json = (await response.json()) as { rating?: { score?: number } };
-  const score = json.rating?.score ?? 0;
-  return score > 0 ? Math.round(score * 10) : null;
 }
 
 async function main(): Promise<void> {

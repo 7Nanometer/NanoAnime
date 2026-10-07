@@ -78,6 +78,13 @@ export interface Anime {
    * 同样可能是 undefined（老的本地快照）。
    */
   bannerImage?: string | null;
+  /**
+   * 原产国（ISO 两位代码，实测取值如 "JP" / "CN" / "US" / "KR"）。
+   * 用途：高分合集只收日本动画（2026-10-07 拍板口径），离线聚合脚本用它过滤。
+   * ⚠️ 可选：老的本地快照里没有这个字段（同 genres / bannerImage）；
+   * 判不了（null / undefined）的一律当"不是日漫"排除，不猜。
+   */
+  countryOfOrigin?: string | null;
   episodes: number | null; // 总集数
   averageScore: number | null; // 评分，0~100
   /**
@@ -342,7 +349,7 @@ export interface AnimeWithSchedule extends Anime {
  * 应用运行时只读文件（宪法铁律 6：运行时零外网依赖），读取入口在 lib/collections-index.ts。
  *
  * 合集 = 同一系列的多部作品（关系白名单见 lib/series-graph.ts）。
- * `representative` 是综合分最高的那部，**卡片直接渲染它**——
+ * `representative` 是 Bangumi 分最高的那部，**卡片直接渲染它**——
  * 封面、名字、年份都取它；「共 N 部」的 N 取 `count`。
  */
 export interface Collection {
@@ -354,11 +361,11 @@ export interface Collection {
   startYear: number | null;
   /** 成员数 */
   count: number;
-  /** 合集均分（0~100，只对有分的成员求平均） */
+  /** 合集均分（0~100，只对有分的成员求平均）。2026-10-07 口径修正后 = Bangumi 分 */
   score: number;
   /** 有分的成员数（用来说明这个均分可不可信） */
   scoredCount: number;
-  /** 这条合集实际用到的评分来源，如 ["AniList","Bangumi"] */
+  /** 这条合集实际用到的评分来源。修正后固定 ["Bangumi"] */
   sources: string[];
   /** 代表作品（完整 Anime 字段，title.zh 已补好，运行时不再出网） */
   representative: Anime;
