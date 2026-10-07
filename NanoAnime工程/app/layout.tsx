@@ -5,6 +5,7 @@ import { OfflineBanner } from "@/components/OfflineBanner";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { StarfieldBackground } from "@/components/StarfieldBackground";
 import { SyncConsentBanner } from "@/components/SyncConsentBanner";
 import { cn } from "@/lib/utils";
 import { Providers } from "./providers";
@@ -95,8 +96,11 @@ export const metadata: Metadata = {
  * 不然手动滚动到页面边界（iOS 上的橡皮筋效果）时会露出一条对不上的色。
  */
 export const viewport: Viewport = {
-  // 深色界面在移动端浏览器里要一起变深：地址栏、状态栏跟着主题走
-  themeColor: "#0d0c13",
+  // 深色界面在移动端浏览器里要一起变深：地址栏、状态栏跟着主题走。
+  // ⚠️ 这个值 = globals.css 里 `--background` 的十六进制（oklch(0.132 0.026 277)）。
+  // 深空星夜改版时统一过一处**既有不一致**：manifest.ts 里曾是 #0a0a0a、
+  // 这里是 #0d0c13，两个值本来就对不上；现在两处都指向同一个深空色。
+  themeColor: "#060712",
   // ⚠️ 这一条不能改成 `user-scalable=no` 或 `maximum-scale=1`——
   // 禁止缩放是无障碍红线（WCAG 1.4.4），低视力用户要靠放大读字
   colorScheme: "dark",
@@ -119,18 +123,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       */}
       <body className="dark flex min-h-screen flex-col bg-background">
         {/*
-          全站背景氛围层。
-          一层极淡的双色径向渐变（左上偏紫、右下偏蓝），**固定在视口上不随滚动移动**。
-          作用不是"好看"，是让大片深色底不至于变成一块死板的纯色，
-          同时给封面墙的封面提供一个有方向的背景，图片的彩色不会衬在死黑上显得割裂。
-          ⚠️ fixed + -z-10 + pointer-events-none 三个都不能少：
-          不加 fixed 滚动时会跟着走、露出边缘；不加负 z 会盖住内容；
-          不加 pointer-events-none 会吃掉整页的点击。
+          全站星空背景层（2026-10-07 深空星夜改版）。
+          它接替了原来那层"双色径向渐变氛围"的职责：让大片深色底不至于变成
+          一块死板的纯色、给封面墙一个有方向的背景（星云的紫 / 青蓝两团与
+          旧氛围层的左上紫、右上蓝位置呼应），并在此之上叠了星点与流星。
+          结构见 components/StarfieldBackground.tsx，视觉在 globals.css「星空层」。
+          ⚠️ 它零客户端 JS（服务端组件 + 纯 CSS 动画）——
+          固定定位、负 z、pointer-events: none 都在组件的 CSS 类里，别在这里重复加。
         */}
-        <div
-          aria-hidden
-          className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(120%_80%_at_12%_-10%,var(--brand-tint)_0%,transparent_55%),radial-gradient(100%_65%_at_92%_4%,oklch(0.62_0.15_250/_8%)_0%,transparent_60%)]"
-        />
+        <StarfieldBackground />
 
         {/* 断网提示条。放在最顶上——它要压过顶栏，让用户第一眼就看到 */}
         <OfflineBanner />

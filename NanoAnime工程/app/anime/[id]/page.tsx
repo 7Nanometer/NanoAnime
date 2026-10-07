@@ -178,7 +178,15 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
               </span>
             ) : null}
             <span>{getFormatLabel(detail.format)}</span>
-            <span aria-hidden className="text-muted-foreground/40">
+            {/*
+              ⚠️ 分隔点不要用叠透明度的灰——原来是 text-muted-foreground/40，
+              全量实测只有 2.17:1（本项目唯一一条过不了 AA 的文字，2026-10-07
+              深空星夜改版的对比度审计扫出来的）。项目在 M6 就立过这条规矩：
+              **文字的"弱"要用算过对比度的实色表达，不用透明度**——透明度让
+              颜色随底色漂移、没法在 token 层一次算清（AnimeCard 那边同理，
+              见 --muted-soft 的定义注释）。muted-soft 就是那套实色里最弱的一档。
+            */}
+            <span aria-hidden className="text-muted-soft">
               ·
             </span>
             <span>{getAiringStatus(detail)}</span>

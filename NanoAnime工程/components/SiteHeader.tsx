@@ -105,10 +105,16 @@ export function SiteHeader() {
           className="group flex shrink-0 items-center gap-2 rounded-md outline-none"
           aria-label="NanoAnime番鉴 · 回到首页"
         >
-          {/* 品牌标记点。纯装饰，给读屏软件隐藏掉——站名本身已经在旁边念出来了 */}
+          {/*
+            品牌标记点 = 全站最左上角的那颗星（2026-10-07 深空星夜）。
+            `star-logo` 让它一明一暗地脉动（关键帧见 globals.css）；
+            hover 放大走独立的 scale 属性，与呼吸动画动的 opacity / box-shadow
+            互不干扰。reduced-motion 时动画整个关掉，回到静态的柔光。
+            纯装饰，给读屏软件隐藏掉——站名本身已经在旁边念出来了。
+          */}
           <span
             aria-hidden
-            className="size-2 rounded-full bg-linear-to-br from-brand-strong to-primary shadow-[0_0_10px_var(--brand-soft)] transition-transform duration-200 group-hover:scale-125"
+            className="star-logo size-2 rounded-full bg-linear-to-br from-brand-strong to-primary shadow-[0_0_10px_var(--brand-soft)] transition-transform duration-200 group-hover:scale-125"
           />
           {/* 两个 span 切换：宽屏显示全名，窄屏只留两个字 */}
           <span className="hidden text-base font-semibold tracking-tight sm:inline">

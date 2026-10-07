@@ -15,9 +15,13 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     display: "standalone",
     lang: "zh-CN",
-    // 和顶栏/分享图同一套配色，启动时不会闪一下白
-    background_color: "#0a0a0a",
-    theme_color: "#0a0a0a",
+    // 和顶栏/分享图同一套配色，启动时不会闪一下白。
+    // ⚠️ 这两个值 = globals.css 的 `--background`（oklch(0.132 0.026 277)）
+    // = layout 的 themeColor = og.ts 的 OG_COLORS.background，四处必须同色。
+    // （2026-10-07 深空星夜改版时统一：此前这里是 #0a0a0a、
+    //  layout 那边是 #0d0c13，本来就对不上。）
+    background_color: "#060712",
+    theme_color: "#060712",
     icons: [
       { src: "/icon", sizes: "512x512", type: "image/png", purpose: "any" },
       { src: "/apple-icon", sizes: "180x180", type: "image/png" },

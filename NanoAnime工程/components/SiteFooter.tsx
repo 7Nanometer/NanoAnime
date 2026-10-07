@@ -14,10 +14,18 @@ import { SITE_CONTAINER } from "@/lib/layout";
  *   ② 来源与版权 —— 次级
  *   ③ 数据存储承诺 —— 再次级，用一道细分隔线单独隔开
  * 原来三行同字号同颜色堆在一起，读者分不出哪句更重要。
+ *
+ * 2026-10-07 深空星夜：顶部原来那条实色 border-t 换成**星辉渐变线**
+ * （中段亮、两端隐没）——页脚站在"地平线"上，是星空的收尾。
  */
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-border">
+    <footer className="mt-16">
+      {/* 星辉分隔线。纯装饰，读屏软件跳过 */}
+      <div
+        aria-hidden
+        className="h-px bg-linear-to-r from-transparent via-brand/30 to-transparent"
+      />
       <div className={`${SITE_CONTAINER} flex flex-col gap-2 py-8 text-xs leading-relaxed`}>
         <p className="text-muted-foreground">
           本站不提供在线播放，只做正版平台的跳转指引。观看请支持正版。

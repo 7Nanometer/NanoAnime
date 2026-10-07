@@ -30,12 +30,21 @@ export const DISCLAIMER = "不提供在线播放，只跳转正版平台";
 /** 分享图标准尺寸（1200×630，宽高比 1.91:1，微信/QQ/微博都按这个裁） */
 export const OG_SIZE = { width: 1200, height: 630 };
 
-/** 分享图配色。深色底 + 白字，缩成小图也看得清 */
+/**
+ * 分享图配色。深色底 + 白字，缩成小图也看得清。
+ *
+ * ⚠️ `background` 要跟 app/globals.css 的 `--background`、app/manifest.ts 的
+ * `background_color`、layout 的 `themeColor` 保持同一族深色——这四处任何一处
+ * 掉队，用户就会看到"分享卡片 / 启动屏 / 页面"三种不同的深色。
+ * （2026-10-07 深空星夜改版时四者统一到新深空色 #060712。）
+ */
 export const OG_COLORS = {
-  background: "#0a0a0a",
+  background: "#060712",
   foreground: "#fafafa",
   muted: "#a1a1aa",
   accent: "#e4e4e7",
+  /** 分享卡上的星点装饰色（微紫白，和站内星点的色相呼应） */
+  star: "#e6e2ff",
 };
 
 /**

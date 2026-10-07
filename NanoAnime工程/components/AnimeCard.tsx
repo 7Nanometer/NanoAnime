@@ -76,7 +76,11 @@ export function AnimeCard({
     <Link
       href={`/anime/${anime.id}`}
       className={cn(
-        "group flex flex-col gap-2.5 rounded-xl outline-none",
+        // reveal：滚动到视口时"浮现"（2026-10-07 深空星夜）。
+        // ⚠️ 动的是 transform + opacity，而 hover 上浮走的是独立的 translate 属性
+        // （Tailwind v4 的编译结果），两者叠加、互不覆盖——入场动画不会吃掉悬停上浮。
+        // 不支持滚动驱动动画的浏览器直接看到完整内容（见 globals.css 的 @supports）。
+        "group reveal flex flex-col gap-2.5 rounded-xl outline-none",
         // 悬浮时整张卡片轻微上浮。负外边距补回来，上浮时不会被裁掉
         "transition-transform duration-200 ease-[var(--ease-out-soft)] hover:-translate-y-1",
       )}
@@ -88,6 +92,12 @@ export function AnimeCard({
           // 细描边让封面图在深底上有明确的边界；纯图片边缘贴在深底上会"融化"
           "ring-1 ring-border transition-all duration-200",
           "group-hover:ring-2 group-hover:ring-brand/60",
+          // 星辉光晕（2026-10-07 深空星夜）：悬停时封面四周亮起一圈柔紫光。
+          // 基础态必须是"同形状的全透明阴影"（而不是不写）——box-shadow 从
+          // none 到具体值没法插值，过渡会变成硬切。
+          // ⚠️ 用 box-shadow 而不是伪元素：封面容器是 overflow-hidden，
+          // 伪元素的光晕画在容器内部、会被自己裁掉；box-shadow 画在盒子外面，不受裁剪。
+          "shadow-[0_0_0_0_transparent] group-hover:shadow-[0_0_28px_-6px_var(--brand-soft)]",
         )}
         style={anime.coverImage.color ? { backgroundColor: anime.coverImage.color } : undefined}
       >

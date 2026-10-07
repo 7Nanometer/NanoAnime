@@ -139,6 +139,18 @@ export function HeroSpotlight() {
         />
 
         {/*
+          焦点位上的星点（2026-10-07 深空星夜）。
+          复用全站星点纹理的第一层（最亮的星），压在渐变遮罩**之上**、内容之下——
+          焦点位这一大块是全页最显眼的区域，它若没有星空感，会显得"这一块是
+          另一套设计"。外层再套一个 50% 透明度的壳把整体压淡：星点在这里只是
+          点缀（主角是番剧横幅），⚠️ 不能直接给星点层加 opacity-* 工具类——
+          那会与它自己的"呼吸"动画抢同一个 opacity 属性。
+        */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-50">
+          <div className="starfield-stars-1" />
+        </div>
+
+        {/*
           内容栅格。版心用 SITE_CONTAINER——文字列与下面区块的标题左右对齐，
           这是"真全宽但内容不散"的关键（A3 验收查的就是这个对齐）。
         */}

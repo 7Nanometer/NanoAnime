@@ -9,7 +9,17 @@
  * NanoAnime番鉴 · 视觉系统
  *
  * 定位：中国动漫爱好者的「追番 + 考据」社区，内容优先（封面墙是主角）。
- * 风格方向：**电影暗紫（cinematic dark violet）** —— 深色影院底 + 紫色品牌色。
+ * 风格方向：**深空星夜（deep-space night）** —— 近黑的夜空蓝紫底 + 星辉紫品牌色，
+ * 全站叠一层星空氛围（星点 / 星云 / 流星，纯 CSS、零依赖，实现见文末「星空层」一节）。
+ *
+ * （2026-10-07 深空星夜改版）方向从「电影暗紫」升级而来，动的只有**底色与氛围**：
+ *   · 底色从紫红侧（色相 291）移到蓝紫侧（277）并整体调深——影院感是紫红，夜空感是蓝紫；
+ *   · 品牌色保留紫色（M7 已拍板「主色保留暗紫」，且紫色是动漫内容的视觉重音色、
+ *     远离「视频网站红」——本站承诺不提供在线播放，用播放器红是错的信号），
+ *     只把亮度微微提一档做出「星辉」感；
+ *   · ⚠️ **前景色（所有文字色）这次一个都没动**：底色调深之后，文字在底上的对比度
+ *     只升不降（最紧的 muted-soft 从 4.64 → 4.77），所以不需要碰它们——这是本次
+ *     配色改版风险最小的关键。前提是「只调深、不外扩色相」，改回来时同理。
  *
  * 为什么是这个方向，而不是保持原来的中性灰白：
  *   1. 内容优先的媒体目录，封面图是唯一的主角。深底能让封面自己发光，
@@ -106,31 +116,42 @@
     /* ── 底色层 ────────────────────────────────────────────────────────────
        三级深度：背景（页面）< card（内容块）< surface-elevated（浮层/悬浮态）。
        暗色界面**靠"逐级提亮"表达层次，不靠阴影**——阴影在深底上几乎看不见，
-       靠阴影分层是亮色模式的做法，照搬过来会显得又平又脏。 */
-    --background: oklch(0.148 0.014 291);
+       靠阴影分层是亮色模式的做法，照搬过来会显得又平又脏。
+
+       （2026-10-07 深空星夜）三档底色同时**调深、调蓝**：色相 291 → 277，
+       亮度各降约 0.015，级差保持原样（+0.034）。
+       ⚠️ 0.132 是下限：再深下去，封面图的暗部会和底色糊成一片，卡片失去边界。
+       ⚠️ 改这里**必须重跑对比度实测**（方法见 docs/进度.md：无头浏览器 + canvas
+       归一化取色，不能用文本解析——Chromium 会把 oklch 序列化成 lab()，正则会误报）。 */
+    --background: oklch(0.132 0.026 277);
     --foreground: oklch(0.963 0.008 293);
-    --surface: oklch(0.181 0.018 291);
-    --surface-elevated: oklch(0.213 0.022 291);
-    --card: oklch(0.181 0.018 291);
+    --surface: oklch(0.166 0.030 277);
+    --surface-elevated: oklch(0.200 0.034 276);
+    --card: oklch(0.166 0.030 277);
     --card-foreground: oklch(0.963 0.008 293);
-    --popover: oklch(0.216 0.024 291);
+    --popover: oklch(0.203 0.034 274);
     --popover-foreground: oklch(0.963 0.008 293);
 
     /* ── 品牌色 ────────────────────────────────────────────────────────────
        主色刻意**压暗到 0.545**，而不是用鲜亮的 #8b6dff：
        按钮上的白字压鲜亮紫只有 3.85:1，过不了 AA 的 4.5:1。
-       压暗之后白字 5.4:1，同时因为饱和度还在（0.24），观感并不发灰。 */
+       压暗之后白字 5.4:1，同时因为饱和度还在（0.24），观感并不发灰。
+
+       （2026-10-07 深空星夜）primary **一个字节没动**（白字 5.4:1 是验过的），
+       只把 brand / brand-strong 各提亮一档、色相往蓝紫侧收 2 度，做出「星辉」观感：
+       它们是深底上的**亮色信号**（激活下划线、轮播点、评分星、链接），越亮越像星光，
+       而且对比度只会更高（brand 在底色上 8.1，brand-strong 11.4）。 */
     --primary: oklch(0.545 0.24 288);
     --primary-foreground: oklch(0.99 0.004 290);
-    --brand: oklch(0.734 0.152 287);
-    --brand-strong: oklch(0.825 0.104 287);
-    --brand-soft: oklch(0.734 0.152 287 / 16%);
-    --brand-tint: oklch(0.734 0.152 287 / 9%);
+    --brand: oklch(0.745 0.155 285);
+    --brand-strong: oklch(0.835 0.100 287);
+    --brand-soft: oklch(0.745 0.155 285 / 16%);
+    --brand-tint: oklch(0.745 0.155 285 / 9%);
 
-    --secondary: oklch(0.249 0.021 291);
+    --secondary: oklch(0.236 0.024 276);
     --secondary-foreground: oklch(0.963 0.008 293);
     /* muted 是"次级文字"专用色，7.6:1 —— 全站所有小字说明都靠它 */
-    --muted: oklch(0.229 0.02 291);
+    --muted: oklch(0.216 0.024 274);
     --muted-foreground: oklch(0.732 0.02 293);
     /* ── 第三档灰：卡片上的"最小号元数据"（集数/评分那行，11px）───────
        为什么要有第三档、而不是写成 text-muted-foreground/60：
@@ -141,7 +162,7 @@
        ⚠️ 想再压暗一点点的诱惑要忍住——压到 L=0.58 时 surface-elevated 上只剩 4.12:1。
        它是"最小号"文字色的下限，不是风格选择。 */
     --muted-soft: oklch(0.61 0.018 293);
-    --accent: oklch(0.249 0.021 291);
+    --accent: oklch(0.236 0.024 276);
     --accent-foreground: oklch(0.963 0.008 293);
 
     /* ── 描边 ──────────────────────────────────────────────────────────────
@@ -172,13 +193,31 @@
     --chart-4: oklch(0.82 0.13 82);
     --chart-5: oklch(0.72 0.17 15);
 
+    /* ── 星空装饰（2026-10-07 深空星夜新增）────────────────────────────────
+       全站星空氛围（星云 / 流星）用的颜色。**纯装饰，不承担任何文字**，
+       所以不参与对比度验收——但它们的**亮度上限受文字对比度约束**：
+       星云是叠在页面底上的大面积光斑，过亮会把底下正文的对比度拉下来。
+       ⚠️ 一条实测教训：**亮色星云吃对比度远比深色星云狠**——
+       亮品牌紫（L≈0.73）开到 16% 就把 muted-soft 压到 4.24（破 AA 线），
+       而深靛（L≈0.28）开到 22% 仍有 5.06。所以：
+         · "显眼的大团" 一律用**深色 + 大透明度**；
+         · 亮色只做**小透明度的点缀**（≤8%）。
+       改任何一个透明度之前，先重跑对比度实测（方法见 docs/进度.md）。
+       ⚠️ 星点（贴片里的星星）不在这里——它们是 SVG 里写死的颜色，
+       见「星空层」注释：data URI 里的 SVG 用不了 CSS 变量。 */
+    --nebula-violet: oklch(0.734 0.152 287 / 8%);    /* 星云·星辉紫（左上） */
+    --nebula-blue: oklch(0.62 0.15 250 / 7%);        /* 星云·深空蓝（右上） */
+    --nebula-indigo: oklch(0.28 0.10 268 / 22%);     /* 星云·深靛（右下） */
+    --nebula-deepviolet: oklch(0.30 0.09 285 / 18%); /* 星云·深紫（左下） */
+    --meteor: oklch(0.96 0.02 285);                  /* 流星：亮白紫 */
+
     --radius: 0.75rem;
 
-    --sidebar: oklch(0.181 0.018 291);
+    --sidebar: oklch(0.166 0.030 277);
     --sidebar-foreground: oklch(0.963 0.008 293);
     --sidebar-primary: oklch(0.545 0.24 288);
     --sidebar-primary-foreground: oklch(0.99 0.004 290);
-    --sidebar-accent: oklch(0.249 0.021 291);
+    --sidebar-accent: oklch(0.236 0.024 276);
     --sidebar-accent-foreground: oklch(0.963 0.008 293);
     --sidebar-border: oklch(1 0 0 / 9%);
     --sidebar-ring: oklch(0.86 0.062 293);
@@ -190,22 +229,22 @@
  * 而不是另写一套——两套值哪怕只差一点，界面上就会出现两种"深"。
  */
 .dark {
-    --background: oklch(0.148 0.014 291);
+    --background: oklch(0.132 0.026 277);
     --foreground: oklch(0.963 0.008 293);
-    --surface: oklch(0.181 0.018 291);
-    --surface-elevated: oklch(0.213 0.022 291);
-    --card: oklch(0.181 0.018 291);
+    --surface: oklch(0.166 0.030 277);
+    --surface-elevated: oklch(0.200 0.034 276);
+    --card: oklch(0.166 0.030 277);
     --card-foreground: oklch(0.963 0.008 293);
-    --popover: oklch(0.216 0.024 291);
+    --popover: oklch(0.203 0.034 274);
     --popover-foreground: oklch(0.963 0.008 293);
     --primary: oklch(0.545 0.24 288);
     --primary-foreground: oklch(0.99 0.004 290);
-    --secondary: oklch(0.249 0.021 291);
+    --secondary: oklch(0.236 0.024 276);
     --secondary-foreground: oklch(0.963 0.008 293);
-    --muted: oklch(0.229 0.02 291);
+    --muted: oklch(0.216 0.024 274);
     --muted-foreground: oklch(0.732 0.02 293);
     --muted-soft: oklch(0.61 0.018 293);
-    --accent: oklch(0.249 0.021 291);
+    --accent: oklch(0.236 0.024 276);
     --accent-foreground: oklch(0.963 0.008 293);
     --border: oklch(1 0 0 / 9%);
     --border-strong: oklch(1 0 0 / 16%);
@@ -213,11 +252,11 @@
     --ring: oklch(0.86 0.062 293);
     --destructive: oklch(0.72 0.17 15);
     --destructive-foreground: oklch(0.99 0.004 290);
-    --sidebar: oklch(0.181 0.018 291);
+    --sidebar: oklch(0.166 0.030 277);
     --sidebar-foreground: oklch(0.963 0.008 293);
     --sidebar-primary: oklch(0.545 0.24 288);
     --sidebar-primary-foreground: oklch(0.99 0.004 290);
-    --sidebar-accent: oklch(0.249 0.021 291);
+    --sidebar-accent: oklch(0.236 0.024 276);
     --sidebar-accent-foreground: oklch(0.963 0.008 293);
     --sidebar-border: oklch(1 0 0 / 9%);
     --sidebar-ring: oklch(0.86 0.062 293);
@@ -326,7 +365,276 @@
       transparent 100%
     );
     }
+
+  /* ══ 星空层（2026-10-07 深空星夜）══════════════════════════════════════
+     全站背景氛围：星点 / 星云 / 流星（结构见 components/StarfieldBackground.tsx，
+     关键帧见文件末尾）。四条不可拆的约束：
+
+     1. **星点不是 DOM 元素，是平铺的 SVG 贴片**——每层用一张"画好若干星点的
+        小方块"repeat 满屏。三层贴片边长取三个互不相同的值（421 / 647 / 787），
+        叠加后的重复周期是三者乘积（约 2.1 亿像素），肉眼看不到规律。
+        星点坐标全部离贴片边 ≥5px——贴边的星会被接缝切成半颗。
+        ⚠️ **为什么是 SVG 贴片、而不是每颗星一层 radial-gradient**：每个
+        radial-gradient 图层都要对**整屏**逐像素求值，画 60 颗星就是 60 层
+        整屏求值（中低端机首帧光栅化能到几百毫秒级）；SVG 贴片只在小图上
+        光栅化一次、之后平铺复用，成本低一两个数量级。这是"手机要能跑"的
+        硬约束，不是偏好。
+        ⚠️ 贴片里的星星颜色是**写死的**（white / lavender / aliceblue /
+        ghostwhite）：data URI 里的 SVG 用不了 CSS 变量；且星点在任何深色
+        主题下都是"白 / 淡紫"，本来就不需要跟随主题变。
+     2. **动画只碰 opacity / transform**——不触发重排重绘，低端机才稳。
+     3. **呼吸类关键帧首尾同值（0% = 100%）**——reduced-motion 的全局兜底把
+        动画压成"只播一次"，首尾同值才会停在原始状态，不卡半亮怪状态。
+     4. 星云是叠在页面底上的大面积光斑，**透明度上调前必须重跑对比度实测**。
+        当前配色的实测（muted-soft 11px，AA 线 4.5:1）：
+          纯背景 5.28 ｜ 品牌紫 8% 4.83 ｜ 深空蓝 7% 4.99
+          深靛 22% 5.06 ｜ 深紫 18% 5.07 ｜ 两团极端叠加 4.66
+        ⚠️ 教训：**亮色星云吃对比度远比深色星云狠**——品牌紫（L≈0.73）
+        开到 16% 就会压破 4.5；深靛（L≈0.28）开到 22% 都还富余。
+        所以"显眼的大团"一律用深色 + 大透明度，"亮色"只做小透明度的点缀。 */
+
+  /* 星空容器：钉在视口上不随滚动（"望远镜里的星空"），负 z 在内容之下。
+     容器自己的背景 = **银河带**：一条 118° 的斜雾，让整片底色不匀、
+     有"银河横贯"的底子。它是静态的（不动），只在最底层做地基。 */
+  .starfield {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    overflow: hidden;
+    pointer-events: none;
+    background-image: linear-gradient(
+      118deg,
+      transparent 34%,
+      oklch(0.55 0.07 285 / 5%) 46%,
+      oklch(0.58 0.09 300 / 7%) 52%,
+      transparent 64%
+    );
+    }
+
+  .starfield-stars-1,
+  .starfield-stars-2,
+  .starfield-stars-3 {
+    position: absolute;
+    inset: 0;
+    background-repeat: repeat;
+    }
+
+  /* 星点·第 1 层：亮星（最大最疏，像近处的星）。
+     ⚠️ 这行长 URL 是生成物，手改坐标时注意同步改 background-size 里的贴片边长。
+     ⚠️ 贴片里**不放任何"有形状"的星**（比如十字星芒）——平铺会把独特形状
+     复制成好几个，一眼就能看出图案在重复（实测：421px 的贴片在 1440 宽的
+     屏上会重复 3~4 次）。星星只用圆点，圆点的重复人眼记不住。 */
+  .starfield-stars-1 {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='421' height='421'%3E%3Ccircle cx='37' cy='89' r='1.17' fill='white' fill-opacity='0.75'/%3E%3Ccircle cx='311' cy='127' r='1.34' fill='white' fill-opacity='0.89'/%3E%3Ccircle cx='172' cy='43' r='1.29' fill='white' fill-opacity='0.97'/%3E%3Ccircle cx='283' cy='251' r='1.35' fill='white' fill-opacity='0.72'/%3E%3Ccircle cx='58' cy='233' r='1.35' fill='white' fill-opacity='0.67'/%3E%3Ccircle cx='396' cy='61' r='0.91' fill='lavender' fill-opacity='0.68'/%3E%3Ccircle cx='205' cy='340' r='1.32' fill='lavender' fill-opacity='0.93'/%3E%3Ccircle cx='129' cy='302' r='0.93' fill='white' fill-opacity='0.87'/%3E%3Ccircle cx='19' cy='371' r='0.99' fill='white' fill-opacity='0.96'/%3E%3Ccircle cx='245' cy='178' r='1.26' fill='white' fill-opacity='0.70'/%3E%3Ccircle cx='357' cy='295' r='1.22' fill='aliceblue' fill-opacity='0.91'/%3E%3Ccircle cx='94' cy='152' r='1.27' fill='lavender' fill-opacity='0.94'/%3E%3Ccircle cx='262' cy='389' r='0.92' fill='white' fill-opacity='0.77'/%3E%3Ccircle cx='388' cy='218' r='1.20' fill='white' fill-opacity='0.78'/%3E%3C/svg%3E");
+    background-size: 421px 421px;
+    animation: star-breathe 7s var(--ease-in-out-soft) infinite;
+    }
+
+  /* 星点·第 2 层：中等（20 颗，亮暗相间） */
+  .starfield-stars-2 {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='647' height='647'%3E%3Ccircle cx='223' cy='58' r='0.89' fill='white' fill-opacity='0.64'/%3E%3Ccircle cx='567' cy='92' r='0.62' fill='lavender' fill-opacity='0.58'/%3E%3Ccircle cx='44' cy='111' r='0.86' fill='aliceblue' fill-opacity='0.55'/%3E%3Ccircle cx='402' cy='188' r='0.86' fill='white' fill-opacity='0.60'/%3E%3Ccircle cx='118' cy='287' r='0.64' fill='white' fill-opacity='0.48'/%3E%3Ccircle cx='498' cy='341' r='0.93' fill='white' fill-opacity='0.57'/%3E%3Ccircle cx='341' cy='245' r='0.77' fill='aliceblue' fill-opacity='0.68'/%3E%3Ccircle cx='601' cy='430' r='0.74' fill='ghostwhite' fill-opacity='0.67'/%3E%3Ccircle cx='76' cy='449' r='0.62' fill='ghostwhite' fill-opacity='0.71'/%3E%3Ccircle cx='285' cy='512' r='0.92' fill='white' fill-opacity='0.75'/%3E%3Ccircle cx='438' cy='601' r='0.86' fill='ghostwhite' fill-opacity='0.69'/%3E%3Ccircle cx='162' cy='618' r='0.82' fill='lavender' fill-opacity='0.66'/%3E%3Ccircle cx='520' cy='226' r='0.74' fill='ghostwhite' fill-opacity='0.55'/%3E%3Ccircle cx='243' cy='375' r='0.92' fill='ghostwhite' fill-opacity='0.49'/%3E%3Ccircle cx='390' cy='89' r='0.95' fill='lavender' fill-opacity='0.71'/%3E%3Ccircle cx='88' cy='555' r='0.82' fill='white' fill-opacity='0.65'/%3E%3Ccircle cx='455' cy='462' r='0.92' fill='lavender' fill-opacity='0.62'/%3E%3Ccircle cx='318' cy='141' r='0.62' fill='ghostwhite' fill-opacity='0.58'/%3E%3Ccircle cx='573' cy='556' r='0.69' fill='ghostwhite' fill-opacity='0.70'/%3E%3Ccircle cx='196' cy='208' r='0.61' fill='lavender' fill-opacity='0.55'/%3E%3C/svg%3E");
+    background-size: 647px 647px;
+    animation: star-breathe 11s var(--ease-in-out-soft) -3s infinite;
+    }
+
+  /* 星点·第 3 层：暗星（28 颗，最小最密，像远端的星尘） */
+  .starfield-stars-3 {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='787' height='787'%3E%3Ccircle cx='421' cy='78' r='0.47' fill='ghostwhite' fill-opacity='0.55'/%3E%3Ccircle cx='52' cy='87' r='0.68' fill='aliceblue' fill-opacity='0.36'/%3E%3Ccircle cx='667' cy='118' r='0.61' fill='aliceblue' fill-opacity='0.38'/%3E%3Ccircle cx='298' cy='152' r='0.59' fill='white' fill-opacity='0.53'/%3E%3Ccircle cx='543' cy='201' r='0.53' fill='white' fill-opacity='0.35'/%3E%3Ccircle cx='176' cy='41' r='0.64' fill='ghostwhite' fill-opacity='0.31'/%3E%3Ccircle cx='89' cy='331' r='0.52' fill='aliceblue' fill-opacity='0.31'/%3E%3Ccircle cx='732' cy='289' r='0.65' fill='lavender' fill-opacity='0.40'/%3E%3Ccircle cx='215' cy='267' r='0.60' fill='white' fill-opacity='0.52'/%3E%3Ccircle cx='489' cy='298' r='0.59' fill='ghostwhite' fill-opacity='0.34'/%3E%3Ccircle cx='367' cy='356' r='0.62' fill='white' fill-opacity='0.39'/%3E%3Ccircle cx='611' cy='388' r='0.58' fill='ghostwhite' fill-opacity='0.46'/%3E%3Ccircle cx='140' cy='468' r='0.61' fill='lavender' fill-opacity='0.39'/%3E%3Ccircle cx='521' cy='449' r='0.46' fill='ghostwhite' fill-opacity='0.49'/%3E%3Ccircle cx='263' cy='421' r='0.53' fill='white' fill-opacity='0.48'/%3E%3Ccircle cx='757' cy='465' r='0.51' fill='white' fill-opacity='0.40'/%3E%3Ccircle cx='398' cy='512' r='0.55' fill='lavender' fill-opacity='0.36'/%3E%3Ccircle cx='644' cy='527' r='0.53' fill='aliceblue' fill-opacity='0.41'/%3E%3Ccircle cx='73' cy='601' r='0.55' fill='lavender' fill-opacity='0.35'/%3E%3Ccircle cx='447' cy='588' r='0.61' fill='lavender' fill-opacity='0.44'/%3E%3Ccircle cx='198' cy='567' r='0.46' fill='lavender' fill-opacity='0.36'/%3E%3Ccircle cx='694' cy='612' r='0.69' fill='aliceblue' fill-opacity='0.47'/%3E%3Ccircle cx='324' cy='632' r='0.49' fill='lavender' fill-opacity='0.41'/%3E%3Ccircle cx='571' cy='661' r='0.70' fill='lavender' fill-opacity='0.46'/%3E%3Ccircle cx='118' cy='721' r='0.51' fill='lavender' fill-opacity='0.31'/%3E%3Ccircle cx='489' cy='705' r='0.50' fill='white' fill-opacity='0.55'/%3E%3Ccircle cx='241' cy='688' r='0.54' fill='ghostwhite' fill-opacity='0.36'/%3E%3Ccircle cx='365' cy='742' r='0.68' fill='lavender' fill-opacity='0.40'/%3E%3C/svg%3E");
+    background-size: 787px 787px;
+    animation: star-breathe 17s var(--ease-in-out-soft) -8s infinite;
+    }
+
+  /* 星云：四团大光斑分居四角，各自极慢漂移/缩放。周期 63/79/91/113 秒
+     两两互不整除，重合状态几乎不重复，看久了也"没在循环"。
+     ⚠️ 配色遵循"深色大 alpha、亮色小 alpha"（见上方约束 4）：
+     四团的**中心**都放在画布四角/画布外，屏幕中部的实际叠加远低于验算值。
+     ⚠️ 四个 div 的中心两两拉开——**不要让两团亮色在屏幕中部重叠**。 */
+  .starfield-nebula-1,
+  .starfield-nebula-2,
+  .starfield-nebula-3,
+  .starfield-nebula-4 {
+    position: absolute;
+    pointer-events: none;
+    }
+  .starfield-nebula-1 {
+    /* 左上 · 星辉紫（品牌色的淡光，亮色只给 8%） */
+    top: -21%;
+    left: -14%;
+    width: 78vw;
+    height: 72vh;
+    background: radial-gradient(closest-side, var(--nebula-violet), transparent);
+    animation: nebula-drift-1 63s var(--ease-in-out-soft) infinite;
+    }
+  .starfield-nebula-2 {
+    /* 右上 · 深空蓝 */
+    top: -12%;
+    right: -16%;
+    width: 58vw;
+    height: 52vh;
+    background: radial-gradient(closest-side, var(--nebula-blue), transparent);
+    animation: nebula-drift-2 79s var(--ease-in-out-soft) infinite;
+    }
+  .starfield-nebula-3 {
+    /* 右下 · 深靛（最显眼的一团：深色可以给到 22%） */
+    bottom: -18%;
+    right: 4%;
+    width: 62vw;
+    height: 58vh;
+    background: radial-gradient(closest-side, var(--nebula-indigo), transparent);
+    animation: nebula-drift-3 91s var(--ease-in-out-soft) infinite;
+    }
+  .starfield-nebula-4 {
+    /* 左下 · 深紫 */
+    bottom: -14%;
+    left: -10%;
+    width: 56vw;
+    height: 54vh;
+    background: radial-gradient(closest-side, var(--nebula-deepviolet), transparent);
+    animation: nebula-drift-4 113s var(--ease-in-out-soft) infinite;
+    }
+
+  /* 流星：一条"头亮尾淡"的细线斜着划过（整轮 17 / 23 秒，划的那下约 1.4 秒）。
+     头在左端（渐变左亮右透明），左端另加一颗小光核。 */
+  .starfield-meteor {
+    position: absolute;
+    width: 148px;
+    height: 1.5px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--meteor), transparent);
+    opacity: 0;
+    pointer-events: none;
+    }
+  .starfield-meteor::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 3px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--meteor);
+    box-shadow: 0 0 8px 2px var(--meteor);
+    transform: translate(-50%, -50%);
+    }
+  .starfield-meteor-1 {
+    top: 7%;
+    right: -12%;
+    animation: meteor-fall-1 17s linear infinite;
+    animation-delay: 2.5s;
+    }
+  .starfield-meteor-2 {
+    top: -4%;
+    right: 30%;
+    animation: meteor-fall-2 23s linear infinite;
+    animation-delay: 9s;
+    }
+
+  /* 手机降级（2026-10-07 深空星夜）：窄屏下给星空"减负"两处。
+     背景层是 fixed 全屏 + 常驻动画 → 每层都是一个合成层纹理（手机 DPR 3 下
+     约 12 MB/层）。这里减掉一个星点层、冻结星云——星云静止的观感损失很小
+     （慢速漂移在小屏上本来就难察觉），而省下的是实打实的显存与电量。
+     ⚠️ 星星的呼吸**保留**：它是主题的核心动效，不是可选项。 */
+  @media (max-width: 767px) {
+    .starfield-stars-3 {
+      display: none;
+      }
+    .starfield-nebula-1,
+    .starfield-nebula-2,
+    .starfield-nebula-3,
+    .starfield-nebula-4 {
+      animation: none;
+      }
+    }
+
+  /* 卡片入场：滚动到视口时"浮现"（淡入 + 轻微上浮）。
+     ⚠️ 用 CSS 滚动驱动动画（animation-timeline: view()）：纯 CSS、零 JS，
+     而且**不支持的浏览器直接看到完整内容**——@supports 的降级是无损的，
+     绝不会出现"脚本没跑、内容隐形"的事故（项目有"无 JS 也要能看到内容"
+     的硬验收）。reduced-motion 用户完全不应用此动画。
+     ⚠️ 位移用 transform 属性、而不是 translate 属性——Tailwind v4 的
+     hover:-translate-y-1 走的是独立的 translate 属性，两者独立叠加、
+     互不覆盖，卡片悬停的上浮不会被入场动画吃掉。
+     ⚠️ animation-range 收到 entry 0~35%：首屏"刚露头"的卡片能快速走完入场，
+     不会卡在半透明的中间态。 */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal {
+        animation-name: reveal-up;
+        animation-timing-function: var(--ease-out-soft);
+        animation-fill-mode: both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 35%;
+        }
+      }
+    }
+
+  /* 顶栏站名的星标：一明一暗地脉动 */
+  .star-logo {
+    animation: star-pulse 3.2s var(--ease-in-out-soft) infinite;
+    }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * 深空星夜 · 关键帧（2026-10-07）
+ *
+ * ⚠️ 所有"循环/呼吸"类关键帧的 0% 与 100% 必须同值（且等于静态状态的样式）：
+ * 下面的 reduced-motion 兜底会把动画压成"只播一次"，首尾同值才会稳稳停在
+ * 原始状态，不会卡在半亮、半路的怪状态上。
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 星点呼吸。三层共用这一条、靠周期（7 / 11 / 17 秒）与负延迟错开相位——
+   相位错开后，三层重叠处的星与单层处的星明灭节奏不同，看起来像"各自眨眼" */
+@keyframes star-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+  }
+
+/* 星云漂移：极慢的位移 + 缩放。0% = 100%，停了就回到原位 */
+@keyframes nebula-drift-1 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(3.5%, 2.5%, 0) scale(1.1); }
+  }
+@keyframes nebula-drift-2 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-4%, 3%, 0) scale(1.06); }
+  }
+@keyframes nebula-drift-3 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50% { transform: translate3d(2.5%, -3%, 0) scale(1); }
+  }
+@keyframes nebula-drift-4 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.04); }
+  50% { transform: translate3d(-2%, -2.5%, 0) scale(1); }
+  }
+
+/* 流星划过：前 ~8%（约 1.4 秒）走完"淡入 → 划过 → 淡出"，
+   其余 92% 的时间停在屏外透明等待下一轮。
+   rotate 在前、translate 在后 = 沿"线自身的方向"移动（左端就是头） */
+@keyframes meteor-fall-1 {
+  0% { opacity: 0; transform: rotate(-34deg) translate3d(0, 0, 0); }
+  2% { opacity: 1; }
+  8%, 100% { opacity: 0; transform: rotate(-34deg) translate3d(-128vw, 0, 0); }
+  }
+@keyframes meteor-fall-2 {
+  0% { opacity: 0; transform: rotate(-50deg) translate3d(0, 0, 0); }
+  1.5% { opacity: 0.9; }
+  6.5%, 100% { opacity: 0; transform: rotate(-50deg) translate3d(-132vw, 0, 0); }
+  }
+
+/* 卡片入场（由滚动进度驱动，见上方 .reveal）。
+   ⚠️ 起点是 0.35 而不是 0：滚动进度由几何决定，首屏恰好"骑在折线上"的
+   那一行卡片会停在动画中段——从 0 起步的话它会看起来像"坏了"（几乎隐形），
+   从 0.35 起步最坏也只是"比终态淡一点"，像设计如此。 */
+@keyframes reveal-up {
+  from { opacity: 0.35; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+  }
+
+/* 顶栏站名星标脉动 */
+@keyframes star-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--brand-soft); }
+  50% { opacity: 0.72; box-shadow: 0 0 16px 2px var(--brand-soft); }
+  }
 
 /*
  * 尊重「减少动态效果」的系统设置。
@@ -347,5 +655,33 @@
     }
   .card-hover:hover {
     transform: none;
+    }
+
+  /* 星空的三个特例（2026-10-07 深空星夜）：
+     · 流星**直接隐藏**——它的关键帧大部分时间在屏外透明状态，
+       显式隐藏比"靠兜底压成一次"更干净，也省掉一个合成层；
+     · 星点与星云显式关掉动画——它们的关键帧首尾同值、被兜底压停本身无害，
+       但彻底去掉可以避免那 0.01ms 的一次跳变；
+     · 站名星标同理，停下来回到它静态的柔光。 */
+  .starfield-meteor {
+    display: none;
+    }
+  .starfield-stars-1,
+  .starfield-stars-2,
+  .starfield-stars-3,
+  .starfield-nebula-1,
+  .starfield-nebula-2,
+  .starfield-nebula-3,
+  .starfield-nebula-4,
+  .star-logo {
+    animation: none;
+    }
+  /* ⚠️ 卡片入场必须**显式**关掉，不能指望上面那条全局兜底：
+     它是"滚动进度驱动"的动画，进度由几何决定、**不看 animation-duration**——
+     兜底压的那条 duration 对它等于没改，不显式关就会照播。
+     （.reveal 的定义本身已包在 `prefers-reduced-motion: no-preference` 里，
+     这条是第二道保险：防未来有人改动那层门。） */
+  .reveal {
+    animation: none !important;
     }
 }
