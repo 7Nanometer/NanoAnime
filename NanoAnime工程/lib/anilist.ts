@@ -121,16 +121,17 @@ const SEASON_ANIME_QUERY = `
 `;
 
 /**
- * 按人气取番剧，**不限季度**。
- * 用途：批量补中文名时扩大覆盖范围（`scripts/fetch-title-zh.ts --scope=top2000`）。
+ * 按指定排序取番剧，**不限季度**。默认按人气。
+ * 用途：批量补中文名时扩大覆盖范围（`scripts/fetch-title-zh.ts --scope=top2000`）；
+ * 高分合集脚本用 `SCORE_DESC` 取「全年代高分榜」当种子（`scripts/build-collections.ts`）。
  *
  * ⚠️ 翻页必须按**固定页数**来，不能靠 `pageInfo.total` —— 实测它不可信
  * （热门查询一律返回 5000 封顶，见下面 SEARCH_ANIME_QUERY 的说明）。
  */
 const POPULAR_ANIME_QUERY = `
-  query PopularAnime($page: Int!, $perPage: Int!) {
+  query PopularAnime($page: Int!, $perPage: Int!, $sort: [MediaSort]) {
     Page(page: $page, perPage: $perPage) {
-      media(type: ANIME, isAdult: false, sort: POPULARITY_DESC) {
+      media(type: ANIME, isAdult: false, sort: $sort) {
         ${ANIME_LIST_FIELDS}
       }
     }
@@ -617,7 +618,7 @@ export async function fetchSeasonAnime(): Promise<SeasonAnimeResult> {
 }
 
 /**
- * 按人气从高到低取**一页**番剧（不限季度）。
+ * 按指定排序取**一页**番剧（不限季度），默认按人气从高到低。
  *
  * ⚠️ 这个函数是给**离线批量脚本**用的，应用运行时不用它。所以刻意**不加**
  * `cache: "force-cache"` 和 `next: { revalidate }` —— 那两个是给 Next 运行时用的，
@@ -625,17 +626,19 @@ export async function fetchSeasonAnime(): Promise<SeasonAnimeResult> {
  *
  * @param page 第几页，从 1 开始
  * @param perPage 每页多少部（AniList 的上限是 50）
+ * @param sort 排序方式。默认 POPULARITY_DESC（人气）；高分合集种子用 SCORE_DESC
  */
 export async function fetchPopularAnime(
   page: number,
   perPage: number,
+  sort: "POPULARITY_DESC" | "SCORE_DESC" = "POPULARITY_DESC",
 ): Promise<Anime[]> {
   const response = await fetch(ANILIST_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({
       query: POPULAR_ANIME_QUERY,
-      variables: { page, perPage },
+      variables: { page, perPage, sort },
     }),
   });
 

@@ -336,6 +336,35 @@ export interface AnimeWithSchedule extends Anime {
 }
 
 /**
+ * 一条「高分合集」（2026-10-07 三期改版新增）。
+ *
+ * 数据由 `scripts/build-collections.ts` 离线算好、落进 `data/collections.json`——
+ * 应用运行时只读文件（宪法铁律 6：运行时零外网依赖），读取入口在 lib/collections-index.ts。
+ *
+ * 合集 = 同一系列的多部作品（关系白名单见 lib/series-graph.ts）。
+ * `representative` 是综合分最高的那部，**卡片直接渲染它**——
+ * 封面、名字、年份都取它；「共 N 部」的 N 取 `count`。
+ */
+export interface Collection {
+  /** 稳定标识：最小成员 id（每次重算得到同一个 key） */
+  key: string;
+  /** 合集名 = 代表作品的显示名 */
+  name: string;
+  /** 代表作品的年份 */
+  startYear: number | null;
+  /** 成员数 */
+  count: number;
+  /** 合集均分（0~100，只对有分的成员求平均） */
+  score: number;
+  /** 有分的成员数（用来说明这个均分可不可信） */
+  scoredCount: number;
+  /** 这条合集实际用到的评分来源，如 ["AniList","Bangumi"] */
+  sources: string[];
+  /** 代表作品（完整 Anime 字段，title.zh 已补好，运行时不再出网） */
+  representative: Anime;
+}
+
+/**
  * 一条本地追番记录。读写都在 lib/collection.ts 里，页面不许直接碰 localStorage。
  *
  * 字段刻意跟 `docs/产品方案.md` 里云端的 `collection` 表对齐——

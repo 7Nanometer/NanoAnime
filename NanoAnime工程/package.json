@@ -9,6 +9,8 @@
     "lint": "eslint",
     "fetch-title-zh": "node scripts/fetch-title-zh.ts",
     "fetch-popularity": "node scripts/fetch-popularity.ts",
+    "fetch-ratings": "node scripts/fetch-ratings.ts",
+    "build-collections": "node scripts/build-collections.ts",
     "og-font": "node scripts/build-og-font.ts"
   },
   "dependencies": {

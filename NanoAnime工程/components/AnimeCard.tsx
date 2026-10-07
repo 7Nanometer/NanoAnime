@@ -11,8 +11,8 @@ import { cn } from "@/lib/utils";
 import type { Anime } from "@/types/anime";
 
 /**
- * 封面墙上的单张卡片。**全站唯一的卡片组件**（首页新番墙、搜索结果共用）——
- * 不要再建第二套，两套卡片迟早会长歪。
+ * 封面墙上的单张卡片。**全站唯一的卡片组件**（首页新番墙、首页周表一行、
+ * 高分合集、搜索结果共用）——不要再建第二套，两套卡片迟早会长歪。
  *
  * 2026-10-06 M7 视觉改版，按参考站版式重做。解剖自上而下：
  *   封面（竖版 2:3）
@@ -47,6 +47,7 @@ import type { Anime } from "@/types/anime";
 export function AnimeCard({
   anime,
   priority = false,
+  collection,
 }: {
   anime: Anime;
   /**
@@ -55,10 +56,21 @@ export function AnimeCard({
    * 还会把后面本来该懒加载的图一起抢带宽。只在首屏前几张用。
    */
   priority?: boolean;
+  /**
+   * 合集模式（2026-10-07 三期改版「高分合集」用）。有值时：
+   *   ① 右上角评分药丸显示**合集均分**（不是这部作品自己的 AniList 分）；
+   *   ② 封面底部不显示时间条，改显示「共 N 部」徽标——
+   *      ⚠️ **仅 count >= 2 显示**：单部补齐的"合集"没有"共 N 部"这回事；
+   *   ③ 名字下方那行从「年份」换成「{年份} · 评分 {合集均分}」。
+   *
+   * 传入的 anime 是合集**代表作品**（系列里综合分最高的那部，脚本选好的）。
+   */
+  collection?: { count: number; score: number };
 }) {
   const title = getPrimaryTitle(anime);
   const cover = anime.coverImage.extraLarge;
-  const score = getScoreLabel(anime.averageScore);
+  // 合集模式显示合集均分（取整；排序按真实值、显示取整，见 build-collections 的注释）
+  const score = collection ? String(Math.round(collection.score)) : getScoreLabel(anime.averageScore);
 
   return (
     <Link
@@ -122,14 +134,38 @@ export function AnimeCard({
         ) : null}
 
         {/*
-          底部时间条。和评分药丸同一个理由：自带深色衬底，不赌封面明暗
+          封面底部一条信息。和评分药丸同一个理由：自带深色衬底，不赌封面明暗
           （模糊 + 55% 黑，最亮的封面底下也有一块足够暗的区域）。
           没有封面时不渲染——底下是纯色占位块，压一条黑条反而显脏。
+          · 普通卡片 → 时间条（「周二 23:30」下一集的播出时刻）；
+          · 合集卡片 → 「共 N 部」徽标（仅 count >= 2；单部补齐的合集什么都不显示）。
         */}
         {cover ? (
-          <span className="absolute inset-x-0 bottom-0 block bg-black/55 px-2 py-1 text-center text-[11px] leading-none font-medium text-white backdrop-blur-sm">
-            <span className="block truncate">{getCardScheduleLabel(anime)}</span>
-          </span>
+          collection ? (
+            collection.count >= 2 ? (
+              <span className="absolute inset-x-0 bottom-0 block bg-black/55 px-2 py-1 text-center text-[11px] leading-none font-medium text-white backdrop-blur-sm">
+                <span className="inline-flex items-center gap-1">
+                  {/* 「合集」图标：上下两层的堆叠图形。内联 SVG，理由同五角星 */}
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden
+                    className="size-3 fill-none stroke-current"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 3 3 8l9 5 9-5-9-5Z" />
+                    <path d="m3 14 9 5 9-5" />
+                  </svg>
+                  共 {collection.count} 部
+                </span>
+              </span>
+            ) : null
+          ) : (
+            <span className="absolute inset-x-0 bottom-0 block bg-black/55 px-2 py-1 text-center text-[11px] leading-none font-medium text-white backdrop-blur-sm">
+              <span className="block truncate">{getCardScheduleLabel(anime)}</span>
+            </span>
+          )
         ) : null}
       </div>
 
@@ -143,12 +179,18 @@ export function AnimeCard({
           {title}
         </h2>
         {/*
-          年份行。用 text-muted-soft，不要改回 muted-foreground/60——
+          年份行。
+          · 普通卡片 → 「2026 年」（getYearLabel）；
+          · 合集卡片 → 「2017 · 评分 86」（参考站的「年份 · 播放量」格式，
+            播放量换成评分——⚠️ 绝不写"N.N 万播放"）。
+          用 text-muted-soft，不要改回 muted-foreground/60——
           11px 的暖灰叠 60% 透明度实测只有 3.60:1，过不了 AA 的 4.5:1；
           muted-soft 是算过对比度的实色（三层底色上都 ≥ 4.6:1）。
         */}
         <p className="truncate text-[11px] leading-snug tabular-nums text-muted-soft">
-          {getYearLabel(anime)}
+          {collection
+            ? `${anime.startDate?.year ?? "年份待定"} · 评分 ${Math.round(collection.score)}`
+            : getYearLabel(anime)}
         </p>
       </div>
     </Link>
