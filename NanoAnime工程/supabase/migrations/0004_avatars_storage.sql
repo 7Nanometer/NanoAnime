@@ -11,7 +11,7 @@
 -- 它做两件事：
 --   1. 建一个「公开读」的存储桶 avatars —— 头像要显示在页面上，用公开 URL 读取；
 --      「谁能写」由下面的策略锁死。
---   2. 三条策略：登录用户只能往**以自己账号编号命名的文件夹**里传 / 换 / 删头像。
+--   2. 四条策略：登录用户只能对**以自己账号编号命名的文件夹**里的文件读 / 传 / 换 / 删。
 --
 -- ⚠️ 为什么文件路径必须按「用户id / 文件名」组织：
 --    桶是所有用户共用的，策略靠**文件夹的第一层名字**判断"这是谁的文件"。
@@ -31,11 +31,22 @@ on conflict (id) do update set
   allowed_mime_types = excluded.allowed_mime_types;
 
 -- ---------------------------------------------------------------------------
--- 安全策略：只认「自己文件夹」里的增 / 改 / 删
+-- 安全策略：只认「自己文件夹」里的读 / 增 / 改 / 删
 -- ---------------------------------------------------------------------------
--- ⚠️ 读（select）不用建策略：公开桶走 /object/public/ 路径直接可读，
---    这与「头像是公开信息」的定位一致。
--- 覆盖头像走的是 storage 的 upsert（先插后改），所以 insert 和 update 两条都要有。
+-- ⚠️ 为什么"读"也要建策略（2026-10-09 实机验证换来的教训）：
+--    页面**显示**头像确实不需要它（公开桶走 /object/public/ 路径就能看）。
+--    但**覆盖上传**和**删除**在数据库底层要先"找到并看见"已存在的文件行——
+--    没有 select 策略时，这两类操作会直接被拒（网页上报"没有权限"）。
+--    这与 Supabase 官方文档一致：覆盖上传(upsert)需要 select + insert + update；
+--    删除需要 select + delete。所以四条缺一不可。
+
+drop policy if exists "本人可查看自己的头像" on storage.objects;
+create policy "本人可查看自己的头像" on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'avatars'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
 
 drop policy if exists "本人可上传自己的头像" on storage.objects;
 create policy "本人可上传自己的头像" on storage.objects
@@ -61,5 +72,10 @@ create policy "本人可删除自己的头像" on storage.objects
     and (storage.foldername(name))[1] = (select auth.uid())::text
   );
 
--- 跑完自检（可选）：把下面一句单独跑，应返回一行 avatars | t | 2097152
+-- 跑完自检（可选）：把下面两句分别单独跑——
+--   应各返回一行 avatars | t | 2097152
 -- select id, public, file_size_limit from storage.buckets where id = 'avatars';
+--   应返回四行策略名（本人可查看 / 上传 / 覆盖 / 删除自己的头像）
+-- select policyname from pg_policies
+--   where schemaname = 'storage' and tablename = 'objects'
+--     and policyname like '本人可%自己的头像';

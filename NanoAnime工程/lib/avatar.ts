@@ -123,8 +123,14 @@ function translateStorageError(message: string): string {
   if (text.includes("mime type") && text.includes("not supported")) {
     return "这个图片格式不支持，请用 PNG / JPG / WebP。";
   }
-  if (text.includes("row-level security") || text.includes("unauthorized")) {
-    return "没有权限：可能是登录过期了，刷新页面重新登录再试。";
+  // ⚠️ 2026-10-09：这条曾经误导过一次——当时真因是 0004 缺"读"策略，文案却让人去重新登录。
+  // 现在两种可能都提：多数情况是登录过期；持续出现则是存储策略没配全。
+  if (
+    text.includes("row-level security") ||
+    text.includes("unauthorized") ||
+    text.includes("access denied")
+  ) {
+    return "没有权限：先刷新页面重新登录再试；若持续如此，可能是云端存储策略没配全。";
   }
 
   return `上传失败：${message}`;
