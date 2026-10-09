@@ -11,8 +11,9 @@ import { cn } from "@/lib/utils";
  * 顶栏的入口。以后加页面只在这里加一行，不用再动布局。
  * （这个文件之前的老做法是往首页标题旁边堆链接，堆到第三个就挤了。）
  *
- * 2026-10-07 三期改版定为五项：
- *   · 「最近更新」/updates —— 当季全部新番、按下一集播出时间排序（本轮新增）
+ * 2026-10-07 三期改版定为五项；2026-10-09 加「全部番剧」成六项：
+ *   · 「最近更新」/updates —— 当季全部新番、按下一集播出时间排序
+ *   · 「全部番剧」/browse —— 按形式 / 状态 / 年份 / 标签自由组合筛选全库（本轮新增）
  *   · 「周表」/calendar —— 完整周表页。它有一段反复：10-06（A+B）曾并进首页的锚点
  *     `/#calendar`；10-07 首页只留一行 7 部，完整周表**恢复成独立页**，
  *     `/calendar` 的 308 跳转已同步删除（不删新页面会被永久重定向吃掉）。
@@ -20,6 +21,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/", label: "首页" },
   { href: "/updates", label: "最近更新" },
+  { href: "/browse", label: "全部番剧" },
   { href: "/calendar", label: "周表" },
   { href: "/search", label: "搜索" },
   { href: "/my", label: "我的" },
@@ -127,7 +129,15 @@ export function SiteHeader() {
           aria-label="主导航"
           className="order-last w-full sm:order-none sm:ml-auto sm:w-auto"
         >
-          <ul className="flex items-center justify-center gap-0 sm:justify-start sm:gap-1">
+          {/*
+            ⚠️ flex-wrap + 每个入口 whitespace-nowrap（2026-10-09 加「全部番剧」后 320px 实测）：
+            六个入口单行需要约 320px，而 320px 屏幕的导航行只有 288px 可用——不让整条
+            导航换行的话，两个四字入口（「最近更新」「全部番剧」）会在胶囊**内部**折成
+            两行竖排（行盒 65px，单行应是 40px），那是最难看的坏状态。
+            让导航按项换行（两行各居中）后文字永不竖排；336px 以上的屏幕单行放得下、
+            完全不受影响（sm 起恢复 nowrap）。判据与实测方法同 155 条纪律。
+          */}
+          <ul className="flex flex-wrap items-center justify-center gap-0 sm:flex-nowrap sm:justify-start sm:gap-1">
             {NAV_ITEMS.map((item) => {
               const active = isActive(pathname, item.href);
 
@@ -138,7 +148,8 @@ export function SiteHeader() {
                     // 告诉读屏软件「这就是当前所在的那一页」。全站第一次用，顺手立个规矩
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "block rounded-md px-2 py-1.5 text-sm transition-colors duration-150 sm:px-3",
+                      // whitespace-nowrap：四字入口在窄屏绝不折成竖排（详见 nav 上的注释）
+                      "block rounded-md px-2 py-1.5 text-sm whitespace-nowrap transition-colors duration-150 sm:px-3",
                       active
                         ? "font-medium text-foreground"
                         : "text-muted-foreground hover:bg-surface hover:text-foreground",

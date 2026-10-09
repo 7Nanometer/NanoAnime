@@ -13,6 +13,7 @@ import type {
   ExternalLink,
   MediaFormat,
   MediaSeason,
+  MediaStatus,
   PersonDetail,
   SeasonAnimeResult,
   SeasonRef,
@@ -663,6 +664,187 @@ export async function fetchPopularAnime(
   }
 
   return withEmptyZh(json.data?.Page?.media ?? []);
+}
+
+/**
+ * 「全部番剧」浏览页：每页 28 部（2026-10-09）。
+ * 28 = 桌面 4 行 × 7 列（网格列数见 lib/anime-constants.ts 的 ANIME_GRID_CLASS，
+ * xl 断点正好 7 列）；AniList 的 perPage 上限是 50，28 远在范围内。
+ */
+const BROWSE_PAGE_SIZE = 28;
+
+/**
+ * 「全部番剧」浏览查询（2026-10-09）。
+ *
+ * 与 SEASON_ANIME_QUERY 的两个差异：
+ *   1. 筛选条件全部来自网址参数（白名单校验在 lib/browse.ts）。
+ *      ⚠️⚠️ 没选的条件必须**从变量里整个省略**（不是传 null）——实测
+ *      AniList 对显式 null 的筛选参数会直接报错（500/400），详见
+ *      buildBrowseVariables 的注释。
+ *   2. 不翻页取全 —— 只要当前这一页。pageInfo 带回来给界面显示
+ *      「共 N 部」和总页数，但见下面的 ⚠️。
+ *
+ * ⚠️ pageInfo.total 有 5000 的封顶（本项目多处实测记录）——界面侧据此
+ * 做了"5000+"的措辞处理（见 app/browse/page.tsx），不许原样显示成"共 5000 部"。
+ *
+ * 年份用 startDate_greater / startDate_lesser 一对（FuzzyDateInt，形如 20241231）：
+ * 语义是数值比较，「2024 年」= 大于 20231231 且小于 20250101。为什么不用
+ * seasonYear：那是可空字段，没标季度的作品会被整个漏掉；startDate 覆盖更高，
+ * 也更贴合用户对"年份"的直觉（首播年）。
+ */
+const BROWSE_ANIME_QUERY = `
+  query BrowseAnime(
+    $page: Int!
+    $perPage: Int!
+    $formats: [MediaFormat]
+    $status: MediaStatus
+    $dateGreater: FuzzyDateInt
+    $dateLesser: FuzzyDateInt
+    $genre: String
+    $tag: String
+    $sort: [MediaSort]
+  ) {
+    Page(page: $page, perPage: $perPage) {
+      pageInfo { total lastPage }
+      media(
+        type: ANIME
+        isAdult: false
+        format_in: $formats
+        status: $status
+        startDate_greater: $dateGreater
+        startDate_lesser: $dateLesser
+        genre: $genre
+        tag: $tag
+        sort: $sort
+      ) {
+        ${ANIME_LIST_FIELDS}
+      }
+    }
+  }
+`;
+
+/** 「全部番剧」的排序方式（网址参数 → 这里的对应关系见 lib/browse.ts） */
+export type BrowseSort = "POPULARITY_DESC" | "TITLE_ROMAJI" | "SCORE_DESC" | "START_DATE_DESC";
+
+/** 「全部番剧」的筛选条件（由 lib/browse.ts 从网址参数规范化并翻译） */
+export interface BrowseQuery {
+  /** AniList 的 format 列表；null = 不筛形式 */
+  formatIn: MediaFormat[] | null;
+  /** null = 不筛状态 */
+  status: MediaStatus | null;
+  /** 年份下界（严格大于该值，形如 20231231）；null = 不设下界 */
+  dateGreater: number | null;
+  /** 年份上界（严格小于该值）；null = 不设上界 */
+  dateLesser: number | null;
+  /** 标签值（AniList 的 genre / tag 名）；null = 不筛标签 */
+  tagValue: string | null;
+  /** 标签走哪个参数查 */
+  tagKind: "genre" | "tag";
+  sort: BrowseSort;
+  page: number;
+}
+
+/** 「全部番剧」一页的结果 */
+export interface BrowseResult {
+  anime: Anime[];
+  /** 结果总数（⚠️ 5000 封顶，界面要按"至少"措辞） */
+  total: number;
+  /** 最后一页的页号（至少为 1） */
+  lastPage: number;
+}
+
+/** 「全部番剧」查询的返回外形。比 AniListResponse 多一个 pageInfo */
+interface AniListBrowseResponse {
+  data?: {
+    Page?: {
+      media?: Anime[];
+      pageInfo?: { total: number; lastPage: number };
+    };
+  };
+  errors?: { message: string }[];
+}
+
+/**
+ * 组装 AniList 的查询变量。
+ *
+ * ⚠️⚠️ **只放有值的键——值为 null 的筛选键必须整个省略，不能传 null。**
+ * 这是 2026-10-09 实测出来的 AniList 服务端怪癖（不是 GraphQL 的标准行为，
+ * 标准里"缺省的变量"和"显式的 null"等价）：
+ *   · `formats: null` / `status: null` → HTTP 500 "Internal Server Error"；
+ *   · `dateGreater: null`（等在部分组合下）→ HTTP 400
+ *     "Illegal operator and value combination"；
+ *   · 而**同样的查询把键省掉就完全正常**。
+ * 更阴的是：有些含 null 的组合不报错、但会**静默返回错误结果**（0 条）——
+ * 所以"没报错"不等于"对了"，本轮就先把 0 结果当成"真没有"差点放过去。
+ * 教训：数据源的行为异常，要先拿最小请求挨个变量二分实测（做法见进度文档）。
+ */
+function buildBrowseVariables(query: BrowseQuery): Record<string, unknown> {
+  const variables: Record<string, unknown> = {
+    page: query.page,
+    perPage: BROWSE_PAGE_SIZE,
+    sort: [query.sort],
+  };
+
+  if (query.formatIn) {
+    variables.formats = query.formatIn;
+  }
+  if (query.status) {
+    variables.status = query.status;
+  }
+  if (query.dateGreater !== null) {
+    variables.dateGreater = query.dateGreater;
+  }
+  if (query.dateLesser !== null) {
+    variables.dateLesser = query.dateLesser;
+  }
+  if (query.tagValue !== null) {
+    // 同一个标签只会进 genre / tag 两个参数中的一个（见 lib/browse.ts 的 kind）
+    if (query.tagKind === "genre") {
+      variables.genre = query.tagValue;
+    } else {
+      variables.tag = query.tagValue;
+    }
+  }
+
+  return variables;
+}
+
+/**
+ * 取「全部番剧」的一页。
+ *
+ * 缓存纪律与全站一致：POST + cache: "force-cache" + 1 小时 revalidate。
+ * 缓存 key 包含请求体——不同筛选组合各存各的，热门组合（默认页、常见标签）
+ * 基本秒开；冷门组合第一次多等一会儿、之后同样进缓存。
+ */
+export async function fetchBrowseAnime(query: BrowseQuery): Promise<BrowseResult> {
+  const response = await fetch(ANILIST_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      query: BROWSE_ANIME_QUERY,
+      variables: buildBrowseVariables(query),
+    }),
+    cache: "force-cache",
+    next: { revalidate: CACHE_SECONDS },
+  });
+
+  if (!response.ok) {
+    throw new Error(`AniList 请求失败：HTTP ${response.status}`);
+  }
+
+  const json = (await response.json()) as AniListBrowseResponse;
+
+  if (json.errors?.length) {
+    throw new Error(`AniList 返回错误：${json.errors.map((e) => e.message).join("; ")}`);
+  }
+
+  const page = json.data?.Page;
+
+  return {
+    anime: withEmptyZh(page?.media ?? []),
+    total: page?.pageInfo?.total ?? 0,
+    lastPage: Math.max(1, page?.pageInfo?.lastPage ?? 1),
+  };
 }
 
 /**

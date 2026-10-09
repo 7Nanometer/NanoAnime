@@ -18,7 +18,18 @@ import { ANIME_GRID_CLASS } from "@/lib/anime-constants";
  * 尺寸、圆角、栅格列数与 AnimeCard 严格对齐（同一套 gap / 断点），
  * 否则替换的瞬间会有一像素级的跳动，等于白做。
  */
-export function AnimeGridSkeleton({ count = 20 }: { count?: number }) {
+export function AnimeGridSkeleton({
+  count = 20,
+  showTitle = true,
+}: {
+  count?: number;
+  /**
+   * 是否渲染顶部的标题占位条。
+   * 「全部番剧」页用它时传 false：那个页面的骨架（app/browse/loading.tsx）
+   * 自己画了标题条 + 筛选区占位，网格骨架再带一条标题会多出半行灰条。
+   */
+  showTitle?: boolean;
+}) {
   return (
     <div
       // aria-busy + aria-live 让读屏软件知道"这儿在加载"，而不是念出一堆空 div
@@ -27,7 +38,9 @@ export function AnimeGridSkeleton({ count = 20 }: { count?: number }) {
       aria-label="正在加载番剧列表"
     >
       {/* 标题占位。宽度固定成一个典型标题的宽度，别占满整行——占满会显得很假 */}
-      <div className="mb-6 h-7 w-64 animate-pulse rounded-md bg-surface" />
+      {showTitle ? (
+        <div className="mb-6 h-7 w-64 animate-pulse rounded-md bg-surface" />
+      ) : null}
 
       <div className={ANIME_GRID_CLASS}>
         {Array.from({ length: count }, (_, index) => (
