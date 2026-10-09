@@ -117,6 +117,11 @@ function toSnapshot(anime: Anime): Anime {
     },
     episodes: anime.episodes,
     averageScore: anime.averageScore,
+    // Bangumi 评分/排名（2026-10-09 全站评分口径）：加入收藏时若数据已带（详情页
+    // 补过）就存下来；老快照没有也不会一直缺——/my 会用 id 走 /api/anime/by-ids
+    // 拉最新数据（fresh ?? entry.anime），拉回来就补上了
+    bangumiRating: anime.bangumiRating ?? null,
+    bangumiRank: anime.bangumiRank ?? null,
     startDate: anime.startDate
       ? { year: anime.startDate.year, month: anime.startDate.month, day: anime.startDate.day }
       : null,
@@ -148,6 +153,8 @@ function placeholderAnime(animeId: number): Anime {
     coverImage: { extraLarge: null, large: null, color: null },
     episodes: null,
     averageScore: null,
+    bangumiRating: null,
+    bangumiRank: null,
     startDate: null,
     status: "FINISHED",
     format: "TV",

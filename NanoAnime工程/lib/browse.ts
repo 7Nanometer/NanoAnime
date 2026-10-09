@@ -11,7 +11,7 @@
 // ⚠️ 本文件目前只被服务端组件引用。**不要**在客户端组件里 import 它——
 // 它带着 Bangumi 中文名索引（title-zh.json，体量不小），进客户端包就亏大了。
 
-import { getTitleZh } from "@/lib/bangumi-index";
+import { getTitleZh, withBangumiRating } from "@/lib/bangumi-index";
 import type { BrowseQuery, BrowseSort } from "@/lib/anilist";
 import type { Anime, MediaFormat } from "@/types/anime";
 
@@ -239,14 +239,16 @@ export function toBrowseQuery(params: BrowseParams): BrowseQuery {
 }
 
 /**
- * 逐条补中文名。与 lib/bangumi-index.ts 的 attachChineseTitles 同一口径
- * （那个是给本季列表用的，接的是 SeasonAnimeResult 形状；浏览页的数据
- * 形状不同，所以在这里做同一件事）。
- * 配不上的作品 title.zh 保持 null，展示层会据此退回日文原名。
+ * 逐条补本地表里的数据：中文名 + Bangumi 评分/排名。
+ * （中文名那部分与 lib/bangumi-index.ts 的 attachChineseTitles 同一口径；
+ * 那个接 SeasonAnimeResult 形状、这里是 Anime[]，所以各自实现。）
+ * 配不上的字段保持 null——展示层会据此降级（退回日文原名 / 不显示评分）。
  */
-export function attachZh(anime: Anime[]): Anime[] {
-  return anime.map((item) => ({
-    ...item,
-    title: { ...item.title, zh: getTitleZh(item.id) },
-  }));
+export function attachLocalData(anime: Anime[]): Anime[] {
+  return anime.map((item) =>
+    withBangumiRating({
+      ...item,
+      title: { ...item.title, zh: getTitleZh(item.id) },
+    }),
+  );
 }

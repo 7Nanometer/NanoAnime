@@ -1,22 +1,27 @@
-// 读「中文名对照表」的运行时入口。
+// 读「Bangumi 本地表」的运行时入口：中文名（title-zh.json）+ 评分与排名（ratings.json）。
 //
-// 中文名是 scripts/fetch-title-zh.ts 一次性从 Bangumi 抓下来、存进 data/title-zh.json 的，
-// 应用运行时**只读这个文件，绝不实时请求 Bangumi**（原因见 lib/bangumi.ts 顶部注释）。
+// 两张表都是离线脚本一次性从 Bangumi 抓下来的（scripts/fetch-title-zh.ts / fetch-ratings.ts），
+// 应用运行时**只读文件，绝不实时请求 Bangumi**（原因见 lib/bangumi.ts 顶部注释）。
+// 2026-10-09 起：站内所有评分的唯一口径就是 ratings.json 里的 Bangumi 分。
 //
 // 为什么和 lib/bangumi.ts 分成两个文件：那个文件要联网，而且要被 `node scripts/xxx.ts`
 // 直接 import —— Node 不认 tsconfig 的 @ 别名，所以那边只能有纯类型导入。
 // 这里反过来，要读本地 JSON，只能在 Next 里用。混在一起脚本就跑不起来了。
 
 import rawIndex from "@/data/title-zh.json";
+import rawRatings from "@/data/ratings.json";
 import { rankLocalMatches, type LocalMatchCandidate } from "@/lib/local-match-rank";
-import type { SeasonAnimeResult } from "@/types/anime";
-import type { BangumiIndex } from "@/types/bangumi";
+import type { Anime, SeasonAnimeResult } from "@/types/anime";
+import type { BangumiIndex, RatingsIndex } from "@/types/bangumi";
 
 /**
  * JSON 导入的类型是按文件内容推断的，这里断言成我们约定的结构。
  * 文件由脚本生成，结构有 scripts/fetch-title-zh.ts 兜着。
  */
 const INDEX = rawIndex as BangumiIndex;
+
+/** 评分表（AniList id → Bangumi 评分/排名），由 scripts/fetch-ratings.ts 生成 */
+const RATINGS = rawRatings as RatingsIndex;
 
 /** 按 AniList 的 id 取中文名。没配对上的返回 null——不猜、不拿别的字段顶替 */
 export function getTitleZh(anilistId: number): string | null {
@@ -154,4 +159,35 @@ export function attachChineseTitles(result: SeasonAnimeResult): SeasonAnimeResul
       title: { ...anime.title, zh: getTitleZh(anime.id) },
     })),
   };
+}
+
+/** 按 AniList 的 id 取 Bangumi 评分（0~100 整数）。没配对上 / 没分为 null */
+export function getBangumiRating(anilistId: number): number | null {
+  return RATINGS[String(anilistId)]?.bangumi ?? null;
+}
+
+/**
+ * 按 AniList 的 id 取 Bangumi 全站排名（动画榜名次）。
+ * 没配对上 / 没上榜 / 旧数据还没抓过（rank 键不存在）一律 null。
+ */
+export function getBangumiRank(anilistId: number): number | null {
+  return RATINGS[String(anilistId)]?.rank ?? null;
+}
+
+/**
+ * 给一部番补上 Bangumi 评分与排名（纯函数，返回新对象）。
+ * 全站评分口径统一走它——展示层只见 `anime.bangumiRating`，不再碰 averageScore。
+ * ⚠️ 泛型是为了 AnimeDetail 这类扩展类型传入后不丢类型。
+ */
+export function withBangumiRating<T extends Anime>(anime: T): T {
+  return {
+    ...anime,
+    bangumiRating: getBangumiRating(anime.id),
+    bangumiRank: getBangumiRank(anime.id),
+  };
+}
+
+/** 给一批番补评分（本季列表这样的批量场景） */
+export function attachBangumiRatings<T extends { anime: Anime[] }>(result: T): T {
+  return { ...result, anime: result.anime.map((item) => withBangumiRating(item)) };
 }

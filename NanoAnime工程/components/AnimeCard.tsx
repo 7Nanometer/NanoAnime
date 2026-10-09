@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import {
+  getBangumiScoreLabel,
   getCardScheduleLabel,
   getPrimaryTitle,
   getScoreLabel,
@@ -59,6 +60,7 @@ export function AnimeCard({
   collection,
   sizes,
   scheduleLabel,
+  scoreMode = "bangumi",
 }: {
   anime: Anime;
   /**
@@ -69,7 +71,7 @@ export function AnimeCard({
   priority?: boolean;
   /**
    * 合集模式（2026-10-07 三期改版「高分合集」用）。有值时：
-   *   ① 右上角评分药丸显示**合集均分**（不是这部作品自己的 AniList 分）；
+   *   ① 右上角评分药丸显示**合集均分**（Bangumi 口径、10 分制显示；不是这部作品自己的分）；
    *   ② 封面底部不显示时间条，改显示「共 N 部」徽标——
    *      ⚠️ **仅 count >= 2 显示**：单部补齐的"合集"没有"共 N 部"这回事；
    *   ③ 名字下方那行从「年份」换成「{年份} · 评分 {合集均分}」。
@@ -91,11 +93,27 @@ export function AnimeCard({
    * 把人看糊涂。口径与其所在的位置必须一致。
    */
   scheduleLabel?: string;
+  /**
+   * 评分口径（2026-10-09 全站改 Bangumi 后新增）：
+   *   · "bangumi"（默认）——显示 Bangumi 评分（10 分制，「8.5」这种）；
+   *   · "anilist"——显示 AniList 分（0~100，「85」这种）。**只有「全部番剧」页
+   *     的「评分」排序在用它**：那个排序由数据源按 AniList 分排，卡片跟着显示
+   *     同口径的分，排序结果与显示值才不会互相矛盾（页面上配了说明文案）。
+   */
+  scoreMode?: "bangumi" | "anilist";
 }) {
   const title = getPrimaryTitle(anime);
   const cover = anime.coverImage.extraLarge;
   // 合集模式显示合集均分（取整；排序按真实值、显示取整，见 build-collections 的注释）
-  const score = collection ? String(Math.round(collection.score)) : getScoreLabel(anime.averageScore);
+  // 评分显示三分支（2026-10-09 全站改 Bangumi）：
+  //   · 合集卡 → 合集均分（Bangumi 口径的 0~100 均值，÷10 显示成「8.4」）
+  //   · scoreMode="anilist" → AniList 分（只给「评分」排序用，见 prop 注释）
+  //   · 默认 → Bangumi 评分（全站唯一口径）
+  const score = collection
+    ? (collection.score / 10).toFixed(1)
+    : scoreMode === "anilist"
+      ? getScoreLabel(anime.averageScore)
+      : getBangumiScoreLabel(anime.bangumiRating);
 
   return (
     <Link
@@ -227,7 +245,7 @@ export function AnimeCard({
         */}
         <p className="truncate text-[11px] leading-snug tabular-nums text-muted-soft">
           {collection
-            ? `${anime.startDate?.year ?? "年份待定"} · 评分 ${Math.round(collection.score)}`
+            ? `${anime.startDate?.year ?? "年份待定"} · 评分 ${(collection.score / 10).toFixed(1)}`
             : getYearLabel(anime)}
         </p>
       </div>

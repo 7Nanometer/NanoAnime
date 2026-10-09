@@ -4,13 +4,15 @@
 // 用法：
 //
 //   NODE_USE_ENV_PROXY=1 HTTPS_PROXY=http://127.0.0.1:7897 \
-//     npm run fetch-ratings -- [--delay=MS] [--limit=N] [--force] [--refill-null]
+//     npm run fetch-ratings -- [--delay=MS] [--limit=N] [--force] [--refill-null] [--refill-rank]
 //
 // 参数：
 //   --delay=MS      每条之间停多久，默认 500（Bangumi 没有明文的限额，跑慢一点稳）
 //   --limit=N       只跑前 N 条（调试用）
 //   --force         重跑已经在表里的条目（默认跳过它们）
 //   --refill-null   只补「跑过但没拿到分」的（bangumi 为 null）——新番评分攒起来后用它
+//   --refill-rank   只补「还没抓过排名」的（rank 为空）——2026-10-09 全站改 Bangumi 评分、
+//                   详情页要显示排名时，用它给老数据补 rank 键
 // ─────────────────────────────────────────────────────────────
 //
 // ⚠️ 跑之前必须先开代理，并且要通过环境变量告诉 Node 走代理——
@@ -40,11 +42,25 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { fetchBangumiScore } from "../lib/bangumi.ts";
-import type { BangumiIndex } from "../types/bangumi.ts";
+import { fetchBangumiRatingDetail } from "../lib/bangumi.ts";
+import type { BangumiIndex, RatingsIndex } from "../types/bangumi.ts";
 
-/** 每条之间停一下。Bangumi 没有明文限额，取比 fetch-title-zh 更小的间隔（这里是纯 GET） */
+/**
+ * 每个并发 worker 两条请求之间停多久。
+ * 总速率 ≈ 并发数 ÷（间隔 + 单条耗时），见主循环顶部的大注释。
+ */
 const DEFAULT_DELAY_MS = 500;
+
+/**
+ * 并发 worker 数（2026-10-09 加）。
+ *
+ * ⚠️ 为什么从串行改成并发：实测同样走代理——curl 单条 0.3 秒，而 Node 走
+ * NODE_USE_ENV_PROXY 的**串行**请求被拖到 5 秒+/条（1909 条要跑 3 小时）；
+ * 8 并发实测全部 0.3~0.57 秒返回、后续请求也无惩罚——**慢的是 Node 的代理
+ * 路径，不是 Bangumi**。6 是留余量的选择（稳态约每秒 6 条，全表约 6 分钟）。
+ * ⚠️ 别再往上加：Bangumi 没有明文限额，但也别拿它做压力测试。
+ */
+const CONCURRENCY = 6;
 
 /** 每处理这么多条就存一次盘（长跑必须的，见 fetch-title-zh 的同款注释） */
 const CHECKPOINT_EVERY = 100;
@@ -66,29 +82,27 @@ const OUTPUT_PATH = path.join(
 );
 
 /**
- * 输出结构。三个来源各自归一 100 制；拿不到的留 null——**缺分不硬凑**
- * （不用 0 分填、不用别处均值填）。
+ * 输出结构 = types/bangumi.ts 的 RatingsIndex（键是 AniList id）。
+ * 三个来源各自归一 100 制；拿不到的留 null——**缺分不硬凑**
+ * （不用 0 分填、不用别处均值填）。rank 是 2026-10-09 加的第二项数据。
  */
-interface RatingEntry {
-  /** AniList averageScore（本来就是 0~100）。本脚本不填，见文件头注释 */
-  anilist: number | null;
-  /** Bangumi rating.score（10 分制）× 10 → 0~100。没有评分时为 null */
-  bangumi: number | null;
-  /** AniTrendz。无稳定接口（403），一律 null，见文件头注释 */
-  anitrendz: number | null;
-}
-
-type RatingsFile = Record<string, RatingEntry>;
 
 interface Options {
   limit: number | null;
   force: boolean;
   refillNull: boolean;
+  refillRank: boolean;
   delayMs: number;
 }
 
 function parseArgs(argv: string[]): Options {
-  const options: Options = { limit: null, force: false, refillNull: false, delayMs: DEFAULT_DELAY_MS };
+  const options: Options = {
+    limit: null,
+    force: false,
+    refillNull: false,
+    refillRank: false,
+    delayMs: DEFAULT_DELAY_MS,
+  };
   for (const arg of argv) {
     if (arg.startsWith("--limit=")) {
       const value = Number(arg.slice("--limit=".length));
@@ -106,6 +120,8 @@ function parseArgs(argv: string[]): Options {
       options.force = true;
     } else if (arg === "--refill-null") {
       options.refillNull = true;
+    } else if (arg === "--refill-rank") {
+      options.refillRank = true;
     } else {
       throw new Error(`不认识的参数：${arg}`);
     }
@@ -134,8 +150,8 @@ async function readJsonSafe<T>(filePath: string): Promise<T | null> {
 }
 
 /** 按键排序后写盘，保证每次生成的 JSON 顺序一致，diff 才看得懂 */
-async function saveRatings(ratings: RatingsFile): Promise<void> {
-  const sorted: RatingsFile = {};
+async function saveRatings(ratings: RatingsIndex): Promise<void> {
+  const sorted: RatingsIndex = {};
   for (const key of Object.keys(ratings).sort((a, b) => Number(a) - Number(b))) {
     sorted[key] = ratings[key];
   }
@@ -158,15 +174,17 @@ async function main(): Promise<void> {
   console.log(`中文名表里带 bangumi_id 的条目：${entries.length}`);
 
   // 先把已有的读进来当底子（只增不减：已有键默认跳过）
-  const ratings = (await readJsonSafe<RatingsFile>(OUTPUT_PATH)) ?? {};
+  const ratings = (await readJsonSafe<RatingsIndex>(OUTPUT_PATH)) ?? {};
   const existingCount = Object.keys(ratings).length;
   console.log(`评分表里已有 ${existingCount} 条`);
 
   let pending = options.force
     ? entries
-    : options.refillNull
-      ? entries.filter(([id]) => ratings[id] && ratings[id].bangumi === null)
-      : entries.filter(([id]) => !ratings[id]);
+    : options.refillRank
+      ? entries.filter(([id]) => ratings[id] && ratings[id].rank == null)
+      : options.refillNull
+        ? entries.filter(([id]) => ratings[id] && ratings[id].bangumi === null)
+        : entries.filter(([id]) => !ratings[id]);
   if (options.limit) {
     pending = pending.slice(0, options.limit);
   }
@@ -181,57 +199,81 @@ async function main(): Promise<void> {
   let hit = 0;
   let noScore = 0;
   let failed = 0;
+  let done = 0;
   let sinceCheckpoint = 0;
+  let nextIndex = 0;
 
-  for (let i = 0; i < pending.length; i++) {
-    const [anilistId, item] = pending[i];
-    try {
-      const score = await fetchBangumiScore(item.bangumi_id!);
-      // anilist 一律 null（由 build-collections 在出网时带上，见文件头注释）；
-      // 已有条目重跑（--force）时保留原有的 anilist 值，别把别人填的抹掉
-      ratings[anilistId] = {
-        anilist: ratings[anilistId]?.anilist ?? null,
-        bangumi: score,
-        anitrendz: null,
-      };
-      if (score === null) {
-        noScore++;
-      } else {
-        hit++;
+  /**
+   * 并发池：CONCURRENCY 个 worker 从 pending 里抢任务（nextIndex++ 在单线程里
+   * 是原子的，不会抢到同一条）。checkpoint 的写盘用"进入即清零"的写法保证
+   * 同一时刻最多一个 worker 在写（见循环内注释）。
+   */
+  const worker = async () => {
+    for (;;) {
+      const index = nextIndex++;
+      if (index >= pending.length) {
+        return;
       }
-    } catch (error) {
-      failed++;
-      // 失败的不写进表——下次重跑会自动补（这是"断点续跑"的关键）
-      if (failed <= 5) {
-        console.log(`   ✗ ${anilistId}（bgm ${item.bangumi_id}）：${error instanceof Error ? error.message : String(error)}`);
+      const [anilistId, item] = pending[index];
+
+      try {
+        const detail = await fetchBangumiRatingDetail(item.bangumi_id!);
+        // anilist 一律 null（由 build-collections 在出网时带上，见文件头注释）；
+        // 已有条目重跑（--force / --refill-rank）时保留原有的 anilist 值，别把别人填的抹掉
+        ratings[anilistId] = {
+          anilist: ratings[anilistId]?.anilist ?? null,
+          bangumi: detail.score,
+          rank: detail.rank,
+          anitrendz: null,
+        };
+        if (detail.score === null) {
+          noScore++;
+        } else {
+          hit++;
+        }
+      } catch (error) {
+        failed++;
+        // 失败的不写进表——下次重跑会自动补（这是"断点续跑"的关键）
+        if (failed <= 5) {
+          console.log(
+            `   ✗ ${anilistId}（bgm ${item.bangumi_id}）：${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
       }
-    }
 
-    sinceCheckpoint++;
-    if (sinceCheckpoint >= CHECKPOINT_EVERY) {
-      sinceCheckpoint = 0;
-      await saveRatings(ratings);
-      const elapsed = Date.now() - startedAt;
-      const done = i + 1;
-      const remain = (elapsed / done) * (pending.length - done);
-      console.log(
-        `── 已跑 ${done}/${pending.length}：有分 ${hit}，无分 ${noScore}，失败 ${failed}；` +
-          `用时 ${formatDuration(elapsed)}，预计还剩 ${formatDuration(remain)}（已存盘）`,
-      );
-    }
+      done++;
+      sinceCheckpoint++;
+      if (sinceCheckpoint >= CHECKPOINT_EVERY) {
+        // 先清零再 await：并发的另一个 worker 即便同时走到这里，也会从 0 重新计，
+        // 不会两个 worker 同时写同一个文件
+        sinceCheckpoint = 0;
+        await saveRatings(ratings);
+        const elapsed = Date.now() - startedAt;
+        const remain = (elapsed / done) * (pending.length - done);
+        console.log(
+          `── 已跑 ${done}/${pending.length}：有分 ${hit}，无分 ${noScore}，失败 ${failed}；` +
+            `用时 ${formatDuration(elapsed)}，预计还剩 ${formatDuration(remain)}（已存盘）`,
+        );
+      }
 
-    if (i < pending.length - 1) {
       await sleep(options.delayMs);
     }
-  }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, pending.length) }, () => worker()),
+  );
 
   await saveRatings(ratings);
   const finalCount = Object.keys(ratings).length;
   const withScore = Object.values(ratings).filter((entry) => entry.bangumi !== null).length;
+  const withRank = Object.values(ratings).filter((entry) => entry.rank != null).length;
   console.log(
     `\n本轮：有分 ${hit}，无分 ${noScore}，失败 ${failed}（共处理 ${pending.length} 条）`,
   );
-  console.log(`评分表：${existingCount} 条 → ${finalCount} 条；其中有 Bangumi 分的 ${withScore} 条`);
+  console.log(
+    `评分表：${existingCount} 条 → ${finalCount} 条；其中有 Bangumi 分的 ${withScore} 条、带排名的 ${withRank} 条`,
+  );
   console.log(`用时 ${formatDuration(Date.now() - startedAt)}`);
   if (failed > 0) {
     console.log(`⚠️ 有 ${failed} 条请求失败——重跑一次会自动只补失败的`);

@@ -86,7 +86,19 @@ export interface Anime {
    */
   countryOfOrigin?: string | null;
   episodes: number | null; // 总集数
-  averageScore: number | null; // 评分，0~100
+  averageScore: number | null; // AniList 评分，0~100（数据层还在拉，**不再上界面**——见 bangumiRating）
+  /**
+   * Bangumi 评分（0~100 整数 = Bangumi 10 分制 ×10，展示时 ÷10 成「8.5」）。
+   * **全站评分的唯一口径**（2026-10-09 起）。来源 data/ratings.json，
+   * 由 lib/bangumi-index.ts 的 withBangumiRating() 按 id 补上；
+   * 没配对上 Bangumi 的为 null，老的本地上快照里可能是 undefined——展示层据此不显示评分。
+   */
+  bangumiRating?: number | null;
+  /**
+   * Bangumi 全站排名（动画榜名次，如 123）。同样来自 data/ratings.json；
+   * 没配对上 / 没上榜 / 旧数据还没抓过时为 null 或 undefined。
+   */
+  bangumiRank?: number | null;
   /**
    * 首播日期。用途：M1 拿它跟 Bangumi 的放送开始年份比对（同一部番的新旧季度靠这个区分），
    * M1-1 详情页也要显示它。

@@ -6,7 +6,7 @@ import { BrowseFilters } from "@/components/BrowseFilters";
 import { BrowsePagination } from "@/components/BrowsePagination";
 import { ANIME_GRID_CLASS } from "@/lib/anime-constants";
 import { fetchBrowseAnime, type BrowseResult } from "@/lib/anilist";
-import { attachZh, buildBrowseHref, parseBrowseParams, toBrowseQuery } from "@/lib/browse";
+import { attachLocalData, buildBrowseHref, parseBrowseParams, toBrowseQuery } from "@/lib/browse";
 import { SITE_CONTAINER } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +65,7 @@ export default async function BrowsePage({
     );
   }
 
-  const anime = attachZh(result.anime);
+  const anime = attachLocalData(result.anime);
   // ⚠️ 5000 封顶的处理：达到封顶值时显示 "5000+"（见文件头注释）
   const totalLabel = result.total >= 5000 ? "5000+" : String(result.total);
   const hasResults = anime.length > 0;
@@ -105,6 +105,9 @@ export default async function BrowsePage({
                 anime={item}
                 // 首屏第一行（xl 断点下正好 7 张）优先加载——同 AnimeGrid 的口径
                 priority={index < 7}
+                // 「评分」排序由数据源按 AniList 分排，卡片跟着显示同口径的分
+                // （页面上配了说明文案；其余排序显示 Bangumi 分）
+                scoreMode={params.sort === "score" ? "anilist" : undefined}
               />
             ))}
           </div>

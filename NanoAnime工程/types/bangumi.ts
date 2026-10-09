@@ -1,5 +1,6 @@
 // Bangumi（番组计划）相关的类型定义。
-// Bangumi 在本项目里只负责一件事：提供中文名。封面、评分等仍以 AniList 为准。
+// Bangumi 在本项目里负责两件事：提供中文名（title-zh.json）、提供**全站评分与排名**
+// （ratings.json，2026-10-09 起站内所有评分只以它为准）。封面等仍以 AniList 为准。
 
 /**
  * Bangumi 搜索接口返回的一条作品。字段名为 Bangumi 原样，没用到的不列。
@@ -55,3 +56,25 @@ export interface BangumiIndexEntry {
 
 /** `data/title-zh.json` 的整体结构，键是 AniList 的 id（字符串形式，JSON 的键只能是字符串） */
 export type BangumiIndex = Record<string, BangumiIndexEntry>;
+
+/**
+ * `data/ratings.json` 里的一条评分记录（2026-10-09 起**全站评分的唯一数据源**）。
+ * 三个来源各自归一 100 制——Bangumi 是 10 分制 ×10 的整数（8.5 → 85，
+ * 展示时 ÷10 还原）；缺分一律 null（不硬凑，不用 0 填）。
+ */
+export interface BangumiRatingEntry {
+  /** AniList averageScore（历史数据，脚本不再维护，固定 null） */
+  anilist: number | null;
+  /** Bangumi 评分：10 分制 ×10 → 0~100 整数；没人为它打分为 null */
+  bangumi: number | null;
+  /**
+   * Bangumi 全站排名（rating.rank，动画榜名次）。
+   * ⚠️ 2026-10-09 之后抓的条目才有这个键——旧记录里没有（读取时按"可能没有"处理）。
+   */
+  rank?: number | null;
+  /** AniTrendz（无稳定接口，固定 null） */
+  anitrendz: number | null;
+}
+
+/** `data/ratings.json` 的整体结构，键是 AniList 的 id（字符串形式） */
+export type RatingsIndex = Record<string, BangumiRatingEntry>;

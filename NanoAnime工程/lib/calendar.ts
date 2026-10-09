@@ -4,7 +4,7 @@
 
 import { fetchWeekSchedule } from "@/lib/anilist";
 import { getBeijingDateKey, toBeijingTime, WEEKDAYS } from "@/lib/anime-display";
-import { getTitleZh } from "@/lib/bangumi-index";
+import { getTitleZh, withBangumiRating } from "@/lib/bangumi-index";
 import type { CalendarDay, CalendarResult, ScheduleEntry } from "@/types/anime";
 
 /** 中国不实行夏令时，北京时间固定是 UTC+8。与 lib/anime-display.ts 里的那份保持一致 */
@@ -126,10 +126,14 @@ export async function fetchCalendar(now: Date = new Date()): Promise<CalendarRes
   const week = getBeijingWeek(now);
   const entries = await fetchWeekSchedule(week.from, week.to);
 
-  // 补中文名。fetchWeekSchedule 出来的 title.zh 是 null，这里按 id 查本地表
+  // 补本地数据：中文名 + Bangumi 评分/排名（fetchWeekSchedule 出来的这几个字段都还是空，
+  // 这里按 id 查本地表，零外网请求）
   const withZh = entries.map((entry) => ({
     ...entry,
-    anime: { ...entry.anime, title: { ...entry.anime.title, zh: getTitleZh(entry.anime.id) } },
+    anime: withBangumiRating({
+      ...entry.anime,
+      title: { ...entry.anime.title, zh: getTitleZh(entry.anime.id) },
+    }),
   }));
 
   return buildCalendar(withZh, week);

@@ -14,14 +14,14 @@ import {
   buildEpisodeRows,
   formatDateRange,
   getAiringStatus,
+  getBangumiScoreLabel,
   getFormatLabel,
   getPrimaryTitle,
-  getScoreLabel,
   getSecondaryTitle,
   getStatusLabel,
   getStudioNames,
 } from "@/lib/anime-display";
-import { getBangumiSummary, getTitleZh } from "@/lib/bangumi-index";
+import { getBangumiSummary, getTitleZh, withBangumiRating } from "@/lib/bangumi-index";
 import type { AnimeDetail } from "@/types/anime";
 
 /**
@@ -39,13 +39,13 @@ function parseId(raw: string): number | null {
   return /^\d+$/.test(raw) ? Number(raw) : null;
 }
 
-/** 取详情并补上中文名 */
+/** 取详情并补上本地数据（中文名 + Bangumi 评分/排名） */
 async function loadDetail(id: number): Promise<AnimeDetail | null> {
   const detail = await fetchAnimeDetail(id);
   if (!detail) {
     return null;
   }
-  return { ...detail, title: { ...detail.title, zh: getTitleZh(detail.id) } };
+  return withBangumiRating({ ...detail, title: { ...detail.title, zh: getTitleZh(detail.id) } });
 }
 
 export async function generateMetadata(props: PageProps<"/anime/[id]">): Promise<Metadata> {
@@ -76,7 +76,8 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
   // 简介也是 M1-0 那张离线表里带的（scripts/fetch-title-zh.ts 抓的 summary），
   // 读本地文件，**不请求 Bangumi**。没配对上就是 null，退回 AniList 的英文简介
   const summary = getBangumiSummary(detail.id);
-  const score = getScoreLabel(detail.averageScore);
+  // 全站评分的唯一口径是 Bangumi（2026-10-09），AniList 分不再上界面
+  const score = getBangumiScoreLabel(detail.bangumiRating);
 
   // 系列年表。第一层（自己 + 直接关系）已经在详情查询里带回来了，
   // 这里只负责把图走完——最多再发 4 次请求，失败就降级（不抛异常）
@@ -96,6 +97,8 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
     { label: "单集时长", value: detail.duration === null ? "—" : `${detail.duration} 分钟` },
     { label: "类型", value: detail.genres.length > 0 ? detail.genres.join(" / ") : "—" },
     { label: "状态", value: getStatusLabel(detail.status) },
+    // 排名来自本地 Bangumi 表（2026-10-09）；没配对上 / 没上榜给破折号（信息栏纪律：不留空）
+    { label: "Bangumi 排名", value: detail.bangumiRank != null ? `#${detail.bangumiRank}` : "—" },
   ];
 
   return (
@@ -174,7 +177,8 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
                 <svg viewBox="0 0 24 24" aria-hidden className="size-3 fill-current">
                   <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" />
                 </svg>
-                {score}
+                {/* 标注来源：10 分制的数字不标会被当成站内自造的分（2026-10-09 全站改 Bangumi） */}
+                Bangumi {score}
               </span>
             ) : null}
             <span>{getFormatLabel(detail.format)}</span>

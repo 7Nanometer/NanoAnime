@@ -171,7 +171,7 @@ export function getYearLabel(anime: Anime): string {
 }
 
 /**
- * 集数与评分的附加信息（如「全 12 集 · 评分 89」）。
+ * 集数与评分的附加信息（如「全 12 集 · Bangumi 8.5」）。
  * 未开播的作品这两项常为空——只拼出存在的那部分；
  * 两个都没有时返回空字符串，调用方据此整段不渲染（而不是渲染一个空行）。
  */
@@ -180,8 +180,10 @@ export function getMetaLine(anime: Anime): string {
   if (anime.episodes !== null) {
     parts.push(`全 ${anime.episodes} 集`);
   }
-  if (anime.averageScore !== null) {
-    parts.push(`评分 ${anime.averageScore}`);
+  // ⚠️ 评分只写 Bangumi（2026-10-09 全站口径），AniList 的 averageScore 不再上界面。
+  // 写成「Bangumi 8.5」而不是「评分 8.5」：10 分制这个数字不标来源会被当成站内自造的分
+  if (anime.bangumiRating != null && anime.bangumiRating > 0) {
+    parts.push(`Bangumi ${(anime.bangumiRating / 10).toFixed(1)}`);
   }
   return parts.join(" · ");
 }
@@ -242,9 +244,22 @@ export function getSeriesTag(type: SeriesRelationType | null): string | null {
   }
 }
 
-/** 评分的显示值。AniList 是 0~100 的整数，没有评分时给破折号 */
+/**
+ * AniList 评分的显示值（0~100 整数；没有给破折号）。
+ * ⚠️ 2026-10-09 全站改 Bangumi 评分后，它的用武之地只剩一处：「全部番剧」页的
+ * 「评分」排序——那个排序由数据源按 AniList 分排，卡片跟着显示同口径的分，
+ * 排序结果与显示值才不会矛盾（页面上有说明文案）。其余地方一律用 getBangumiScoreLabel()。
+ */
 export function getScoreLabel(score: number | null): string {
   return score === null ? DASH : String(score);
+}
+
+/**
+ * Bangumi 评分的显示值：0~100 归一分 ÷10 → 一位小数（「8.5」）。
+ * 没有评分（null / undefined / 非正数）返回破折号——调用方据此不渲染评分位。
+ */
+export function getBangumiScoreLabel(rating: number | null | undefined): string {
+  return rating != null && rating > 0 ? (rating / 10).toFixed(1) : DASH;
 }
 
 /** 制作公司。AniList 上很多番没填，没有就给破折号 */

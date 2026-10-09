@@ -8,7 +8,7 @@
 // 少任何一个，「搜『药屋』能找到、搜『Frieren』也能找到」就做不成。
 
 import { fetchAnimeByIds, searchAnimeByKeyword } from "@/lib/anilist";
-import { findLocalMatches, getTitleZh } from "@/lib/bangumi-index";
+import { findLocalMatches, getTitleZh, withBangumiRating } from "@/lib/bangumi-index";
 import type { Anime, SearchResult } from "@/types/anime";
 
 /**
@@ -71,11 +71,13 @@ export async function searchAnime(keyword: string): Promise<SearchResult> {
     }
   }
 
-  const anime = ordered.slice(0, SEARCH_RESULT_LIMIT).map((item) => ({
-    ...item,
-    // 中文名按 id 从本地表补（跟首页同一个来源、同一套规则：查不到就是 null）
-    title: { ...item.title, zh: getTitleZh(item.id) },
-  }));
+  const anime = ordered.slice(0, SEARCH_RESULT_LIMIT).map((item) =>
+    // 中文名 + Bangumi 评分/排名按 id 从本地表补（跟首页同一个来源、同一套规则）
+    withBangumiRating({
+      ...item,
+      title: { ...item.title, zh: getTitleZh(item.id) },
+    }),
+  );
 
   return {
     keyword: trimmed,

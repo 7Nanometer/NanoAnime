@@ -58,6 +58,19 @@ export function BrowseFilters({ current }: { current: BrowseParams }) {
         currentValue={current.sort}
         hrefFor={(value) => buildBrowseHref(current, { sort: value })}
       />
+
+      {/*
+        「评分」排序的口径说明（2026-10-09 全站评分改 Bangumi 后加）：
+        数据源自带的排序只能按 AniList 打分，没法按 Bangumi 分排——为了保住
+        "按分排序"的能力，这个排序下卡片显示的是同口径的 AniList 分。
+        不说明的话，用户会发现"分数怎么突然变成 85 了"，以为站里有两套评分。
+      */}
+      {current.sort === "score" ? (
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          「评分」排序按数据源的 0~100 分排列，卡片同步显示同一口径的分数；
+          站内其他位置的评分均为 Bangumi 的 10 分制评分。
+        </p>
+      ) : null}
     </div>
   );
 }

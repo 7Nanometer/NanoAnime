@@ -263,3 +263,41 @@ export async function fetchBangumiScore(bangumiId: number): Promise<number | nul
   const score = json.rating?.score ?? 0;
   return score > 0 ? Math.round(score * 10) : null;
 }
+
+/** Bangumi 条目的一次性评分 + 排名 */
+export interface BangumiRatingDetail {
+  /** 10 分制 ×10 → 0~100 整数；没人打分为 null */
+  score: number | null;
+  /** 全站排名；没上榜为 null */
+  rank: number | null;
+}
+
+/**
+ * 取 Bangumi 条目的**评分 + 排名**（一次请求两样都要，2026-10-09 加排名时新增）。
+ *
+ * 与 fetchBangumiScore 的差异只有一个：多取 `rating.rank`（排行榜名次）。
+ * 两者并存是因为 build-collections 的补抓路径只需要分、而全表扫描（fetch-ratings）
+ * 要一次拿全——不合并成一个函数是为了不动已经在跑的老路径。
+ *
+ * ⚠️ 与 score 同款的 API 怪癖：没上榜的条目 `rank` 是 **0**——0 不是"第 0 名"，
+ * 是"没有名次"，所以 <= 0 一律当没有。
+ */
+export async function fetchBangumiRatingDetail(bangumiId: number): Promise<BangumiRatingDetail> {
+  const response = await fetch(`https://api.bgm.tv/v0/subjects/${bangumiId}`, {
+    headers: {
+      "User-Agent": USER_AGENT,
+      Accept: "application/json",
+    },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const json = (await response.json()) as { rating?: { score?: number; rank?: number } };
+  const score = json.rating?.score ?? 0;
+  const rank = json.rating?.rank ?? 0;
+  return {
+    score: score > 0 ? Math.round(score * 10) : null,
+    rank: rank > 0 ? rank : null,
+  };
+}

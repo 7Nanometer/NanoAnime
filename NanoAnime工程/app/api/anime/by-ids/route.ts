@@ -6,7 +6,7 @@
 // 路由处理器默认就不缓存，本来每次请求都会重新执行。详见 app/api/calendar/route.ts 的注释。
 
 import { fetchAnimeWithSchedule } from "@/lib/anilist";
-import { getTitleZh } from "@/lib/bangumi-index";
+import { getTitleZh, withBangumiRating } from "@/lib/bangumi-index";
 
 /** 一次最多取多少部。AniList 的 perPage 就是 50，多传也拿不回来 */
 const MAX_IDS = 50;
@@ -42,9 +42,11 @@ export async function GET(request: Request) {
 
   try {
     const anime = await fetchAnimeWithSchedule(ids);
-    // 中文名是本地 data/title-zh.json 里查的，不额外发请求
+    // 中文名、Bangumi 评分/排名都是本地表里查的，不额外发请求
     return Response.json(
-      anime.map((item) => ({ ...item, title: { ...item.title, zh: getTitleZh(item.id) } })),
+      anime.map((item) =>
+        withBangumiRating({ ...item, title: { ...item.title, zh: getTitleZh(item.id) } }),
+      ),
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "未知错误";
