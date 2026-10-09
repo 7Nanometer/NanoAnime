@@ -11,6 +11,15 @@ import { cn } from "@/lib/utils";
 import type { Anime } from "@/types/anime";
 
 /**
+ * 封面图的 sizes 默认值——按 ANIME_GRID_CLASS 的列数断点走。
+ * ⚠️ 分档必须跟着网格的列数断点改（见 lib/anime-constants.ts）：
+ * 10-07 加 xl 七列档之后末尾从 20vw 收紧到 13vw，否则宽屏按 20vw 取图、封面发糊。
+ * 不走封面墙的窄卡（周表页横向滚动条里定宽的卡片）用 sizes prop 覆盖。
+ */
+const DEFAULT_COVER_SIZES =
+  "(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 13vw";
+
+/**
  * 封面墙上的单张卡片。**全站唯一的卡片组件**（首页新番墙、首页周表一行、
  * 高分合集、搜索结果共用）——不要再建第二套，两套卡片迟早会长歪。
  *
@@ -48,6 +57,8 @@ export function AnimeCard({
   anime,
   priority = false,
   collection,
+  sizes,
+  scheduleLabel,
 }: {
   anime: Anime;
   /**
@@ -66,6 +77,20 @@ export function AnimeCard({
    * 传入的 anime 是合集**代表作品**（系列里 Bangumi 分最高的那部，脚本选好的）。
    */
   collection?: { count: number; score: number };
+  /**
+   * 封面图的 sizes（告诉浏览器这张图实际显示多宽，用来挑合适的图源档位）。
+   * 默认按全站封面墙的列数断点算（DEFAULT_COVER_SIZES）；周表页的横向滚动条
+   * 里卡片固定 144px 宽，传 "144px" 让浏览器别按 13vw 取大图。
+   */
+  sizes?: string;
+  /**
+   * 封面底部时间条的文案覆盖（例如周表页传「周五 16:00」，那是**这一集**的播出时刻）。
+   * 不传时走默认的 getCardScheduleLabel（「下一集什么时候播」）。
+   * ⚠️ 周表页必须传：默认口径是"下一集"，在"已经过去的日子"那些行里，一部番的
+   * 下一集往往已经漂到下周的另一天——卡片会顶着"周日 10:00"出现在周二那一行里，
+   * 把人看糊涂。口径与其所在的位置必须一致。
+   */
+  scheduleLabel?: string;
 }) {
   const title = getPrimaryTitle(anime);
   const cover = anime.coverImage.extraLarge;
@@ -111,10 +136,7 @@ export function AnimeCard({
             src={cover}
             alt={title}
             fill
-            // 告诉浏览器不同屏幕下图片的实际显示宽度，避免下载过大的图。
-            // ⚠️ 分档必须跟着网格的列数断点走（见 lib/anime-constants.ts 的 ANIME_GRID_CLASS）：
-            // 10-07 加 xl 七列档之后末尾从 20vw 收紧到 13vw，否则宽屏按 20vw 取图、封面发糊
-            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 13vw"
+            sizes={sizes ?? DEFAULT_COVER_SIZES}
             priority={priority}
             // 鼠标移上去时封面轻微放大，提示这张卡片可以点
             className="object-cover transition-transform duration-500 ease-[var(--ease-out-soft)] group-hover:scale-105"
@@ -179,7 +201,7 @@ export function AnimeCard({
             ) : null
           ) : (
             <span className="absolute inset-x-0 bottom-0 z-[2] block bg-black/55 px-2 py-1 text-center text-[11px] leading-none font-medium text-white backdrop-blur-sm">
-              <span className="block truncate">{getCardScheduleLabel(anime)}</span>
+              <span className="block truncate">{scheduleLabel ?? getCardScheduleLabel(anime)}</span>
             </span>
           )
         ) : null}

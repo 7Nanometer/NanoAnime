@@ -142,7 +142,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="zh-CN"
-      className={cn("font-sans", notoSansSC.variable, outfit.variable)}
+      className={cn("scroll-smooth font-sans", notoSansSC.variable, outfit.variable)}
       // 顶栏是 sticky 的，页面内锚点跳转时若不加这个偏移，被跳到的标题会被顶栏压住
       style={{ scrollPaddingTop: "5rem" }}
       // ⚠️ 下面那段内联脚本会在 hydration 之前给 <html> 加 intro-playing 类，
