@@ -53,14 +53,40 @@ export const STATUS_OPTIONS: BrowseOption[] = [
   { value: "FINISHED", label: "完结" },
 ];
 
-/** 年份列到哪一年为止（再往前归入「更早」） */
-export const EARLIEST_YEAR = 2010;
+/**
+ * 年份按年列到哪一年为止（更早的归年代档）。
+ *
+ * 2026-10-09 全年代扩容：原来只列到 2010、更早的全部挤在一个「更早」档里——
+ * 老番没有单独的年份入口，而且那一档的条目数远超数据源单次查询的 5000 上限、
+ * 翻不到底。现在 2000 年起按年列，2000 年以前按年代档（见 DECADE_BUCKETS）。
+ */
+export const FIRST_YEAR_WITH_INDIVIDUAL_PILL = 2000;
 
-/** 年份行（动态生成：今年 → 2010 + 「更早」） */
+/**
+ * 年代档（2000 年以前，按十年一档）。
+ *
+ * ⚠️ 每一档的全库条目数必须小于**数据源单次查询的 5000 上限**，否则档内翻不到底
+ * （见 lib/anilist.ts 的 BROWSE_MAX_PAGE）。定档时用全库清点（data/catalog-counts.json）
+ * 核算过——2026-10-09 实测：90 年代 1874、80 年代 1316、70 年代 543、更早（≤1969）591，
+ * 每一档都远小于 5000，全档可翻到底。（顺带：单年最大 2021 年也才 945 条，年份粒度全部安全。）
+ */
+export const DECADE_BUCKETS = [
+  { value: "1990s", label: "90 年代", from: 1990, to: 1999 },
+  { value: "1980s", label: "80 年代", from: 1980, to: 1989 },
+  { value: "1970s", label: "70 年代", from: 1970, to: 1979 },
+] as const;
+
+/** 「更早」档的上界（含）：1970 年以前都归它 */
+export const EARLIER_UNTIL = 1969;
+
+/** 年份行（动态生成：今年 → 2000 按年；2000 年以前按年代档 + 「更早」） */
 export function getYearOptions(now: Date = new Date()): BrowseOption[] {
   const options: BrowseOption[] = [{ value: "", label: "全部" }];
-  for (let year = now.getFullYear(); year >= EARLIEST_YEAR; year--) {
+  for (let year = now.getFullYear(); year >= FIRST_YEAR_WITH_INDIVIDUAL_PILL; year--) {
     options.push({ value: String(year), label: String(year) });
+  }
+  for (const bucket of DECADE_BUCKETS) {
+    options.push({ value: bucket.value, label: bucket.label });
   }
   options.push({ value: "earlier", label: "更早" });
   return options;
@@ -209,8 +235,18 @@ export function buildBrowseHref(current: BrowseParams, patch: Partial<BrowsePara
  */
 export function toYearRange(year: string): { greater: number | null; lesser: number | null } {
   if (year === "earlier") {
-    // 「更早」= 2010 年之前（严格小于 20100101，即 ≤ 2009 年）
-    return { greater: null, lesser: EARLIEST_YEAR * 10000 + 101 };
+    // 「更早」= 1970 年之前（严格小于 19700101，即 ≤ 1969 年）。
+    //
+    // ⚠️ 下界写 1、不写 null：AniList 的日期筛选把**没填日期的条目当 0 处理**——
+    // 只给 lesser 一个条件时，未定档的作品（0 < 19700101）会全部混进来。
+    // 2026-10-09 实测踩到：「更早」第一屏全是"待开播"的新番（孤独摇滚 2 期……）。
+    // greater: 1 把 0 挡在界外，又不会伤到任何真实日期（现存最早是 1907 年）。
+    return { greater: 1, lesser: (EARLIER_UNTIL + 1) * 10000 + 101 };
+  }
+  const bucket = DECADE_BUCKETS.find((item) => item.value === year);
+  if (bucket) {
+    // 年代档是闭区间 [from, to]，用同一套"另一年的端点"表达
+    return { greater: (bucket.from - 1) * 10000 + 1231, lesser: (bucket.to + 1) * 10000 + 101 };
   }
   const value = Number.parseInt(year, 10);
   if (!Number.isFinite(value)) {

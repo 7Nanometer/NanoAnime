@@ -671,7 +671,17 @@ export async function fetchPopularAnime(
  * 28 = 桌面 4 行 × 7 列（网格列数见 lib/anime-constants.ts 的 ANIME_GRID_CLASS，
  * xl 断点正好 7 列）；AniList 的 perPage 上限是 50，28 远在范围内。
  */
-const BROWSE_PAGE_SIZE = 28;
+export const BROWSE_PAGE_SIZE = 28;
+
+/**
+ * 浏览页能翻到的最深页码（数据源硬上限）。
+ *
+ * ⚠️ AniList 拒绝 offset + perPage 超过 5000 的请求（实测 perPage=28 翻到第 179 页
+ * 直接 HTTP 400："Page depth exceeds maximum allowed for API requests (5000
+ * entries)"——全年代扩容时二分实测）。第 178 页（offset 4956，页尾 4984 条）
+ * 是能取的最后一页。翻页链接、越界拦截都以它为准，别再发出注定 400 的请求。
+ */
+export const BROWSE_MAX_PAGE = Math.floor(5000 / BROWSE_PAGE_SIZE);
 
 /**
  * 「全部番剧」浏览查询（2026-10-09）。
@@ -684,8 +694,10 @@ const BROWSE_PAGE_SIZE = 28;
  *   2. 不翻页取全 —— 只要当前这一页。pageInfo 带回来给界面显示
  *      「共 N 部」和总页数，但见下面的 ⚠️。
  *
- * ⚠️ pageInfo.total 有 5000 的封顶（本项目多处实测记录）——界面侧据此
- * 做了"5000+"的措辞处理（见 app/browse/page.tsx），不许原样显示成"共 5000 部"。
+ * ⚠️ pageInfo 的 total / lastPage **都不可信**（5000 封顶，同一查询翻不同页还会
+ * 报出不同的总数，详见 CLAUDE.md 第 14 条）。界面侧一律不用它们：总数改从全库
+ * 清点来（lib/catalog.ts），翻页深度以 BROWSE_MAX_PAGE 为界（见上）。
+ * 这里把 total/lastPage 原样带回来，只留作排查时的参考。
  *
  * 年份用 startDate_greater / startDate_lesser 一对（FuzzyDateInt，形如 20241231）：
  * 语义是数值比较，「2024 年」= 大于 20231231 且小于 20250101。为什么不用
@@ -817,6 +829,11 @@ function buildBrowseVariables(query: BrowseQuery): Record<string, unknown> {
  * 基本秒开；冷门组合第一次多等一会儿、之后同样进缓存。
  */
 export async function fetchBrowseAnime(query: BrowseQuery): Promise<BrowseResult> {
+  // 翻过数据源上限的页，发出去也是 400——拦在本地，把错误说清楚
+  if (query.page > BROWSE_MAX_PAGE) {
+    throw new Error(`页码超过数据源翻页上限（第 ${BROWSE_MAX_PAGE} 页）`);
+  }
+
   const response = await fetch(ANILIST_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },

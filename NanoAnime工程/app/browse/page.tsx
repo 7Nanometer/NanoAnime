@@ -5,8 +5,14 @@ import { AnimeCard } from "@/components/AnimeCard";
 import { BrowseFilters } from "@/components/BrowseFilters";
 import { BrowsePagination } from "@/components/BrowsePagination";
 import { ANIME_GRID_CLASS } from "@/lib/anime-constants";
-import { fetchBrowseAnime, type BrowseResult } from "@/lib/anilist";
+import {
+  BROWSE_MAX_PAGE,
+  BROWSE_PAGE_SIZE,
+  fetchBrowseAnime,
+  type BrowseResult,
+} from "@/lib/anilist";
 import { attachLocalData, buildBrowseHref, parseBrowseParams, toBrowseQuery } from "@/lib/browse";
+import { getCatalogCount } from "@/lib/catalog";
 import { SITE_CONTAINER } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 
@@ -16,17 +22,24 @@ export const metadata: Metadata = {
 };
 
 /**
- * 「全部番剧」浏览页（2026-10-09）。
+ * 「全部番剧」浏览页（2026-10-09 建页；同日"全年代扩容"二次改版）。
  *
  * 分工三层，各自一个文件：
  *   · 网址参数 ↔ 筛选状态：lib/browse.ts（白名单 / 默认值 / 链接生成）
  *   · 筛选状态 → AniList 查询：lib/anilist.ts 的 fetchBrowseAnime
  *   · 本文件：读参数 → 取数 → 摆版面
  *
- * ⚠️ 「共 N 部」的数字来自 AniList 的 pageInfo.total，实测有 **5000 封顶**——
- * 所以数字达到 5000 时显示「5000+」而不是「5000」。这是本项目对待数字的
- * 老纪律（同「本季收录 N 部」）：宁可说"至少这么多"，不能把一个截断值
- * 装成总数。
+ * ⚠️ 全页围着数据源的两条硬规矩转（2026-10-09 二分 + 深页实测）：
+ *
+ *   1. **pageInfo 的 total / lastPage 会撒谎**——同一查询翻不同页报不同的总数；
+ *      「1960 年前只有百来部」它也敢报 5000。所以「共 N 部」只在**我们自己数过**
+ *      的范围里显示：年份维度的数字来自全库清点（lib/catalog.ts，把全库两万条
+ *      逐条扫出来数的）。带形式/状态/标签的组合没数过——**不显示数字**，
+ *      宁可不说，不说假话。
+ *
+ *   2. **翻页深度硬上限 5000 条**——offset+perPage 超过就 HTTP 400，perPage=28 时
+ *      第 178 页（BROWSE_MAX_PAGE）是最后一页。第 179 页起在这里直接拦下、给一句
+ *      人话（老版会把它误报成"数据源超时"，见下面"重试"分支的注释）。
  *
  * 取数失败不抛给错误边界：AniList 偶发超时/限流是全站常态，这里兜住、
  * 给一句人话 + 一个「重试」（整页链接——用 <a> 而不是 <Link>，要它真正
@@ -38,6 +51,35 @@ export default async function BrowsePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = parseBrowseParams(await searchParams);
+
+  // 翻过数据源上限的页码：拦在取数之前，给一句人话（见文件头注释第 2 条）。
+  // 筛选区照常渲染——用户正是该用它把范围缩小
+  if (params.page > BROWSE_MAX_PAGE) {
+    return (
+      <main className={`${SITE_CONTAINER} py-8 sm:py-10`}>
+        <h1 className="section-mark text-2xl font-bold tracking-tight sm:text-[28px]">
+          浏览全部番剧
+        </h1>
+        <div className="mt-6">
+          <BrowseFilters current={params} />
+        </div>
+        <div className="mt-7 flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-20 text-center">
+          <p className="text-sm text-muted-foreground">
+            页码超出了数据源的单次查询上限——最多翻到第 {BROWSE_MAX_PAGE} 页。
+          </p>
+          <p className="text-xs text-muted-foreground/80">
+            想看更全的番剧目录，请用上面的年份、标签把范围缩小；也可以回第 1 页重新开始。
+          </p>
+          <Link
+            href={buildBrowseHref(params, { page: 1 })}
+            className="mt-1 rounded-lg border border-border bg-surface px-4 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-brand/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          >
+            回到第 1 页
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   let result: BrowseResult;
   try {
@@ -66,8 +108,20 @@ export default async function BrowsePage({
   }
 
   const anime = attachLocalData(result.anime);
-  // ⚠️ 5000 封顶的处理：达到封顶值时显示 "5000+"（见文件头注释）
-  const totalLabel = result.total >= 5000 ? "5000+" : String(result.total);
+
+  // 「共 N 部」的计数范围：只有"年份是唯一筛选维度"时才数得清（见文件头注释第 1 条）
+  const countScope = params.format === "" && params.status === "" && params.tag === "";
+  const count = countScope ? getCatalogCount(params.year) : null;
+
+  // 分页参数（两种模式，见 BrowsePagination 头注释）：
+  //   已知总数 → 首尾页 + 当前±2，末页截到数据源上限；
+  //   未知（组合筛选）→ 上一页/下一页，"还有没有下一页"看本页满不满
+  const pagesFromCount = count !== null && count > 0 ? Math.ceil(count / BROWSE_PAGE_SIZE) : null;
+  const lastPage = pagesFromCount !== null ? Math.min(pagesFromCount, BROWSE_MAX_PAGE) : null;
+  const sourceCapped = pagesFromCount !== null && pagesFromCount > BROWSE_MAX_PAGE;
+  const hasMore = result.anime.length >= BROWSE_PAGE_SIZE;
+  const atCapUnknown = lastPage === null && params.page >= BROWSE_MAX_PAGE && hasMore;
+
   const hasResults = anime.length > 0;
 
   return (
@@ -78,11 +132,11 @@ export default async function BrowsePage({
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           按形式 / 状态 / 年份 / 标签自由组合筛选
-          {/* 结果为 0 时不报「共 0 部」——空态区已有完整说明，不重复念叨 */}
-          {result.total > 0 ? (
+          {/* 数字只在数得清时显示（见文件头注释第 1 条）；0 条交给空态区解释，不在这念叨 */}
+          {count !== null && count > 0 ? (
             <>
               {" · 共 "}
-              <span className="tabular-nums">{totalLabel}</span> 部
+              <span className="tabular-nums">{count}</span> 部
             </>
           ) : null}
         </p>
@@ -111,17 +165,24 @@ export default async function BrowsePage({
               />
             ))}
           </div>
-          <BrowsePagination current={params} page={params.page} lastPage={result.lastPage} />
+          <BrowsePagination
+            current={params}
+            page={params.page}
+            lastPage={lastPage}
+            hasMore={hasMore}
+            capNote={sourceCapped || atCapUnknown}
+          />
         </>
       ) : (
         <div className="mt-7 flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-20 text-center">
           <p className="text-sm text-muted-foreground">
-            {result.total === 0
+            {/* 第 1 页为空 = 这个筛选组合没结果；之后的页为空 = 页码翻过了头 */}
+            {params.page === 1
               ? "没有找到符合条件的番剧。"
               : "这一页没有内容，页码可能超出了结果范围。"}
           </p>
           <p className="text-xs text-muted-foreground/80">
-            {result.total === 0
+            {params.page === 1
               ? "换一组筛选组合试试，或者点上面的「全部」重新开始。"
               : "点下面的链接回到第 1 页。"}
           </p>

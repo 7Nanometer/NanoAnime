@@ -223,14 +223,8 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
         <h2 className="section-mark mb-4 text-lg font-semibold">简介</h2>
         {summary ? (
           <>
-            {/* ⚠️ 如实标注语言：Bangumi 的新条目简介填的是官方日文原文，
-                要等志愿者翻译成中文。本季 17 条全是日文。不说清楚的话，
-                用户会以为中文简介加载出错了 */}
-            {summary.isJapanese ? (
-              <p className="mb-2 text-xs text-muted-foreground">
-                Bangumi 上目前只有日文简介，暂无中文。
-              </p>
-            ) : null}
+            {/* 简介直接显示，不再挂「只有日文」的提示
+                （2026-10-09 用户要求删除） */}
             <p className="text-sm leading-loose whitespace-pre-line text-muted-foreground">
               {summary.text}
             </p>

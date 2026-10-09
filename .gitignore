@@ -12,3 +12,7 @@ node_modules/
 
 # 文档助手小七的工作区，不进版本控制
 .workbuddy/
+
+# 全库清点的中间产物（npm run build-catalog 生成）——
+# 是"扫一遍就有"的临时数据，不进版本控制；成品计数（catalog-counts.json）要进
+NanoAnime工程/data/.catalog-snapshot.json
