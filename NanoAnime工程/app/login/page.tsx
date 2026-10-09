@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { AuthForm } from "@/components/AuthForm";
 import { SignOutButton } from "@/components/SignOutButton";
@@ -60,7 +61,14 @@ export default async function LoginPage() {
           <p className="text-xs text-muted-foreground">已登录</p>
           <p className="mt-1 text-base font-medium break-all">{user.email}</p>
 
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            {/* 顶栏头像菜单也能进，这里给一条明路——从账号页登完的人顺着往下走 */}
+            <Link
+              href="/account"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all duration-150 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              进入个人中心
+            </Link>
             <SignOutButton />
           </div>
         </div>

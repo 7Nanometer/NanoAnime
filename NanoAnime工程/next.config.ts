@@ -43,11 +43,18 @@ const nextConfig: NextConfig = {
     unoptimized: process.env.NODE_ENV === "development",
 
     // 图片域名白名单：不在这里列出的域名，next/image 一律拒绝（返回 400）。
-    // 只放行 AniList 的官方图床。M3 接 TMDB 时再加它的域名。
+    // AniList 的官方图床 + Supabase 的存储（用户上传的头像，2026-10-09 加）。
+    // Supabase 用通配 *.supabase.co：项目引用代号可能会换，白名单按域名放行，
+    // 不用跟着改配置。
     remotePatterns: [
       {
         protocol: "https",
         hostname: "s4.anilist.co",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
         pathname: "/**",
       },
     ],
