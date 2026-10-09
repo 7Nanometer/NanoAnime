@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { ViewTransition } from "react";
 import { Noto_Sans_SC, Outfit } from "next/font/google";
 import { CursorSpotlight } from "@/components/CursorSpotlight";
 import { IntroOverlay } from "@/components/IntroOverlay";
@@ -184,7 +185,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader />
         {/* flex-1 让内容区把剩下的高度撑满，页脚才会被顶到底部，而不是浮在半空 */}
         <Providers>
-          <div className="flex-1">{children}</div>
+          {/*
+            页面切换转场（2026-10-09 签名动效，Awwwards 级打磨）：
+            站内跳转时内容区做一次"旧页先走、新页慢浮现"的溶解过渡。
+            ⚠️ 三个关键事实（都从 React/Next 官方文档核实过）：
+              1. **不需要任何配置**——Next 16 内置的 React canary 已带
+                 <ViewTransition>，2026 年的 `experimental.viewTransition`
+                 开关已被官方移除（它本来就是空开关），别再加回 next.config；
+              2. 它**不产生任何 DOM 节点**，只是一个"过渡边界"——包在 children
+                 外面，整站零成本（不参与布局、不参与样式）；
+              3. **只包内容区**：顶栏 / 星空背景 / 页脚都在边界之外，跳转时不闪——
+                 只有"页面内容"这一块在溶解（这也正是要的效果）。
+            视觉（时长/缓动/减弱动效兜底）在 globals.css 的「页面切换转场」一节。
+          */}
+          <ViewTransition default="vt-page">
+            <div className="flex-1">{children}</div>
+          </ViewTransition>
         </Providers>
         <SiteFooter />
         {/* 离线缓存的开机开关，不显示任何东西 */}

@@ -157,11 +157,14 @@
        为什么要有第三档、而不是写成 text-muted-foreground/60：
        叠透明度会让实际颜色随底色漂移，没法在 token 层一次性算清对比度。
        实测 text-muted-foreground/60 落到 3.60:1，11px 正文过不了 AA。
-       这里直接定成一个**算过对比度的实色**，三层底色上都达标：
-         on background 5.15:1 ｜ on surface 4.93:1 ｜ on surface-elevated 4.62:1
-       ⚠️ 想再压暗一点点的诱惑要忍住——压到 L=0.58 时 surface-elevated 上只剩 4.12:1。
-       它是"最小号"文字色的下限，不是风格选择。 */
-    --muted-soft: oklch(0.61 0.018 293);
+       这里直接定成一个**算过对比度的实色**。
+       ⚠️ 2026-10-09 从 L=0.61 提到 0.67：全站对比度扫描抓到了三层底色之外的
+       第四种底——「周表·今天」面板（品牌紫 9% 衬底）上的年份行实测只剩 4.0:1、
+       详情页氛围光覆盖区的分隔点 4.03:1，都破 4.5。这不是那两种底色的错，
+       是 0.61 只按纯色底算过、没给"底色之上还有一层薄色"留余量。
+       提到 0.67 后实测：紫衬底上 ≈4.9、氛围光上 ≈4.9，各区都回 4.5 以上。
+       ⚠️ 想再压暗一点点的诱惑要忍住——它和更亮一档之间必须留出可辨的层级差。 */
+    --muted-soft: oklch(0.67 0.018 293);
     --accent: oklch(0.236 0.024 276);
     --accent-foreground: oklch(0.963 0.008 293);
 
@@ -243,7 +246,7 @@
     --secondary-foreground: oklch(0.963 0.008 293);
     --muted: oklch(0.216 0.024 274);
     --muted-foreground: oklch(0.732 0.02 293);
-    --muted-soft: oklch(0.61 0.018 293);
+    --muted-soft: oklch(0.67 0.018 293);
     --accent: oklch(0.236 0.024 276);
     --accent-foreground: oklch(0.963 0.008 293);
     --border: oklch(1 0 0 / 9%);
@@ -279,6 +282,41 @@
     /* 深色界面必须显式声明，否则浏览器原生的滚动条、表单控件、自动填充
        还会按亮色渲染，出现"深底上一条白滚动条"这种破绽 */
     color-scheme: dark;
+    }
+
+  /* ── 浏览器原生表面（2026-10-09 顶级打磨）───────────────────────────────
+     文字选中色、输入光标、滚动条——这些东西浏览器给的都是"出厂默认"，
+     谁也不属于哪个设计系统。把它们按调色板主题化，是"这个页面被设计过"
+     最便宜、也最容易被同行看出来的证据（craft 检查表的"Browser surfaces"项）。 */
+  ::selection {
+    /* 主色 45% 覆盖在深底上 ≈ L 0.32，白字压上去约 7:1，选中文字照样能读 */
+    background-color: oklch(0.545 0.24 288 / 45%);
+    }
+  html {
+    /* 输入光标用最亮的品牌色（对比度只高不低） */
+    caret-color: var(--brand-strong);
+    }
+  /* 滚动条：细、半透明白、悬停变亮。标准属性（Firefox / 新 Chromium）与
+     webkit 伪元素（旧 Chromium / Safari）都写——浏览器各取自己能认的那份 */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(1 0 0 / 14%) transparent;
+    }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    }
+  ::-webkit-scrollbar-thumb {
+    background-color: oklch(1 0 0 / 14%);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: oklch(1 0 0 / 26%);
     }
 
   /* 标题默认收紧字距。中文标题不收紧的话，字与字之间会显得松垮。
@@ -448,6 +486,23 @@
     position: absolute;
     inset: 0;
     background-repeat: repeat;
+    }
+
+  /* 两档深度层（2026-10-09 签名动效·随指针视差）。
+     --par-x / --par-y 由 CursorSpotlight 写入（-1 ~ 1，页面中心为 0）；
+     星云动得多（近），星点动得少（远），两层不同幅度 = 纵深感。
+     变量缺省 0 → 位移为零：触摸设备、减弱动效、脚本失败时就是静止星空。
+     ⚠️ 只动 transform（合成层），不碰布局属性。 */
+  .starfield-depth-nebula,
+  .starfield-depth-stars {
+    position: absolute;
+    inset: 0;
+    }
+  .starfield-depth-nebula {
+    transform: translate3d(calc(var(--par-x, 0) * -18px), calc(var(--par-y, 0) * -12px), 0);
+    }
+  .starfield-depth-stars {
+    transform: translate3d(calc(var(--par-x, 0) * -7px), calc(var(--par-y, 0) * -5px), 0);
     }
 
   /* 星点·第 1 层：亮星（最大最疏，像近处的星）。
@@ -704,6 +759,19 @@
     opacity: 1;
     }
 
+  /* 焦点位轮播进度条（2026-10-09 电影化改版）：一条随自动播放前进的细线。
+     时长由 JSX 内联注入（= HeroSpotlight 的 AUTOPLAY_MS，两处同源），这里只定义行为。
+     暂停时由 JSX 加 --paused 把动画冻在中途；reduced-motion 下 JSX 直接不渲染它。 */
+  .hero-progress {
+    transform-origin: left;
+    animation-name: hero-progress;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    }
+  .hero-progress--paused {
+    animation-play-state: paused;
+    }
+
   /* ══ 入场动画「星尘聚字」（2026-10-07）══════════════════════════════════
      打开网站时的开场：黑场 → 星尘汇聚成「番鉴」→ 星芒一闪 → 星尘散开 →
      网站浮现。约 5.6 秒，可点击跳过。动画逻辑在 components/IntroOverlay.tsx。
@@ -897,6 +965,40 @@
   0% { opacity: 0; transform: rotate(-50deg) translate3d(0, 0, 0); }
   1.5% { opacity: 0.9; }
   6.5%, 100% { opacity: 0; transform: rotate(-50deg) translate3d(-132vw, 0, 0); }
+  }
+
+/* ── 页面切换转场（View Transitions，2026-10-09 签名动效）─────────────
+   app 路由导航时内容区做快照：旧页先走（0.22s）、新页稍慢浮现（0.38s），
+   形成"溶解"式过渡；380ms 与站内慢档动效同拍。
+   `.vt-page` 是 app/layout.tsx 里 <ViewTransition default="vt-page"> 挂的
+   过渡类名——React 会把它加到这对伪元素上，这里按类名定动画。
+   ⚠️ 支持转场的浏览器才有这组伪元素（Chromium / Safari 18+），其余浏览器
+   直接走原来的瞬间跳转；「减弱动态效果」由浏览器规范层跳过整个转场，
+   这里再包一道 guard 双保险。 */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(.vt-page) {
+    animation: vt-fade-out 0.22s var(--ease-in-out-soft) both;
+    }
+  ::view-transition-new(.vt-page) {
+    animation: vt-fade-in 0.38s var(--ease-out-soft) both;
+    }
+  /* 过渡组的盒子动画（旧页→新页的高度变化）跟随同一节奏 */
+  ::view-transition-group(.vt-page) {
+    animation-duration: 0.38s;
+    animation-timing-function: var(--ease-in-out-soft);
+    }
+}
+@keyframes vt-fade-out {
+  to { opacity: 0; }
+  }
+@keyframes vt-fade-in {
+  from { opacity: 0; }
+  }
+
+/* 焦点位轮播进度：0 → 满（时长由内联样式给，见 .hero-progress） */
+@keyframes hero-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
   }
 
 /* 卡片入场（由滚动进度驱动，见上方 .reveal）。

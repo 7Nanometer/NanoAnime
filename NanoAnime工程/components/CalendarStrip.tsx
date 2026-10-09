@@ -89,7 +89,7 @@ export function CalendarStrip() {
     <section>
       <header className="mb-5 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <div>
-          <h2 className="section-mark text-2xl font-bold tracking-tight">追番周表</h2>
+          <h2 className="section-mark text-2xl font-bold tracking-tight sm:text-[28px]">追番周表</h2>
           {/* 副标题沿用 CalendarBoard 的文案构成，不另造一套 */}
           <p className="mt-2 text-sm tabular-nums text-muted-foreground">
             {first.dateLabel} ~ {last.dateLabel} · 本周共 {data.totalCount} 集 ·{" "}

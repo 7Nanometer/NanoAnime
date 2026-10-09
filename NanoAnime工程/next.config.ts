@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ⚠️ 2026-10-09 注：页面切换转场（View Transitions）**不需要在这里开任何开关**。
+  //    官方在 Next 16 移除了 `experimental.viewTransition`（它本来就是个空开关，
+  //    运行时从不读取）。转场直接用 app/layout.tsx 里的 <ViewTransition> 组件，
+  //    效果相关的 CSS 在 globals.css 的「页面切换转场」一节。别把旧文档里的
+  //    `experimental: { viewTransition: true }` 加回来——加了只会得到一条
+  //    "Unrecognized key" 警告。
   // ⚠️ 这里原来有一条 `/calendar → /#calendar` 的 308 永久跳转（2026-10-06 A+B 阶段
   // 把周表并进首页时加的）。2026-10-07 三期改版把完整周表恢复成独立页，跳转已删——
   // 不删的话新页面会被它永久重定向吃掉。

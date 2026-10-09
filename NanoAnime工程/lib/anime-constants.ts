@@ -25,3 +25,12 @@ export const ANIME_GRID_CLASS =
  * 突然没有简介段、或首页同一部番出现两次，都属于"看起来对但其实错了"。
  */
 export const HERO_COUNT = 7;
+
+/**
+ * 首页新番墙显示多少部（2026-10-09 电影化改版引入）。
+ *
+ * ⚠️ **两处必须同源**：`app/page.tsx` 传给 AnimeGrid 的 limit、
+ * `components/SeasonTopRail.tsx` 计算"遗珠"候选时的跳过数（HERO_COUNT + 它）。
+ * 一边改、另一边没改不会报错——症状是首页出现重复封面（遗珠轨收进了墙上已有的番）。
+ */
+export const HOME_WALL_COUNT = 14;

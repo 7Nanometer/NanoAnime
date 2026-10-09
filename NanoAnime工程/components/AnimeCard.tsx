@@ -58,6 +58,7 @@ export function AnimeCard({
   anime,
   priority = false,
   collection,
+  rank,
   sizes,
   scheduleLabel,
   scoreMode = "bangumi",
@@ -79,6 +80,12 @@ export function AnimeCard({
    * 传入的 anime 是合集**代表作品**（系列里 Bangumi 分最高的那部，脚本选好的）。
    */
   collection?: { count: number; score: number };
+  /**
+   * 榜单名次（只有首页「本季遗珠」横滑轨在用，2026-10-09）。
+   * 显示成封面左上角的两位数字药丸（01、02……两位数保证宽度一致、排起来齐）。
+   * ⚠️ 放左上角：右上角已经被评分药丸占了，两枚药丸不许叠在一起。
+   */
+  rank?: number;
   /**
    * 封面图的 sizes（告诉浏览器这张图实际显示多宽，用来挑合适的图源档位）。
    * 默认按全站封面墙的列数断点算（DEFAULT_COVER_SIZES）；周表页的横向滚动条
@@ -165,6 +172,16 @@ export function AnimeCard({
             {title}
           </span>
         )}
+
+        {/* 名次药丸（左上角，榜单轨用）。样式与评分药丸同款：深色衬底 + 白字。
+            ⚠️ 数字**不要**改回品牌紫：全站对比度扫描实测，紫字（L≈0.73）压
+           黑 60% 衬底、下面又是亮色封面时只有 3.6:1（白字同组合是 5.7:1，验过）。
+            黑/60 的衬底对最亮的封面也只到 0.4 灰度，够白字用、不够亮紫字用。 */}
+        {rank ? (
+          <span className="absolute top-2 left-2 z-[2] inline-flex items-center rounded-full bg-black/60 px-2 py-0.5 text-[11px] leading-none font-bold text-white tabular-nums backdrop-blur-sm">
+            {String(rank).padStart(2, "0")}
+          </span>
+        ) : null}
 
         {/*
           评分药丸（右上角）。

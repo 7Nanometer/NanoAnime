@@ -26,18 +26,29 @@
 export function StarfieldBackground() {
   return (
     <div aria-hidden className="starfield">
-      {/* 星云四团分居四角：星辉紫（左上）→ 深空蓝（右上）→ 深靛（右下）→ 深紫（左下）。
-          ⚠️ 四个中心两两拉开是**安全性要求**，不只是构图：两团亮色若在屏幕中部
-          重叠，小字对比度会破线（验算见 globals.css「星空层」约束 4）。 */}
-      <div className="starfield-nebula-1" />
-      <div className="starfield-nebula-2" />
-      <div className="starfield-nebula-3" />
-      <div className="starfield-nebula-4" />
+      {/*
+        两档深度层（2026-10-09 签名动效·随指针视差）：
+        星云和星点各自包一层，CSS 用 --par-x / --par-y（由 CursorSpotlight 写入）
+        做**不同幅度的反向位移**——星云近(动得多)、星点远(动得少)，鼠标划动时
+        整片星空有纵深。触摸设备和减弱动效下变量恒为 0、位移为零，等于没开。
+        流星不参与视差（它们自己在飞）。
+      */}
+      <div className="starfield-depth-nebula">
+        {/* 星云四团分居四角：星辉紫（左上）→ 深空蓝（右上）→ 深靛（右下）→ 深紫（左下）。
+            ⚠️ 四个中心两两拉开是**安全性要求**，不只是构图：两团亮色若在屏幕中部
+            重叠，小字对比度会破线（验算见 globals.css「星空层」约束 4）。 */}
+        <div className="starfield-nebula-1" />
+        <div className="starfield-nebula-2" />
+        <div className="starfield-nebula-3" />
+        <div className="starfield-nebula-4" />
+      </div>
 
-      {/* 星点三层：亮星疏、中星中、暗星密。平铺纹理，不是几百个 DOM 元素 */}
-      <div className="starfield-stars-1" />
-      <div className="starfield-stars-2" />
-      <div className="starfield-stars-3" />
+      <div className="starfield-depth-stars">
+        {/* 星点三层：亮星疏、中星中、暗星密。平铺纹理，不是几百个 DOM 元素 */}
+        <div className="starfield-stars-1" />
+        <div className="starfield-stars-2" />
+        <div className="starfield-stars-3" />
+      </div>
 
       {/* 流星两条。reduced-motion 时由 CSS 整体隐藏，不在这里判断 */}
       <div className="starfield-meteor starfield-meteor-1" />

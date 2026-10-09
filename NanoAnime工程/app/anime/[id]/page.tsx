@@ -16,6 +16,7 @@ import {
   getAiringStatus,
   getBangumiScoreLabel,
   getFormatLabel,
+  getGenreLabel,
   getPrimaryTitle,
   getSecondaryTitle,
   getStatusLabel,
@@ -89,13 +90,16 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
     relations: detail.relations,
   });
 
-  // 信息栏。**每一项都必须有值**，缺数据的显示「—」，不留空
+  // 信息栏。**每一项都必须有值**，缺数据的显示「—」，不留空。
+  // ⚠️ 2026-10-09 改版：原来这里是右栏里一个竖版小盒子（挤在标题旁边、宽度受限），
+  // 现在改成页头下方**通栏的数据带**——值可以有更长的行宽，右栏也腾出来给
+  // 类型标签和操作按钮。原「类型」一行撤掉了：类型已经做成中文标签直接显示，
+  // 同一件事不写两遍（英文原文的 join 也就没有存在意义了）。
   const infoRows: { label: string; value: string }[] = [
     { label: "制作公司", value: getStudioNames(detail) },
     { label: "播出时间", value: formatDateRange(detail.startDate, detail.endDate) },
     { label: "总集数", value: detail.episodes === null ? "—" : `${detail.episodes} 集` },
     { label: "单集时长", value: detail.duration === null ? "—" : `${detail.duration} 分钟` },
-    { label: "类型", value: detail.genres.length > 0 ? detail.genres.join(" / ") : "—" },
     { label: "状态", value: getStatusLabel(detail.status) },
     // 排名来自本地 Bangumi 表（2026-10-09）；没配对上 / 没上榜给破折号（信息栏纪律：不留空）
     { label: "Bangumi 排名", value: detail.bangumiRank != null ? `#${detail.bangumiRank}` : "—" },
@@ -116,7 +120,7 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
       {cover ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] overflow-hidden"
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[460px] overflow-hidden"
         >
           <Image
             src={cover}
@@ -125,11 +129,28 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
             sizes="(max-width: 896px) 100vw, 896px"
             // 这张图用户"看不见细节"，只是取它的颜色，所以不参与首屏关键资源竞争
             loading="lazy"
-            className="scale-125 object-cover object-top opacity-25 blur-3xl saturate-150"
+            className="scale-125 object-cover object-top opacity-30 blur-3xl saturate-150"
           />
           {/* 渐隐到底色。不做这一步，模糊图会在中间出现一条生硬的横切线 */}
           <div className="absolute inset-0 bg-linear-to-b from-transparent via-background/60 to-background" />
         </div>
+      ) : null}
+
+      {/*
+        专属氛围色（2026-10-09 电影化改版）：把封面主色（AniList 的 coverImage.color）
+        在页头右侧打成一团大光斑——每部番的详情页自带一个专属色调。
+        与上面那层"模糊封面"的分工：模糊图给"质地"，这团色光给"色相"；
+        两者都压得很克制（装饰层，亮度受页面文字对比度约束）。
+        ⚠️ 3d 是十六进制透明度（约 24%）。上调前先复测页头文字的对比度。
+      */}
+      {detail.coverImage.color ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[460px]"
+          style={{
+            background: `radial-gradient(640px at 78% -10%, ${detail.coverImage.color}3d, transparent 72%)`,
+          }}
+        />
       ) : null}
 
       {/* 顶部：大封面 + 名字 + 评分 */}
@@ -158,7 +179,11 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
         </div>
 
         <div className="flex min-w-0 flex-col gap-3">
-          <h1 className="text-2xl leading-tight font-bold tracking-tight sm:text-[28px]">
+          {/*
+            标题升到 36px + 紫晕（2026-10-09 电影化改版）：详情页的 h1 是
+            这个页面的"焦点位主标题"，规格向首页焦点位靠拢。
+          */}
+          <h1 className="text-glow-brand text-3xl leading-tight font-bold tracking-tight sm:text-4xl">
             {primary}
           </h1>
           {/* 副标题和主标题相同时不重复渲染（没配到中文名又没有英文名时会这样） */}
@@ -196,31 +221,52 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
             <span>{getAiringStatus(detail)}</span>
           </div>
 
-          {/* 追番按钮。它自己是个客户端组件，详情页仍然是服务端组件 */}
-          <div className="mt-1">
-            <FollowButton anime={detail} />
-          </div>
+          {/* 类型标签（2026-10-09 改版）：中文显示（没收录映射的原样英文），
+              最多 6 枚——AniList 个别作品题材很多，全排会把这个区域撑散 */}
+          {detail.genres.length > 0 ? (
+            <ul className="flex flex-wrap gap-1.5">
+              {detail.genres.slice(0, 6).map((genre) => (
+                <li
+                  key={genre}
+                  className="rounded-full border border-border bg-surface/60 px-2.5 py-1 text-xs text-muted-foreground"
+                >
+                  {getGenreLabel(genre)}
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
-          {/*
-            信息栏。
-            ⚠️ 用 grid-cols-[auto_1fr] 而不是两列等宽：左列（标签）宽度由内容决定，
-            右列吃掉剩余空间。等宽的话左列会留一大片空白，右列的长值（播出时间）
-            又不够放。窄屏退成单列堆叠。
-          */}
-          <dl className="mt-2 grid gap-x-4 gap-y-2 rounded-xl border border-border bg-surface/60 p-4 text-sm sm:grid-cols-[auto_1fr]">
-            {infoRows.map((row) => (
-              <div key={row.label} className="contents">
-                <dt className="text-muted-foreground">{row.label}</dt>
-                <dd className="min-w-0 sm:pb-0.5">{row.value}</dd>
-              </div>
-            ))}
-          </dl>
+          {/* 操作行：追番（客户端组件）+ 「哪里能看」锚点跳转。
+              锚点用原生 <a>：同页跳转不需要路由，交给浏览器最稳 */}
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <FollowButton anime={detail} />
+            <a
+              href="#watch"
+              className="inline-flex items-center rounded-lg border border-border bg-surface/40 px-4 py-2.5 text-sm font-medium text-foreground transition-colors duration-150 hover:border-border-strong hover:bg-surface-elevated/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              哪里能看
+            </a>
+          </div>
         </div>
       </div>
 
+      {/*
+        数据带（2026-10-09 改版，从右栏小盒子搬出来）：通栏 grid，
+        手机 2 列 → sm 3 列 → lg 6 列一行排开。标签用 muted-soft（最小号一档），
+        值用正文色——层级靠颜色分，不靠字号差。
+      */}
+      <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl border border-border bg-surface/40 p-4 text-sm sm:grid-cols-3 lg:grid-cols-6">
+        {infoRows.map((row) => (
+          <div key={row.label} className="flex min-w-0 flex-col gap-1">
+            <dt className="text-xs text-muted-soft">{row.label}</dt>
+            <dd className="min-w-0">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+
       {/* 简介：优先用 Bangumi 的（离线抓进 data/title-zh.json），拿不到才退回 AniList 英文 */}
       <section className="mt-12">
-        <h2 className="section-mark mb-4 text-lg font-semibold">简介</h2>
+        <h2 className="section-mark mb-4 text-xl font-semibold">简介</h2>
         {summary ? (
           <>
             {/* 简介直接显示，不再挂「只有日文」的提示
@@ -246,14 +292,14 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
 
       {/* 剧集列表 */}
       <section className="mt-12">
-        <h2 className="section-mark mb-4 text-lg font-semibold">剧集列表</h2>
+        <h2 className="section-mark mb-4 text-xl font-semibold">剧集列表</h2>
         <EpisodeList list={episodes} />
       </section>
 
       {/* 哪里能看。数据在 lib/watch.ts 里组装，红线都收在那个文件里——这里只显示，只跳转不播放。
           ⚠️ id="watch" 是首页焦点位「去哪看」按钮的锚点（/anime/[id]#watch），改名要一起改 */}
       <section id="watch" className="mt-12">
-        <h2 className="section-mark mb-4 text-lg font-semibold">哪里能看</h2>
+        <h2 className="section-mark mb-4 text-xl font-semibold">哪里能看</h2>
         <WatchLinks detail={detail} />
       </section>
 
@@ -265,7 +311,7 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
       */}
       {timeline.entries.length > 1 ? (
         <section className="mt-12">
-          <h2 className="section-mark mb-4 text-lg font-semibold">系列年表</h2>
+          <h2 className="section-mark mb-4 text-xl font-semibold">系列年表</h2>
           <SeriesTimeline
             entries={timeline.entries}
             currentId={detail.id}
@@ -276,13 +322,13 @@ export default async function AnimeDetailPage(props: PageProps<"/anime/[id]">) {
 
       {/* 制作人员 */}
       <section className="mt-12">
-        <h2 className="section-mark mb-4 text-lg font-semibold">制作人员</h2>
+        <h2 className="section-mark mb-4 text-xl font-semibold">制作人员</h2>
         <StaffList staff={detail.staff} />
       </section>
 
       {/* 声优。以声优为主体，角色只作挂靠 */}
       <section className="mt-12">
-        <h2 className="section-mark mb-4 text-lg font-semibold">声优</h2>
+        <h2 className="section-mark mb-4 text-xl font-semibold">声优</h2>
         <CastList cast={detail.cast} missingCount={detail.castMissingCount} />
       </section>
     </main>

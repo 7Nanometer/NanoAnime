@@ -5,6 +5,11 @@ import type { EpisodeListResult } from "@/lib/anime-display";
  *
  * 规则见 lib/anime-display.ts 的 buildEpisodeRows()：
  * 以总集数为准列全，AniList 没给数据的那集日期如实显示「—」，不编造。
+ *
+ * 2026-10-09 电影化改版：≥lg 时排成**双栏**。原来 26 集会拉成一条又窄又长的
+ * 单栏（只用了版心一半的宽度，页面被拉得极长）；双栏后同样内容缩一半高度。
+ * ⚠️ 双栏下 divide-y 不能用（它只连纵向邻居、网格里会错位）——每行改成
+ * 自带的底边框，最后一行（双栏时是最后两行）由 [&:last-child] / nth-last-child 收掉。
  */
 export function EpisodeList({ list }: { list: EpisodeListResult }) {
   if (list.rows.length === 0) {
@@ -23,11 +28,11 @@ export function EpisodeList({ list }: { list: EpisodeListResult }) {
         </p>
       ) : null}
 
-      <ol className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface/50">
+      <ol className="grid overflow-hidden rounded-xl border border-border bg-surface/50 lg:grid-cols-2 lg:gap-x-8">
         {list.rows.map((row) => (
           <li
             key={row.number}
-            className="flex items-baseline gap-3 px-3.5 py-2.5 text-sm transition-colors duration-150 hover:bg-brand-tint"
+            className="flex items-baseline gap-3 border-b border-border/70 px-3.5 py-2.5 text-sm transition-colors duration-150 last:border-b-0 hover:bg-brand-tint lg:[&:nth-last-child(-n+2)]:border-b-0"
           >
             <span className="w-14 shrink-0 text-xs tabular-nums text-muted-foreground">
               第 {row.number} 集
